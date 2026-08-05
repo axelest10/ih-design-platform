@@ -1,0 +1,28 @@
+brand: international-house-mexico
+name: International House México
+status: approved-foundation
+colors:
+  knowledge: "#3B44B5"
+  salmon: "#F06C6A"
+  pink: "#E070A2"
+  technology: "#923472"
+  youth: "#B7DB6E"
+  joy: "#F4CF80"
+  light: "#F4AB63"
+  green: "#28AE62"
+typography:
+  headings: Aptos
+  body: Open Sans
+visual_style:
+  - limpio
+  - moderno
+  - educativo
+  - global
+  - inclusivo
+  - centrado en la conexión mediante el lenguaje
+rules:
+  official_logos_only: true
+  preserve_logo_colors: true
+  preserve_logo_clear_space: true
+  do_not_distort_logo: true
+  critical_text_must_use_controlled_templates: true

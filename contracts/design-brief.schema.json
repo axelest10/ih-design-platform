@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ih-mexico.example/contracts/design-brief.schema.json",
+  "title": "IH Mexico Design Brief",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["title", "format", "audience", "objective"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1, "maxLength": 180 },
+    "format": { "type": "string", "enum": ["square", "story", "portrait"] },
+    "audience": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "requested_message": { "type": "string" },
+    "source_references": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "constraints": { "type": "object", "additionalProperties": true }
+  }
+}

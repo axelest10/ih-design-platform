@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080" role="img">
+  <!-- Safe, commercial-data-free base. Critical copy and official assets are injected by the renderer. -->
+  <rect width="1080" height="1080" fill="#3B44B5" />
+  <rect x="72" y="72" width="936" height="936" rx="32" fill="#FFFFFF" opacity="0.96" />
+  <g id="logo-slot" aria-label="official-logo-slot" />
+  <text id="headline-slot" x="120" y="420" fill="#3B44B5" font-family="Aptos, sans-serif" font-size="72" font-weight="700">
+    {{ headline }}
+  </text>
+  <text id="body-slot" x="120" y="540" fill="#1F2340" font-family="Open Sans, sans-serif" font-size="34">
+    {{ body }}
+  </text>
+  <g id="cta-slot" aria-label="controlled-cta-slot" />
+</svg>
