@@ -12,8 +12,10 @@ guía deja preparada la configuración, pero no crea cuentas ni despliega servic
   entorno. El frontend actual se sirve desde Django y funciona same-origin; no hay una dependencia
   de CORS instalada porque todavía no existe un frontend separado.
 - `infrastructure/Dockerfile` es reutilizable como imagen de aplicación si el build context es la
-  raíz del repositorio y el proveedor recibe esa ruta de Dockerfile. No es un entorno de producción
-  completo por sí solo.
+  raíz del repositorio. `railway.json` fija `builder=DOCKERFILE`, la ruta
+  `/infrastructure/Dockerfile`, la migración pre-deploy y el healthcheck. El Dockerfile define el
+  `CMD` de Gunicorn y agrega `/app/backend` al `PYTHONPATH` para que `config.wsgi` sea importable
+  dentro de la imagen.
 - `infrastructure/docker-compose.yml` es local: no debe trasladarse literalmente como arquitectura
   de producción.
 
@@ -33,6 +35,16 @@ DJANGO_SECURE_SSL_REDIRECT=1
 DJANGO_SECURE_COOKIES=1
 DJANGO_HSTS_SECONDS=31536000
 AWS_STORAGE_BUCKET_NAME=<bucket>
+AWS_S3_REGION_NAME=<región del bucket>
+AWS_S3_ENDPOINT_URL=
+AWS_ACCESS_KEY_ID=<credencial fuera de Git>
+AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
+OPENAI_API_KEY=<secreto fuera de Git>
+OPENAI_MODEL=gpt-4.1-mini
+DESIGN_TEST_MODE=1
+DESIGN_TEST_LIMIT=50
+CELERY_TASK_ALWAYS_EAGER=0
+CORS_ALLOWED_ORIGINS=
 ```
 
 El almacenamiento local de logos y referencias no debe considerarse persistente en un PaaS. Para
