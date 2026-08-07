@@ -1,0 +1,512 @@
+# brand/knowledge/product-catalog.yaml
+#
+# Catálogo oficial de productos/pilares de International House por país (LATAM).
+# Fuente única de verdad — brand/knowledge/product-catalog.json se GENERA desde este archivo
+# con brand/scripts/generate_product_catalog.py. No editar el JSON a mano.
+#
+# Principio: no se inventan productos, públicos, colores ni CTAs. Cada campo no confirmado por
+# una fuente real queda en null o con status "inferred"/"needs_confirmation" según corresponda.
+# Fuentes usadas para construir este archivo (2026-08-06):
+#   - brand/product-colors/authorized-colors.yaml (6 pilares de negocio, confirmados por el
+#     cliente el 2026-08-05 — SOLO para México; ver countries_confirmed por producto).
+#   - brand/assets/logos/manifest.yaml (78 logos, con scope/country/brand por entrada —
+#     confirma qué países/sub-marcas/partners tienen artwork oficial cargado).
+#   - HANDOFF_BRAND_SYSTEM.md (histórico de decisiones: alias Hello!/UP, hallazgo Hello Live
+#     English como identidad propia no adoptada, contraste, Aptos, tamaño de logo).
+#   - brand/knowledge/artwork-reference-knowledge.json (454 referencias visuales: se usó para
+#     verificar qué palabras clave de producto aparecen realmente en filenames/tags/collection_path
+#     — solo "ielts" aparece con señal fuerte (110/454); ningún otro nombre de producto aparece
+#     en los metadatos de archivo, así que la vinculación producto-país para el resto se basa en
+#     los pilares institucionales, no en evidencia directa de campaña por país).
+#   - products/README.md: confirma que Marketing NO ha entregado todavía catálogo comercial
+#     autorizado (precios, fechas, sedes) — por eso ningún producto tiene esos datos aquí.
+#
+# NO existe ninguna fuente que confirme explícitamente qué pilares se ofrecen en cada país
+# fuera de México. Se marca countries_confirmed (evidencia directa) vs countries_inferred
+# (asumido por ser un pilar institucional estándar de la red IH, coherente con que Chile,
+# Colombia y Perú tienen escuelas IH activas según brand/assets/logos/manifest.yaml) —
+# cualquier país en countries_inferred debe tratarse como pendiente de confirmar, no como dato
+# comercial listo para usar.
+
+version: "1.1.0"
+status: partial
+generated_by: "brand/scripts/generate_product_catalog.py"
+
+countries:
+  # Países con escuela/sub-marca IH confirmada por logo oficial cargado (manifest.yaml).
+  MX: { name: "México", evidence: "brand/assets/logos/manifest.yaml scope=regional country=MX" }
+  CO: { name: "Colombia", evidence: "brand/assets/logos/manifest.yaml scope=regional country=CO (IH Colombia, Barranquilla, Bogotá, Cali, Medellín)" }
+  PE: { name: "Perú", evidence: "brand/assets/logos/manifest.yaml scope=regional country=PE (IH Lima)" }
+  CL: { name: "Chile", evidence: "brand/assets/logos/manifest.yaml scope=regional country=CL (IH Santiago)" }
+
+regional_groups:
+  # Grupos que no son un país sino una unidad de marketing/distribución regional, tal como
+  # aparecen en la carpeta de Drive de la biblioteca visual (brand/assets/artwork-references/).
+  ielts-latam:
+    name: "IELTS LATAM"
+    evidence: "brand/knowledge/artwork-reference-knowledge.json summary.by_country incluye 'ielts-latam' como grupo propio, separado de Chile/Colombia/México/Perú (107 referencias)."
+    note: >
+      No hay ninguna fuente que confirme si "IELTS LATAM" es una unidad comercial/administrativa
+      distinta del pilar IELTS de cada país, o simplemente el nombre de la carpeta de marketing
+      regional que centraliza el contenido de IELTS de varios países. Se documenta como grupo
+      aparte (needs_confirmation) — ver producto `ielts-latam-regional-program`.
+
+products:
+  # ————————————————————————————————————————————
+  # PILARES INSTITUCIONALES (brand_scope: core) — confirmados para México, inferidos para el
+  # resto de la red LATAM por ser pilares estándar de negocio de IH, no campañas locales.
+  # ————————————————————————————————————————————
+
+  - product_slug: general-english
+    canonical_name: "Inglés General"
+    aliases: ["Live!", "Hello!"]
+    country: null
+    countries: ["MX", "CO", "PE", "CL"]
+    countries_confirmed: ["MX"]
+    countries_inferred: ["CO", "PE", "CL"]
+    brand_scope: core
+    pillar: ingles_general
+    target_audience: "Público general (adolescentes/adultos) que aprende inglés general."
+    language: en
+    modality: null
+    product_type: language-course
+    typical_formats: ["social-post-square", "social-post-portrait", "story", "reel"]
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.ingles_general"
+    associated_logo_keys: ["hello-live-svg", "hello-live-ai"]
+    allowed_ctas: null
+    source: "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05); alias Hello!/Live! confirmado por el cliente 2026-08-05 (ver HANDOFF_BRAND_SYSTEM.md sección 7.3)"
+    status: confirmed
+    needs_confirmation: true
+    notes: >
+      El cliente confirmó explícitamente (2026-08-05) que "Hello!" (antes "Live!") es un alias
+      comercial de este mismo pilar, usando el color institucional Youth Green (#B7DB6E) — no
+      una paleta propia. Existe un logo dedicado "Hello Live" (hello-live-svg/ai, scope
+      sub-brand) que sí se vincula aquí como artwork utilizable, pero la identidad visual
+      independiente descrita en el deck "Hello Live English — Presentación Directores" (paleta
+      Navy/Cian/Verde/Naranja/Magenta/Morado, tipografía Poppins) NO se adopta, por decisión
+      explícita del cliente. Pendiente: confirmar en qué países además de México se comercializa
+      bajo el nombre "Hello!" vs. el nombre genérico "Inglés General".
+
+  - product_slug: hello-live-kids
+    canonical_name: "Hello Live Kids"
+    aliases: []
+    country: null
+    countries: []
+    countries_confirmed: []
+    countries_inferred: []
+    brand_scope: sub-brand
+    pillar: ingles_general
+    target_audience: "Niños (segmento infantil de inglés general) — inferido únicamente del nombre del logo, sin briefing de producto."
+    language: en
+    modality: null
+    product_type: language-course
+    typical_formats: null
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.ingles_general"
+    associated_logo_keys: ["hello-live-kids-ai", "hello-live-kids-svg"]
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (hello-live-kids-ai/svg, scope=sub-brand)"
+    status: inferred
+    needs_confirmation: true
+    notes: >
+      Solo existe evidencia de un logo cargado ("Hello Live Kids"). Ningún documento confirma
+      que sea un producto comercial activo, en qué país(es) se ofrece, ni su relación exacta con
+      el pilar "Inglés General" más allá de compartir el nombre "Hello Live". Se infiere el
+      vínculo al pilar por el nombre, no se confirma.
+
+  - product_slug: cambridge-exam-preparation
+    canonical_name: "Cambridge"
+    aliases: []
+    country: null
+    countries: ["MX", "CO", "PE", "CL"]
+    countries_confirmed: ["MX"]
+    countries_inferred: ["CO", "PE", "CL"]
+    brand_scope: core
+    pillar: cambridge
+    target_audience: "Candidatos a certificaciones de inglés Cambridge English."
+    language: en
+    modality: null
+    product_type: exam-preparation-course
+    typical_formats: ["social-post-square", "social-post-portrait", "story", "reel"]
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.cambridge"
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05)"
+    status: confirmed
+    needs_confirmation: true
+    notes: >
+      Este es el curso de preparación de IH (producto propio). Distinto de los badges de
+      acreditación de la entidad certificadora "Cambridge English Qualifications" — ver esos
+      como productos brand_scope=partner más abajo. No se vinculan logos partner aquí para no
+      confundir el curso propio con la credencial del examen.
+
+  - product_slug: university-programmes
+    canonical_name: "University Programmes"
+    aliases: ["UP"]
+    country: null
+    countries: ["MX", "CO", "PE", "CL"]
+    countries_confirmed: ["MX"]
+    countries_inferred: ["CO", "PE", "CL"]
+    brand_scope: core
+    pillar: university_programmes
+    target_audience: "Estudiantes que buscan ingresar a universidades de habla inglesa (programas puente/preparatorios)."
+    language: en
+    modality: null
+    product_type: pathway-course
+    typical_formats: ["social-post-square", "social-post-portrait", "story", "reel"]
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.university_programmes"
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05); alias UP confirmado por el cliente 2026-08-05 (ver HANDOFF_BRAND_SYSTEM.md sección 7.3)"
+    status: confirmed
+    needs_confirmation: true
+    notes: "\"UP\" confirmado como alias comercial de este mismo pilar, mismo color institucional Knowledge Blue (#3B44B5)."
+
+  - product_slug: business-english
+    canonical_name: "Inglés para Empresas"
+    aliases: ["Empresas"]
+    country: null
+    countries: ["MX", "CO", "PE", "CL"]
+    countries_confirmed: ["MX"]
+    countries_inferred: ["CO", "PE", "CL"]
+    brand_scope: core
+    pillar: empresas
+    target_audience: "Profesionales y empresas (capacitación corporativa de inglés)."
+    language: en
+    modality: null
+    product_type: corporate-training
+    typical_formats: ["social-post-square", "social-post-portrait", "story", "reel"]
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.empresas"
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05)"
+    status: confirmed
+    needs_confirmation: true
+    notes: null
+
+  - product_slug: ielts-preparation
+    canonical_name: "IELTS"
+    aliases: []
+    country: null
+    countries: ["MX", "CO", "PE", "CL"]
+    countries_confirmed: ["MX"]
+    countries_inferred: ["CO", "PE", "CL"]
+    brand_scope: core
+    pillar: ielts
+    target_audience: "Candidatos que requieren certificación IELTS para estudio, migración o trabajo."
+    language: en
+    modality: null
+    product_type: exam-preparation-course
+    typical_formats: ["social-post-square", "social-post-portrait", "story", "reel"]
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.ielts"
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05, color Rojo IELTS #E31736 extensión MX); confirmado por el cliente 2026-08-06 que el grupo 'IELTS LATAM' de la biblioteca visual es este mismo producto (ver deprecated#ielts-latam-regional-program)"
+    status: confirmed
+    needs_confirmation: false
+    notes: >
+      Curso de preparación IELTS propio de IH. El cliente confirmó (2026-08-06) que "IELTS
+      LATAM" es únicamente la carpeta de marketing regional de este mismo producto, no una
+      unidad comercial distinta — las 107 referencias de esa carpeta se re-etiquetaron a este
+      product_slug. Ver los productos brand_scope=partner (`ielts-from-idp`,
+      `ielts-test-centre`) para las entidades administradoras del examen — esas sí son
+      entidades distintas (el logo "IELTS Official Test Centre"/"IELTS from IDP" que acredita
+      la sede de examen), no se fusionan con este producto.
+
+  - product_slug: teacher-training-certifications
+    canonical_name: "Certificaciones para Profesores de Idiomas"
+    aliases: ["CELTA", "DELTA", "TKT", "CAM", "DIEELE"]
+    country: null
+    countries: ["MX", "CL", "CO", "PE"]
+    countries_confirmed: ["MX", "CL", "CO", "PE"]
+    countries_inferred: []
+    brand_scope: core
+    pillar: null
+    target_audience: "Profesores de idiomas (inglés/español) que buscan certificación profesional docente."
+    language: en
+    modality: null
+    product_type: teacher-certification-course
+    typical_formats: ["social-post-square", "social-post-portrait"]
+    authorized_color_reference: null
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: >
+      Revisión visual directa (2026-08-06) de 3 piezas reales de la biblioteca:
+      brand/assets/artwork-references/chile/1-feb2--14wICDZp-zYaQPBO92jPnPPQvbhEERY9v.jpg
+      ("Certifícate en: DIEELE, CELTA, DELTA, CAM, TKT"),
+      brand/assets/artwork-references/peru/6-nov1--14xZyVr59t47hBraHgTVe7EWcSN0__xlF.jpg
+      ("Take the next step in your teaching career with CELTA" — IH Lima). Alcance confirmado
+      por el cliente 2026-08-06.
+    status: confirmed
+    needs_confirmation: true
+    notes: >
+      Confirmado por el cliente (2026-08-06): es un producto que se vende en cada país, sin
+      marca/logo propio — usa el logo institucional de cada país (p. ej. ih-mexico-classic,
+      ih-santiago-classic, ih-bogota-vector, ih-lima-vector), no un logo dedicado a
+      "certificaciones docentes". Por eso `associated_logo_keys` queda vacío a propósito en vez
+      de listar un logo fijo. Sigue pendiente: color/pilar institucional (authorized-colors.yaml
+      no lo contempla) — needs_confirmation se mantiene en true solo por eso, no por el alcance
+      ni la existencia del producto, que ya están confirmados. "DIEELE" (Diploma Internacional
+      en Enseñanza de Español como Lengua Extranjera) sugiere que también cubre certificación
+      docente de español, no solo de inglés.
+
+  - product_slug: spanish-courses
+    canonical_name: "Spanish Courses"
+    aliases: ["Spanish Course"]
+    country: MX
+    countries: ["MX"]
+    countries_confirmed: ["MX"]
+    countries_inferred: []
+    brand_scope: core
+    pillar: spanish_courses
+    target_audience: "Estudiantes internacionales aprendiendo español en México."
+    language: es
+    modality: null
+    product_type: language-course
+    typical_formats: ["social-post-square", "social-post-portrait", "story", "reel"]
+    authorized_color_reference: "brand/product-colors/authorized-colors.yaml#pillars.spanish_courses"
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05)"
+    status: confirmed
+    needs_confirmation: true
+    notes: >
+      Sin evidencia en la biblioteca visual ni en logos de que Chile/Colombia/Perú ofrezcan este
+      producto (Chile también es hispanohablante, por lo que no aplicaría de la misma forma);
+      no se extiende `countries` por falta de evidencia, a diferencia de los demás pilares.
+
+  # ————————————————————————————————————————————
+  # SUB-MARCA con público propio (brand_scope: sub-brand)
+  # ————————————————————————————————————————————
+
+  - product_slug: qc-2026
+    canonical_name: "Quality Circle (QC)"
+    aliases: ["QC"]
+    country: MX
+    countries: ["MX"]
+    countries_confirmed: ["MX"]
+    countries_inferred: []
+    brand_scope: sub-brand
+    pillar: null
+    target_audience: "Colegios (instituciones educativas K-12) con convenio institucional con IH."
+    language: en
+    modality: null
+    product_type: school-partnership-program
+    typical_formats: ["social-post-square", "social-post-portrait"]
+    authorized_color_reference: null
+    associated_logo_keys: ["qc-2026-color-svg", "qc-2026-ai", "qc-2026-svg"]
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (qc-2026-*, scope=sub-brand, country=MX); identidad confirmada por el cliente 2026-08-06"
+    status: confirmed
+    needs_confirmation: true
+    notes: >
+      Confirmado por el cliente (2026-08-06): "QC" = Quality Circle, programa dirigido a
+      colegios (instituciones K-12) con los que IH tiene convenio institucional — no es un
+      curso individual como los demás pilares. Sigue pendiente: color/pilar institucional y si
+      existe en países además de México (por ahora solo hay logo/evidencia en la carpeta de
+      México). Ver override de mexico/6-nov4 en artwork-annotations.yaml, que probablemente
+      pertenece a este producto en vez de a teacher-training-certifications.
+
+  # ————————————————————————————————————————————
+  # MARCAS PARTNER / ENTIDADES CERTIFICADORAS (brand_scope: partner)
+  # No son productos de IH: son las entidades externas cuyos logos IH usa para acreditar
+  # exámenes/certificaciones. Se catalogan para que no se confundan con los pilares propios.
+  # ————————————————————————————————————————————
+
+  - product_slug: cambridge-english-qualifications
+    canonical_name: "Cambridge English Qualifications"
+    aliases: ["CEQ"]
+    country: null
+    countries: []
+    countries_confirmed: []
+    countries_inferred: []
+    brand_scope: partner
+    pillar: cambridge
+    target_audience: null
+    language: en
+    modality: null
+    product_type: certification-partner-badge
+    typical_formats: null
+    authorized_color_reference: null
+    associated_logo_keys:
+      - cambridge-ceq-black-cmyk-ai
+      - cambridge-ceq-black-cmyk-jpg
+      - cambridge-ceq-black-rgb-ai
+      - cambridge-ceq-black-rgb-png
+      - cambridge-ceq-full-colour-cmyk-ai
+      - cambridge-ceq-full-colour-cmyk-jpg
+      - cambridge-ceq-full-colour-rgb-ai
+      - cambridge-ceq-full-colour-rgb-png
+      - cambridge-ceq-white-cmyk-ai
+      - cambridge-ceq-white-rgb-ai
+      - cambridge-ceq-white-rgb-png
+      - cambridge-ceq-stacked-rgb-jpg
+      - cambridge-ceq-stacked-rgb-png
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (cambridge-ceq-*, scope=partner)"
+    status: confirmed
+    needs_confirmation: true
+    notes: "Entidad real conocida (Cambridge Assessment English). needs_confirmation=true solo por país/uso exacto, no por identidad de marca."
+
+  - product_slug: cambridge-assessment-english-centre-status
+    canonical_name: "Cambridge Assessment English — Authorised/Platinum Centre"
+    aliases: ["AEC", "Cambridge Platinum"]
+    country: null
+    countries: []
+    countries_confirmed: []
+    countries_inferred: []
+    brand_scope: partner
+    pillar: cambridge
+    target_audience: null
+    language: en
+    modality: null
+    product_type: certification-partner-badge
+    typical_formats: null
+    authorized_color_reference: null
+    associated_logo_keys:
+      - cambridge-aec-negative-png
+      - cambridge-aec-positive-ai
+      - cambridge-aec-positive-png
+      - cambridge-platinum-white-png
+      - cambridge-platinum-jpg
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (cambridge-aec-*, cambridge-platinum-*, scope=partner)"
+    status: needs_confirmation
+    needs_confirmation: true
+    notes: >
+      Nombre canónico inferido de las siglas del archivo ("AEC" ~ Authorised Exam Centre,
+      "Platinum" ~ nivel de estatus de centro). No confirmado con el cliente; podría tratarse
+      del mismo badge que `cambridge-english-qualifications` en otra presentación en vez de una
+      entidad distinta — se separan por prudencia, no por certeza.
+
+  - product_slug: ielts-from-idp
+    canonical_name: "IELTS from IDP"
+    aliases: []
+    country: null
+    countries: []
+    countries_confirmed: []
+    countries_inferred: []
+    brand_scope: partner
+    pillar: ielts
+    target_audience: null
+    language: en
+    modality: null
+    product_type: certification-partner-badge
+    typical_formats: null
+    authorized_color_reference: null
+    associated_logo_keys: ["ielts-from-idp-horizontal-png", "ielts-from-idp-horizontal-svg", "ielts-from-idp-positive-png"]
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (ielts-from-idp-*, scope=partner)"
+    status: confirmed
+    needs_confirmation: true
+    notes: "Entidad real conocida (IDP IELTS). needs_confirmation=true solo por relación comercial exacta con IH, no por identidad de marca."
+
+  - product_slug: ielts-test-centre
+    canonical_name: "IELTS Test Centre"
+    aliases: []
+    country: null
+    countries: []
+    countries_confirmed: []
+    countries_inferred: []
+    brand_scope: partner
+    pillar: ielts
+    target_audience: null
+    language: en
+    modality: null
+    product_type: certification-partner-badge
+    typical_formats: null
+    authorized_color_reference: null
+    associated_logo_keys: ["ielts-test-centre-red-jpg", "ielts-test-centre-pantone-svg", "ielts-test-centre-rgb-png"]
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (ielts-test-centre-*, scope=partner)"
+    status: needs_confirmation
+    needs_confirmation: true
+    notes: "Pendiente confirmar si IH opera directamente como sede de examen (test centre) o solo promociona el examen."
+
+  - product_slug: michigan-language-assessment
+    canonical_name: "Michigan Language Assessment"
+    aliases: ["MET", "MLA"]
+    country: null
+    countries: []
+    countries_confirmed: []
+    countries_inferred: []
+    brand_scope: partner
+    pillar: null
+    target_audience: null
+    language: en
+    modality: null
+    product_type: certification-partner-badge
+    typical_formats: null
+    authorized_color_reference: null
+    associated_logo_keys:
+      - michigan-met-c-color-nm-eps
+      - michigan-met-c-color-eps
+      - michigan-met-c-color-svg
+      - michigan-met-c-gray-eps
+      - michigan-met-c-gray-svg
+      - michigan-met-id-01
+      - michigan-met-r-color
+      - michigan-logo
+      - michigan-mla-prepcenter-eps
+      - michigan-mla-prepcenter-jpg
+      - michigan-mla-prepcenter-png
+      - michigan-mla-prepcenter-svg
+      - michigan-mla-r-testcenter
+      - michigan-mla-ro-logo-eps
+      - michigan-mla-ro-logo-jpg
+      - michigan-mla-ro-logo-png
+      - michigan-mla-ro-logo-svg
+    allowed_ctas: null
+    source: "brand/assets/logos/manifest.yaml (michigan-*, scope=partner)"
+    status: needs_confirmation
+    needs_confirmation: true
+    notes: >
+      No se identificó a qué pilar de IH corresponde este examen (podría relacionarse con
+      University Programmes o ser independiente) — no se asigna `pillar` sin confirmación.
+
+  - product_slug: tea-test-of-english-for-aviation
+    canonical_name: "TEA — Test of English for Aviation"
+    aliases: ["TEA"]
+    country: CO
+    countries: ["CO"]
+    countries_confirmed: ["CO"]
+    countries_inferred: []
+    brand_scope: partner
+    pillar: null
+    target_audience: "Profesionales de aviación (pilotos, controladores aéreos) que requieren certificación de inglés aeronáutico."
+    language: en
+    modality: null
+    product_type: certification-partner-badge
+    typical_formats: ["social-post-square"]
+    authorized_color_reference: null
+    associated_logo_keys: []
+    allowed_ctas: null
+    source: >
+      Descubierto por inspección visual directa (2026-08-06, segunda pasada de revisión) en 2
+      piezas reales: brand/assets/artwork-references/colombia/21-feb2--12n1mcSabeKKg4-eaVE_AYGVNhIuocHKM.jpg
+      (calendario de fechas de examen con insignia TEA junto a otras certificaciones) y
+      brand/assets/artwork-references/colombia/16-ene1--1gjs7FZniV3rtPtN9p1eFvf9HUJEl_UIv.jpg
+      ("¡Certifícate en el TEA a inicios de 2026!"). Ningún documento de marca lo menciona.
+    status: inferred
+    needs_confirmation: true
+    notes: >
+      No catalogado en ningún documento de marca — se agrega únicamente por evidencia visual
+      directa, siguiendo el mismo criterio que teacher-training-certifications. Sin logo propio
+      cargado en brand/assets/logos/manifest.yaml (associated_logo_keys queda vacío). Solo hay
+      evidencia en Colombia; no se extiende a otros países sin evidencia adicional. Pendiente:
+      confirmar con el cliente si es un examen que IH administra directamente o solo promociona,
+      y si existe en otros países de la red.
+
+deprecated:
+  # Nombres antiguos que ya no deben usarse como product_slug, conservados solo para trazabilidad
+  # de contenido histórico (p. ej. artes viejos que digan "Live" en vez de "Hello!").
+  - product_slug: live-english
+    canonical_name: "Live! (nombre anterior de Inglés General)"
+    superseded_by: general-english
+    status: deprecated
+    source: "HANDOFF_BRAND_SYSTEM.md sección 7.3 — confirmado por el cliente 2026-08-05"
+
+  - product_slug: ielts-latam-regional-program
+    canonical_name: "IELTS LATAM (carpeta de marketing regional)"
+    superseded_by: ielts-preparation
+    status: deprecated
+    source: "Confirmado por el cliente 2026-08-06: 'misma carpeta de marketing regional de IELTS, pero en realidad es IELTS y ya' — no es una unidad comercial distinta."

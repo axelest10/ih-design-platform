@@ -1,0 +1,167 @@
+{
+  "$schema": "ih-design-artwork-annotation-schema",
+  "version": "1.0.0",
+  "purpose": "Documenta los campos y vocabularios controlados usados para etiquetar las 454 referencias visuales de brand/knowledge/artwork-reference-knowledge.json, para que puedan seleccionarse con precisión al generar nuevos diseños.",
+  "guardrails": [
+    "Estas anotaciones son metadata de selección/inspiración, no reglas oficiales de marca.",
+    "Ningún arte individual se convierte automáticamente en regla de marca ni cambia su approval_status.",
+    "reuse_permission = client-authorized-reuse refleja la autorización general del cliente para reutilizar/tomar como referencia estos artes (confirmada 2026-08-06), no una aprobación de diseño específica.",
+    "annotation_status = metadata-only o needs_review=true significa que el campo NO fue verificado visualmente por un humano ni por un pase de análisis de imagen — es un valor por defecto o heurístico, y debe tratarse como tentativo."
+  ],
+  "top_level_fields_added_to_each_asset": {
+    "product_slug": {
+      "type": "string|null",
+      "description": "Debe existir en brand/knowledge/product-catalog.json (products[].product_slug o deprecated[].product_slug), o ser null.",
+      "validation": "product_slug != null implica que existe en product-catalog.json; si no se puede determinar, usar null y dejar needs_review=true en `annotation`."
+    },
+    "content_pillar": {
+      "type": "string|null",
+      "description": "Pilar de negocio (brand/product-colors/authorized-colors.yaml#pillars, por su slug: ingles_general | cambridge | university_programmes | empresas | ielts | spanish_courses), o null si no se puede determinar. Puede estar poblado aunque product_slug sea null (p. ej. se sabe que es contenido de IELTS pero no si es ielts-preparation o ielts-latam-regional-program)."
+    },
+    "campaign_or_theme": {
+      "type": "string|null",
+      "description": "Nombre de campaña/tema si es identificable en la pieza o por metadata compartida entre países (p. ej. 'back-to-school', 'reyes-magos', 'black-friday'). null si no hay evidencia clara — NO se debe usar la fecha sola (año/mes) como campaña, eso ya vive en calendar."
+    },
+    "annotation_status": {
+      "type": "string",
+      "enum": ["metadata-only", "machine-assisted", "human-reviewed", "needs-review"],
+      "default": "metadata-only",
+      "description": "Nivel de confianza del proceso de anotación para ESTE asset en su conjunto."
+    }
+  },
+  "nested_annotation_object": {
+    "path": "asset.annotation",
+    "fields": {
+      "product_status": {
+        "type": "string|null",
+        "enum": ["confirmed", "inferred", "needs_confirmation", null],
+        "description": "Estado de confianza del product_slug asignado. Coincide con los estados usados en product-catalog.yaml."
+      },
+      "audience": {
+        "type": "string|null",
+        "description": "Público objetivo observado o inferido del pilar/producto (texto libre corto, p. ej. 'adultos', 'niños', 'profesores', 'empresas'). null si no se puede determinar."
+      },
+      "funnel_stage": {
+        "type": "string",
+        "enum": ["awareness", "consideration", "conversion", "retention", "unknown"],
+        "default": "unknown"
+      },
+      "visual_tags": {
+        "type": "array<string>",
+        "description": "Etiquetas visuales libres adicionales a `tags` (que ya existe y documenta procedencia técnica). No duplicar valores ya presentes en `tags`.",
+        "default": []
+      },
+      "background_type": {
+        "type": "string",
+        "enum": ["solid-color", "white", "gradient", "photographic", "geometric", "rainbow-accent", "transparent", "unknown"],
+        "default": "unknown"
+      },
+      "composition_type": {
+        "type": "string",
+        "enum": ["centered", "split-layout", "text-left-image-right", "text-right-image-left", "full-bleed-image", "card-based", "editorial", "collage", "unknown"],
+        "default": "unknown"
+      },
+      "layout_pattern": {
+        "type": "string",
+        "enum": ["square-social-post", "portrait-social-post", "landscape-banner", "story", "reel-cover", "carousel-cover", "announcement", "promotional", "institutional", "unknown"],
+        "default": "unknown",
+        "derivation_note": "Para assets con technical.orientation conocido se deriva heurísticamente (square->square-social-post, portrait->portrait-social-post); para video sin metadata técnica queda 'unknown' salvo revisión humana."
+      },
+      "image_subject": {
+        "type": "string|null",
+        "enum": ["person-portrait", "people-group", "hands-object-closeup", "campus-interior", "campus-exterior", "illustration-only", "text-only", "product-badge", "mixed", null],
+        "description": "Sujeto visual dominante. null si no se pudo analizar (metadata-only)."
+      },
+      "people_count": {
+        "type": "integer|string|null",
+        "description": "Número de personas visibles si es determinable (0, 1, 2, '3+'), null si no se analizó."
+      },
+      "logo_present": {
+        "type": "boolean|null"
+      },
+      "logo_placement": {
+        "type": "string",
+        "enum": ["top-left", "top-right", "bottom-left", "bottom-right", "centered", "integrated", "absent", "unknown"],
+        "default": "unknown"
+      },
+      "logo_variant": {
+        "type": "string|null",
+        "description": "Debe coincidir con un `variant` de brand/assets/logos/manifest.yaml (classic | black | white | white-reversed | dual-branding) cuando sea identificable, o el nombre de un logo partner/sub-marca (p. ej. 'ielts-official-test-centre'). null si no se identificó."
+      },
+      "logo_scale": {
+        "type": "string",
+        "enum": ["small", "medium", "large", "full-bleed", "unknown"],
+        "default": "unknown"
+      },
+      "headline_present": {
+        "type": "boolean|null"
+      },
+      "headline_treatment": {
+        "type": "string|null",
+        "enum": ["bold-large", "editorial-serif", "handwritten", "outline", "highlighted-box", "minimal", null]
+      },
+      "supporting_text_present": {
+        "type": "boolean|null"
+      },
+      "cta_present": {
+        "type": "boolean|null"
+      },
+      "cta_treatment": {
+        "type": "string|null",
+        "enum": ["button-solid", "button-outline", "text-link", "banner-strip", "none", null]
+      },
+      "typography_style": {
+        "type": "string|null",
+        "description": "Descripción libre corta del estilo tipográfico observado (p. ej. 'sans-serif bold institucional'). No implica que la tipografía sea Aptos/Open Sans oficiales salvo verificación."
+      },
+      "photo_style": {
+        "type": "string|null",
+        "enum": ["candid-lifestyle", "posed-studio", "stock-generic", "campus-documentary", "illustration", "no-photo", null]
+      },
+      "graphic_elements": {
+        "type": "array<string>",
+        "description": "Elementos gráficos observados, vocabulario libre corto (p. ej. ['rainbow-strip', 'sticker-badge', 'icon-row', 'confetti']).",
+        "default": []
+      },
+      "recommended_use": {
+        "type": "string|null",
+        "description": "Nota corta de uso recomendado como referencia (p. ej. 'precedente de layout para posts de temporada'). Nunca una instrucción de marca oficial."
+      },
+      "annotation_confidence": {
+        "type": "string|null",
+        "enum": ["high", "medium", "low", null]
+      },
+      "annotation_source": {
+        "type": "string|null",
+        "description": "Cómo se obtuvo la anotación: 'human-visual-review-2026-08-06', 'heuristic:<regla>', 'default-unannotated', etc."
+      },
+      "needs_review": {
+        "type": "boolean",
+        "default": true
+      }
+    }
+  },
+  "review_object_addition": {
+    "path": "asset.review.reuse_permission",
+    "type": "string",
+    "const": "client-authorized-reuse",
+    "description": "El cliente confirmó (2026-08-06) que todos los artes de la biblioteca pueden reutilizarse o tomarse como referencia. Esto NO cambia review.approval_status ni review.inspiration_only/requires_human_approval, que permanecen como están hasta revisión humana pieza por pieza."
+  },
+  "endpoint_filters": {
+    "path": "GET /api/v1/artwork-references/knowledge/",
+    "supported_query_params": [
+      "product_slug",
+      "country",
+      "media_type",
+      "format",
+      "orientation",
+      "calendar.year",
+      "calendar.month",
+      "content_pillar",
+      "campaign_or_theme",
+      "tag",
+      "annotation_status"
+    ],
+    "nested_filter_syntax": "Los filtros de puntos (calendar.year, calendar.month) se implementan como query params literales con el punto en el nombre (?calendar.year=2026), no como JSON anidado — ver backend/assets/views.py::ArtworkReferenceViewSet.knowledge."
+  }
+}

@@ -1,0 +1,173 @@
+# brand/tokens/colors.yaml
+# Fuente única de verdad para los colores institucionales de International House México.
+# NO editar colors.json, ih-brand.css, tokens.js ni tailwind-preset.js a mano:
+# se generan desde este archivo con brand/scripts/generate_tokens.py.
+#
+# Fuente: "International House Brand Guidelines (1).pdf" (manual oficial global, paleta primaria
+# y secundaria) + verificación cruzada contra las instrucciones del proyecto. Los 8 colores
+# coinciden exactamente (HEX/RGB/CMYK) entre el manual oficial y la lista provista por el cliente.
+
+version: "1.0.0"
+status: approved
+source_of_truth: "International House Brand Guidelines (1).pdf — Primary Colour Palette / Secondary Colour Palette"
+
+primary_palette:
+  knowledge:
+    official_name: "Knowledge Blue"
+    hex: "#3B44B5"
+    rgb: [59, 68, 181]
+    cmyk: [67, 62, 0, 29]
+    role: primary
+    usage: "Color insignia de la marca. Fondos institucionales, University Programmes, texto sobre fondo blanco, logo sobre fondo Knowledge Blue en blanco."
+  technology:
+    official_name: "Technology Purple"
+    hex: "#923472"
+    rgb: [146, 52, 114]
+    cmyk: [0, 64, 22, 43]
+    role: primary
+    aliases_mx: ["Magenta", "Purple"]
+    usage: "Pilar Cambridge (color principal)."
+  youth:
+    official_name: "Youth Green"
+    hex: "#B7DB6E"
+    rgb: [183, 219, 110]
+    cmyk: [16, 0, 50, 14]
+    role: primary
+    usage: "Pilar Inglés General (color principal)."
+  joy:
+    official_name: "Joy Yellow"
+    hex: "#F4CF80"
+    rgb: [244, 207, 128]
+    cmyk: [0, 15, 48, 4]
+    role: primary
+    aliases_mx: ["Gold"]
+    usage: "Color de cierre del rainbow (regla de oro: el rainbow siempre inicia en salmon y termina en joy/yellow)."
+
+secondary_palette:
+  light:
+    official_name: "Light Orange"
+    hex: "#F4AB63"
+    rgb: [244, 171, 99]
+    cmyk: [0, 30, 59, 4]
+    role: secondary
+    aliases_mx: ["Ámbar"]
+    usage: "Pilar Spanish Courses (color principal)."
+  salmon:
+    official_name: "Salmon"
+    hex: "#F06C6A"
+    rgb: [240, 108, 106]
+    cmyk: [0, 55, 56, 6]
+    role: secondary
+    usage: "Color de apertura del rainbow (regla de oro: siempre inicia en salmon)."
+  pink:
+    official_name: "Pink"
+    hex: "#E070A2"
+    rgb: [224, 112, 162]
+    cmyk: [0, 50, 28, 12]
+    role: secondary
+    usage: "Color secundario del pilar IELTS."
+  green:
+    official_name: "Green"
+    hex: "#28AE62"
+    rgb: [40, 174, 98]
+    cmyk: [77, 0, 44, 32]
+    role: secondary
+    usage: "Pilar Inglés para Empresas (color principal)."
+
+# Extensión MX confirmada por el cliente (no forma parte de los 8 colores del manual global,
+# pero es oficial para el pilar IELTS en México). Ver brand/product-colors/authorized-colors.yaml.
+extended_colors:
+  ielts_red:
+    name: "Rojo IELTS (oficial México)"
+    hex: "#E31736"
+    rgb: [227, 23, 54]
+    cmyk: null
+    role: extension
+    status: confirmed
+    confirmed_by: "Axel Estrada, 2026-08-05 — documento IH_BRANDING_MARCA, texto: 'Rojo IELTS oficial'."
+    usage: "Color principal del pilar IELTS. No sustituye ni se mezcla con la paleta institucional de 8 colores."
+
+# Colores neutros de soporte (documentados en los sistemas de diseño web de México;
+# no forman parte del manual de marca global, se marcan como extensión funcional/UI).
+neutrals:
+  white: { hex: "#FFFFFF", usage: "Fondo de logo clásico, texto sobre fondos oscuros/color." }
+  black: { hex: "#000000", usage: "Texto de alto contraste, logo negro." }
+  dark_navy:
+    hex: "#1A2566"
+    name: "Dark Blue / Azul marino"
+    status: mx_extension
+    usage: "Badges oscuros, CTA de Empresas en una de las dos fuentes MX (ver contradicción documentada)."
+  gray_100: { hex: "#F5F5F5" }
+  gray_300: { hex: "#D0D0D0" }
+  surface_1: { hex: "#F8F8F8" }
+  surface_2: { hex: "#FAFAFA" }
+  surface_tint_blue: { hex: "#F0F4FF" }
+
+# Rainbow institucional — regla de oro del manual global (PDF):
+# "Always use the rainbow starting from the colour salmon and ending in the colour yellow."
+# Decisión del cliente (2026-08-05): usar la versión oficial del PDF (incluye Light Orange),
+# NO la variante del docx de Diseño Web MX que sustituía Light Orange por un color "Teal" #407B98
+# no documentado en ninguna paleta oficial.
+rainbow:
+  status: approved
+  rule: "Inicia siempre en salmon, termina siempre en joy (yellow). No reordenar, no gradientes, no rotar ni mezclar variantes distintas en la misma pieza."
+  colors_hex:
+    - "#F06C6A"  # salmon (inicio obligatorio)
+    - "#3B44B5"  # knowledge
+    - "#28AE62"  # green
+    - "#923472"  # technology
+    - "#B7DB6E"  # youth
+    - "#F4AB63"  # light
+    - "#F4CF80"  # joy (cierre obligatorio)
+    - "#E070A2"  # pink
+  note: >
+    El orden visual exacto de las franjas dentro de cada variante gráfica (Line, Rhythm,
+    Flat Wavy Up/Down, Double Line) está definido por los archivos SVG oficiales en
+    brand/assets/rainbows/ — no se debe regenerar ni reordenar el rainbow manualmente.
+  rejected_variant:
+    source: "IH_Mexico_Sistema_Diseno_Web.docx, Tabla 9"
+    reason: "Sustituía Light Orange (#F4AB63) por un color 'Teal' #407B98 inexistente en la paleta oficial del manual global. Rechazada por el cliente el 2026-08-05."
+
+contrast_and_accessibility:
+  # Actualizado 2026-08-05: se confirmó que el manual global SÍ trae una matriz de contraste
+  # oficial (página "Contrast and Accessible Colours"), renderizada como imagen/tabla y no como
+  # texto extraíble — por eso no se había detectado antes. Ver documentation/accessibility-rules.md
+  # para la matriz completa (10x10 colores, niveles AAA/AA/AA18/DNP).
+  documented_rule_source: "International House Brand Guidelines (1).pdf, página 'Contrast and Accessible Colours' (matriz oficial, verificada visualmente el 2026-08-05)"
+  standard: "Umbrales idénticos a WCAG 2.1 — AAA >= 7:1, AA >= 4.5:1, AA18 (texto grande) >= 3:1, DNP < 3:1"
+  minimum_ratio: "4.5:1 (WCAG AA) para texto normal"
+  status: approved
+  approved_pairs_aa_or_better:
+    - "Negro sobre cualquier color de marca (todas AAA)"
+    - "Blanco sobre Knowledge Blue (7.84 AAA) y Technology Purple (7.10 AAA)"
+    - "Knowledge Blue sobre Youth Green (4.99 AA) y Joy Yellow (5.25 AA)"
+    - "Technology Purple sobre Youth Green (4.52 AA) y Joy Yellow (4.76 AA)"
+  official_pdf_guidance:
+    - "Se recomienda usar blanco o negro para elementos de texto."
+    - "Para fondos: usar azul (Knowledge Blue) y blanco."
+    - "No combinar demasiados colores en una misma pieza."
+    - "No crear degradados (gradientes) con los colores de marca."
+    - "No combinar colores de bajo contraste."
+    - "No modificar los colores oficiales."
+  mx_checklist_consistency: >
+    IH_Mexico_Sistema_Diseno_Web.docx (checklist 9.3) pide de forma independiente un mínimo
+    WCAG AA (4.5:1) — coincide exactamente con el umbral AA de la matriz oficial de arriba, sin
+    contradicción entre fuentes.
+  application_note: >
+    Excepción documentada en el manual oficial (sección "Digital ad with graphics"):
+    al representar personas, usar tonos de piel naturales en vez de la paleta de marca;
+    símbolos universalmente reconocidos (planetas, semáforos, banderas) deben conservar
+    sus colores naturales o estándar.
+
+do_and_dont:
+  do:
+    - "Usar los 8 colores oficiales exactamente en los valores HEX/RGB/CMYK documentados aquí."
+    - "Usar blanco o negro para texto sobre color."
+    - "Usar Knowledge Blue y blanco como combinación de fondo principal."
+    - "Mantener el rainbow completo y en su secuencia oficial (salmon → joy)."
+  dont:
+    - "No crear degradados con los colores de marca."
+    - "No combinar colores de bajo contraste."
+    - "No modificar ni aproximar los valores HEX oficiales."
+    - "No inventar colores nuevos fuera de la paleta de 8 + extensión IELTS confirmada."
+    - "No usar el logo sobre ningún fondo de color que no sea blanco o Knowledge Blue (ver documentation/logo-rules.md)."

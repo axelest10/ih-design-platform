@@ -1,0 +1,124 @@
+# brand/tokens/typography.yaml
+# Fuente única de tipografía. No editar generated/ a mano.
+version: "1.0.0"
+status: approved_with_open_questions
+
+typefaces:
+  heading:
+    name: Aptos
+    role: headings
+    source: "International House Brand Guidelines (1).pdf — 'Golden rule: Always use Aptos as the primary typeface.'"
+    weights_documented: [Regular, Semibold, Bold]
+    fallback_stack: "Aptos, Arial, sans-serif"
+    fallback_source: "IH_Mexico_Sistema_Diseno_Web.docx / IH_Sistema_Colores_v2.docx — variable CSS --font-heading"
+    license_status: RESTRICTED_STANDARD_LICENSE
+    license_note: >
+      Investigado el 2026-08-05: Microsoft publica una descarga oficial de Aptos
+      (microsoft.com/en-us/download/details.aspx?id=106087), pero la licencia estándar que
+      acompaña esa descarga permite usar la fuente para crear/mostrar/imprimir contenido, mas
+      NO autoriza la redistribución de los archivos .ttf dentro de un repositorio de código o
+      dependencia interna reutilizable — Microsoft ofrece licenciamiento aparte para
+      redistribución de software/hardware o instalación en servidores. Por eso los .ttf de
+      Aptos NO se incluyen en brand/assets/fonts/aptos/. Si IH México ya cuenta con un acuerdo
+      empresarial con Microsoft que cubra la redistribución, debe confirmarse explícitamente
+      antes de cambiar este estado. Ver brand/assets/fonts/README.md.
+  body:
+    name: Open Sans
+    role: body
+    source: "International House Brand Guidelines (1).pdf — 'Golden rule: Always use Open Sans as a secondary typeface.'"
+    weights_documented: [Light, Regular, Semibold, Bold]
+    fallback_stack: "'Open Sans', sans-serif"
+    license_status: OFL
+    license_note: "SIL Open Font License 1.1 — incluida en brand/assets/fonts/open-sans/OFL.txt. Uso y redistribución libres bajo los términos de la licencia."
+
+leading:
+  # Interlineado — manual oficial PDF (cita textual)
+  heading: { ratio: 1.1, percent: "110%" }
+  subheading: { ratio: 1.2, percent: "120%" }
+  body: { ratio: 1.4, percent: "140%" }
+
+tracking:
+  # Espaciado entre letras — manual oficial PDF (cita textual)
+  heading: { figma_percent: "-2%", adobe_pt: -20 }
+  subheading: { figma_percent: "-1%", adobe_pt: -10 }
+  body: { figma_percent: "0%", adobe_pt: 0 }
+
+weight_rules:
+  - "Para títulos y encabezados usar el peso semibold de Aptos (no bold por defecto) para llamar la atención sin sensación de pesadez."
+  - "Para cuerpo de texto usar Open Sans Light o Regular."
+  - "Para enfatizar una palabra/frase dentro de un párrafo, subir un solo nivel de peso (p. ej. de Regular a Semibold, saltando 'medium')."
+  - "Usar como máximo 3 tamaños de fuente por pieza de comunicación."
+
+type_scale:
+  # Escala tipográfica detallada — fuente: IH_Mexico_Sistema_Diseno_Web.docx e
+  # IH_Sistema_Colores_v2.docx (idénticas entre ambos documentos; no aparece en el manual global).
+  status: mx_extension
+  styles:
+    h1_display:
+      typeface: heading
+      weight: Bold
+      size_px: 56
+      line_height_px: 64
+      letter_spacing: "-1%"
+      usage: "Títulos hero principales. Solo uno por página."
+      mobile_max_px: 32
+    h2_section:
+      typeface: heading
+      weight: Semibold
+      size_px: 40
+      line_height_px: 48
+      usage: "Títulos de sección principales."
+      mobile_max_px: 24
+    h3_subsection:
+      typeface: heading
+      weight: Semibold
+      size_px: 28
+      line_height_px: 36
+      usage: "Subtítulos de bloque y títulos grandes de card."
+    h4_card_title:
+      typeface: heading
+      weight: Semibold
+      size_px: 22
+      line_height_px: 28
+      usage: "Títulos dentro de cards y modales."
+    body_large:
+      typeface: body
+      weight: Regular
+      size_px: 18
+      line_height_px: 28
+      usage: "Párrafos principales debajo del hero."
+    body_base:
+      typeface: body
+      weight: Regular
+      size_px: 16
+      line_height_px: 24
+      usage: "Texto de cuerpo estándar."
+    body_small:
+      typeface: body
+      weight: Regular
+      size_px: 14
+      line_height_px: 20
+      usage: "Texto secundario, labels, notas al pie."
+    caption:
+      typeface: body
+      weight: Regular
+      size_px: 12
+      line_height_px: 18
+      usage: "Captions, metadatos, textos legales."
+    cta_button:
+      typeface: heading
+      weight: Semibold
+      size_px: 16
+      usage: "Botones. Mayúsculas opcional."
+    badge_tag:
+      typeface: body
+      weight: Bold
+      size_px: 12
+      letter_spacing: "1%"
+      usage: "Tags de categoría, badges, pills."
+
+incorrect_use:
+  - "No mezclar alineaciones de texto en párrafos cercanos."
+  - "No distorsionar las tipografías en texto de cuerpo."
+  - "No mezclar tipografías distintas dentro del mismo bloque de texto."
+  - "No justificar el texto."

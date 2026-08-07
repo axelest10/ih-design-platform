@@ -1,0 +1,9 @@
+# brand/tokens/radius.yaml
+# Fuente: IH_Sistema_Colores_v2.docx / IH_Mexico_Sistema_Diseno_Web.docx (extensión MX/UI).
+version: "1.0.0"
+status: mx_extension
+values:
+  button_px: 8
+  card_px: 12
+  input_px: 8
+  pill_px: 100

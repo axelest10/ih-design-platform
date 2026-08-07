@@ -1,0 +1,36 @@
+# brand/tokens/spacing.yaml
+# Fuente: IH_Sistema_Colores_v2.docx e IH_Mexico_Sistema_Diseno_Web.docx (extensión MX;
+# el manual global PDF no documenta cifras de grid/espaciado en el texto extraído).
+version: "1.0.0"
+status: mx_extension
+
+base_unit_px: 8
+
+scale:
+  xs: 8
+  sm: 16
+  md: 24
+  lg: 32
+  xl: 48
+  "2xl": 64
+  "3xl": 80
+  "4xl": 120
+
+grid:
+  desktop: { columns: 12, gutter_px: 72, margin_px: 80, breakpoint_px: 1440 }
+  tablet: { columns: 8, gutter_px: 24, margin_px: 40, breakpoint_px: 768 }
+  mobile: { columns: 4, gutter_px: 16, margin_px: 20, breakpoint_px: 375 }
+  auto_layout_rule: "Hug en ambas dimensiones para componentes. Fill para contenedores de sección."
+
+responsive_breakpoints:
+  # Sistema distinto al grid de Figma de arriba (ambos documentados, de origen MX, no reconciliados
+  # entre sí por el manual global). Se usa para diseño responsivo de página.
+  desktop_min_px: 1200
+  tablet_range_px: [768, 1199]
+  mobile_max_px: 767
+
+rules:
+  - "Nunca ocultar CTAs en mobile — son el elemento más importante."
+  - "Las imágenes hero en mobile deben ser verticales o cuadradas, no el mismo recorte que desktop."
+  - "Los formularios en mobile deben ocupar el 100% del ancho, sin columnas internas."
+  - "Todos los botones CTA en mobile deben tener mínimo 44px de altura (touch target estándar)."

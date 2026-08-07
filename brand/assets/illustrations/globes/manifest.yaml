@@ -1,0 +1,29 @@
+# brand/assets/illustrations/globes/manifest.yaml
+# Manifest del globo IH — elemento gráfico institucional (no es el logotipo; es el ícono/globo
+# usado como referencia de la zona de exclusión del logo y como elemento decorativo autorizado).
+# Fuente: PDF oficial, sección "Assets" / definición de zona de exclusión del logo.
+version: "1.0.0"
+status: approved
+note: >
+  Este NO es el logotipo oficial de IH México (esos archivos van en brand/assets/logos/,
+  pendientes de carga). Es el elemento gráfico "globo" documentado en el manual como parte
+  del sistema visual y como referencia de medida para la zona de exclusión del logo
+  ("equivalente a la mitad del diámetro del globo IH de la marca").
+variants:
+  - name: "Classic Globe"
+    svg_path: svg/Classic Globe.svg
+    svg_transparent_path: "svg/Classic Globe Transparent Background.svg"
+    png_path: "png/Classic Globe PNG.png"
+  - name: "Black Globe"
+    svg_path: "svg/Black Globe.svg"
+    svg_transparent_path: "svg/Black Globe Transparent Background.svg"
+    png_path: "png/Black Globe PNG.png"
+  - name: "White Globe"
+    svg_transparent_path: "svg/White Globe Transparent Background.svg"
+    png_path: "png/White Globe PNG.png"
+  - name: "White Reversed Globe"
+    svg_path: "svg/White Reversed Globe.svg"
+rules:
+  - "No recolorear, rotar, deformar ni reflejar el globo fuera de las variantes provistas."
+  - "Usar la variante 'Classic' sobre fondos claros/blancos y 'White'/'White Reversed' sobre fondos oscuros o de color."
+  - "El globo se usa como elemento gráfico decorativo o como referencia de proporción del logo — no reemplaza al logotipo oficial."

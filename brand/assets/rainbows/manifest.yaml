@@ -1,0 +1,36 @@
+# brand/assets/rainbows/manifest.yaml
+# Manifest de variantes oficiales del rainbow institucional.
+# Fuente: PDF oficial (sección "Assets" / "Rainbow") + IH_Mexico_Sistema_Diseno_Web.docx, sección 6.
+version: "1.0.0"
+status: approved
+golden_rule: "Usar siempre el rainbow iniciando en el color salmon y terminando en el color joy (yellow). Ver brand/tokens/colors.yaml -> rainbow."
+variants:
+  - name: Line
+    svg_path: svg/Line.svg
+    png_path: png/Line.png
+    usage: "Separador de línea simple entre secciones."
+  - name: "Double line"
+    svg_path: "svg/double line.svg"
+    png_path: "png/double line.png"
+    usage: "Variante de doble línea del separador."
+  - name: Rhythm
+    svg_path: svg/Rhythm.svg
+    png_path: png/Rhythm.png
+    usage: "Ondas rítmicas superpuestas — separador central de página. Documentado en MX: viewBox 1720x151."
+  - name: "Flat wavy up"
+    svg_path: "svg/Flat wavy up.svg"
+    png_path: "png/Flat wavy up.png"
+    usage: "Olas planas ascendentes — debajo del hero, separa el hero del primer bloque. Documentado en MX: viewBox 1720x197."
+  - name: "Flat wavy down"
+    svg_path: "svg/Flat wavy down.svg"
+    png_path: "png/Flat wavy down.png"
+    usage: "Olas planas descendentes — antes del CTA final y footer. Documentado en MX: viewBox 1720x197."
+rules:
+  - "Solo se puede usar un modelo/variante de rainbow a la vez en una misma pieza."
+  - "El modelo elegido puede duplicarse para ajustarse mejor al diseño, pero la duplicación debe ser una repetición del mismo patrón, nunca reflejada, rotada ni escalada de forma distinta."
+  - "No cambiar los colores del rainbow ni el orden de los colores."
+  - "No iniciar el rainbow con el color amarillo (joy); siempre debe iniciar en salmon."
+  - "No secuenciar distintos modelos de rainbow entre sí."
+  - "No usar el rainbow en diagonal — solo orientación vertical u horizontal."
+  - "No modificar los paths ni los colores del SVG — es un activo de marca inmutable."
+  - "Extensión MX (IH_Mexico_Sistema_Diseno_Web.docx): no usar más de 3 rainbows por página (uno de cada variante); no repetir la misma variante en una misma página; altura de display recomendada en web: 30-40px; usar preserveAspectRatio=\"none\" para estirar horizontalmente al 100% del contenedor."

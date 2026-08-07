@@ -1,0 +1,18 @@
+# brand/tokens/motion.yaml
+# ADVERTENCIA: ningún documento fuente (manual global PDF, docx de Colores ni de Diseño Web)
+# define reglas oficiales de motion/animación/easing. Estos valores son PROVISIONALES,
+# construidos con convenciones estándar de UI (no son una regla de marca aprobada) y deben
+# tratarse como pendientes de validación por el equipo de marca antes de considerarse oficiales.
+version: "0.1.0-draft"
+status: NOT_OFFICIAL_PENDING_BRAND_APPROVAL
+durations_ms:
+  fast: 120
+  base: 200
+  slow: 320
+easing:
+  standard: "cubic-bezier(0.4, 0, 0.2, 1)"
+  entrance: "cubic-bezier(0, 0, 0.2, 1)"
+  exit: "cubic-bezier(0.4, 0, 1, 1)"
+note: >
+  No usar estos valores como si fueran reglas de marca en materiales de cliente/institucionales
+  hasta que el equipo de marketing/diseño de IH México los apruebe explícitamente.

@@ -1,0 +1,9 @@
+# brand/tokens/shadows.yaml
+# Fuente: IH_Sistema_Colores_v2.docx / IH_Mexico_Sistema_Diseno_Web.docx (extensión MX/UI).
+version: "1.0.0"
+status: mx_extension
+values:
+  level_1: "0 2px 8px rgba(0,0,0,0.08)"
+  level_2: "0 8px 24px rgba(0,0,0,0.12)"
+  level_3: "0 16px 48px rgba(0,0,0,0.16)"
+  card: "0 8px 24px rgba(0,0,0,0.10)"

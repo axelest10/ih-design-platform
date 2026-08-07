@@ -1,0 +1,1073 @@
+# brand/assets/logos/manifest.yaml
+#
+# Catálogo de logotipos para International House LATAM y activos asociados.
+# ESTADO ACTUAL: carga parcial: se incorporaron los archivos disponibles en Drive.
+# Siguen pendientes las variantes IH white-reversed y dual-branding.
+#
+# Cuando se carguen los archivos de logo, cada entrada de `logos:` debe registrarse aquí con
+# los campos definidos en `schema`. `backend/branding/services/validators.py::validate_logo` valida
+# contra este archivo: cualquier logo cuyo `file` no esté listado aquí se considera NO
+# APROBADO y debe ser rechazado por el sistema (ver validations en tests/test_branding_assets.py).
+
+version: "2.0.0"
+status: partial
+
+schema:
+  # Campos requeridos por cada entrada bajo `logos:`
+  fields:
+    - name          # nombre corto identificador, ej. "ih-mexico-classic"
+    - variant       # classic | black | white | white-reversed | dual-branding
+    - format        # svg | ai | png | jpg | eps
+    - file          # ruta relativa dentro de brand/assets/logos/
+    - allowed_backgrounds  # lista: white | knowledge-blue | photo-high-contrast
+    - clear_space_rule     # referencia a documentation/logo-rules.md
+    - approved      # true/false — true si el archivo fue provisto por el cliente
+    - notes
+  optional_fields:
+    - scope         # core | regional | global | sub-brand | partner
+    - brand         # marca representada por el archivo
+    - country       # país o null si es global/partner
+    - source_folder
+    - source_file_id
+
+expected_variants:
+  # Basado en el manual oficial y los archivos disponibles en la carpeta LATAM compartida.
+  # Esta lista documenta QUÉ se espera recibir, no activos ya cargados.
+  - variant: classic
+    description: "Logo a color — negro + Knowledge Blue. Uso por defecto sobre fondo blanco."
+    formats_expected: [svg, ai, png]
+  - variant: black
+    description: "Logo monocromático negro. Uso de alto contraste sobre fondo blanco."
+    formats_expected: [svg, ai, png]
+  - variant: white
+    description: "Logo monocromático blanco. Uso sobre fondo Knowledge Blue o fotografía oscura."
+    formats_expected: [svg, ai, png]
+  - variant: white-reversed
+    description: "Variante blanca invertida, para fondos de color/foto con alto contraste."
+    formats_expected: [svg, png]
+  - variant: dual-branding
+    description: "Lockup horizontal/vertical IH World + escuela, con barra separadora (80% de altura/longitud)."
+    formats_expected: [svg, ai, png]
+
+logos:
+  - name: ih-mexico-classic-png
+    variant: classic
+    format: png
+    file: classic/ih-mexico-classic.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    notes: >
+      Artwork provisto por el cliente (Axel Estrada), 2026-08-05, vía carpeta local
+      "Logotipos IH MX Y QC" y confirmado por una segunda copia equivalente
+      (MEXICO-COLOR.png) en la carpeta de Google Drive compartida ese mismo día
+      (https://drive.google.com/drive/folders/14TZxcHMkSnnwWfwSk6fmxI2Ck1aZ9FeM ->
+      subcarpeta "Ih México"). 1089x340px, RGBA.
+  - name: ih-mexico-classic-vector
+    variant: classic
+    format: ai
+    file: classic/ih-mexico-classic.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    notes: >
+      Versión vectorial (Adobe Illustrator) del mismo artwork, provista por el cliente el
+      2026-08-05 en la carpeta local "Logotipos IH MX Y QC" (archivo "LOGO IH MX.ai").
+  - name: ih-mexico-black
+    variant: black
+    format: png
+    file: black/ih-mexico-black.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    notes: >
+      Artwork provisto por el cliente el 2026-08-05, carpeta local "Logotipos IH MX Y QC"
+      (archivo "logo black mx.png"). 1089x372px, RGBA.
+  - name: ih-mexico-white
+    variant: white
+    format: png
+    file: white/ih-mexico-white.png
+    allowed_backgrounds: [knowledge-blue, photo-high-contrast]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    notes: >
+      Artwork provisto por el cliente el 2026-08-05, carpeta local "Logotipos IH MX Y QC"
+      (archivo "logo bco mx.png"). 1089x372px, RGBA.
+
+  # ---------------------------------------------------------------------------
+  # LATAM: archivos regionales provistos en la carpeta compartida de Drive.
+  # `scope` diferencia la marca institucional IH de sub-marcas y partners.
+  # ---------------------------------------------------------------------------
+  - name: ih-colombia-color
+    variant: classic
+    format: png
+    file: latam/colombia/colombia-color.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Colombia
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1Pg68q0HuSyZYc6ydkht1XnMpy4QvGXr-
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-colombia-white
+    variant: white
+    format: png
+    file: latam/colombia/colombia-white.png
+    allowed_backgrounds: [knowledge-blue, photo-high-contrast]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Colombia
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1hnYhAjYAiy6hZqCJwISRRCbRwCbgLUC2
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-barranquilla-vector
+    variant: classic
+    format: ai
+    file: latam/colombia/barranquilla/ih-barranquilla.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Barranquilla
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1wqKJWvYnidjG-tXd0Lh2of0DYng2ujr1
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-barranquilla-svg
+    variant: classic
+    format: svg
+    file: latam/colombia/barranquilla/ih-barranquilla.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Barranquilla
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 138tX4P4KdLijirHz7g-s-jjKgtkRpZeY
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-bogota-vector
+    variant: classic
+    format: ai
+    file: latam/colombia/bogota/ih-bogota.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Bogotá
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1KtyxbFqHN24s2lrCg6t0JkRRumU5JGxE
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-bogota-svg
+    variant: classic
+    format: svg
+    file: latam/colombia/bogota/ih-bogota.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Bogotá
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 10nMaiQOeoh6OBvu2rYCL6O4uQJ2fqo78
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-cali-vector
+    variant: classic
+    format: ai
+    file: latam/colombia/cali/ih-cali.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Cali
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1KxcwIUBsnaWGsHKriLNp7i9O9oflrgpw
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-cali-svg
+    variant: classic
+    format: svg
+    file: latam/colombia/cali/ih-cali.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Cali
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1BrQpx-jwG1SVlzVdrKqoecSLC0RpGQqd
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-medellin-vector
+    variant: classic
+    format: ai
+    file: latam/colombia/medellin/ih-medellin.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Medellín
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1B_qeEokLpfyMu_3Jx62AGPuTqKbkvaBR
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-medellin-svg
+    variant: classic
+    format: svg
+    file: latam/colombia/medellin/ih-medellin.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Medellín
+    country: CO
+    source_folder: Ih Colombia
+    source_file_id: 1Z4yF5pfQ8OI5NETh0qXGmtkdR0xC3wbO
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-mexico-drive-vector
+    variant: classic
+    format: ai
+    file: latam/mexico/logo-ih-mx.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House México
+    country: MX
+    source_folder: Ih México
+    source_file_id: 1SFchFpw-6V0g_hBT7Ob3RCY_Z4Ip4-yD
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-mexico-drive-svg
+    variant: classic
+    format: svg
+    file: latam/mexico/logo-ih-mx.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House México
+    country: MX
+    source_folder: Ih México
+    source_file_id: 1TuWlvjIAFzBIdzU2p5XqFN54czo9GnKt
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-mexico-drive-color
+    variant: classic
+    format: png
+    file: latam/mexico/mexico-color.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House México
+    country: MX
+    source_folder: Ih México
+    source_file_id: 1TtWT360hk5_mjZKSwM2KN_Bc4nf4uxfl
+    notes: "Exportación a color provista por el cliente desde Google Drive."
+  - name: ih-mexico-drive-color-copy
+    variant: classic
+    format: png
+    file: latam/mexico/mexico-color-copy.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House México
+    country: MX
+    source_folder: Ih México
+    source_file_id: 1kM6-job4hwKSRkUlUFuATR1F_ISUKkN8
+    notes: "Copia de exportación a color provista por el cliente desde Google Drive."
+  - name: ih-lima-color
+    variant: classic
+    format: png
+    file: latam/peru/lima/lima-color.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Lima
+    country: PE
+    source_folder: Ih Perú
+    source_file_id: 17qSW65uNxZnGBkvUj_UdlgPSg1CfZlm3
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-lima-white
+    variant: white
+    format: png
+    file: latam/peru/lima/lima-white.png
+    allowed_backgrounds: [knowledge-blue, photo-high-contrast]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Lima
+    country: PE
+    source_folder: Ih Perú
+    source_file_id: 1k_yx6oOfCAy9hefvexwkY5nUNuqJKziA
+    notes: "Archivo sin extensión en Drive; se verificó firma PNG antes de registrarlo."
+  - name: ih-lima-vector
+    variant: classic
+    format: ai
+    file: latam/peru/lima/ih-lima.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Lima
+    country: PE
+    source_folder: Ih Perú
+    source_file_id: 1cdZJV14vxXAdW5RLS48RRDtvwjGyGDKB
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-lima-svg
+    variant: classic
+    format: svg
+    file: latam/peru/lima/ih-lima.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Lima
+    country: PE
+    source_folder: Ih Perú
+    source_file_id: 1R4PoqZCOvf07eQJE3moFeavNlmIrA1tx
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-santiago-classic-white
+    variant: white
+    format: png
+    file: latam/chile/santiago/santiago-classic-white.png
+    allowed_backgrounds: [knowledge-blue, photo-high-contrast]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Santiago
+    country: CL
+    source_folder: Ih Santiago
+    source_file_id: 17RZVjefZgJnvwEjFN-VqX6d7n3wtHggW
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-santiago-classic
+    variant: classic
+    format: png
+    file: latam/chile/santiago/santiago-classic.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Santiago
+    country: CL
+    source_folder: Ih Santiago
+    source_file_id: 1sQDp9HclQBN9s2eYjLdmixC-cy9EfgfH
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-santiago-classic-svg
+    variant: classic
+    format: svg
+    file: latam/chile/santiago/santiago-classic.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Santiago
+    country: CL
+    source_folder: Ih Santiago
+    source_file_id: 1jVnqEIPQzVlo1QCRktEIsyKPqDqU1kbT
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+  - name: ih-santiago-white
+    variant: white
+    format: png
+    file: latam/chile/santiago/santiago-white.png
+    allowed_backgrounds: [knowledge-blue, photo-high-contrast]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: regional
+    brand: International House Santiago
+    country: CL
+    source_folder: Ih Santiago
+    source_file_id: 10ANVumKqxHCrh00KwUfaB5r25ZWXzic6
+    notes: "Artwork regional provisto por el cliente desde Google Drive."
+
+  # ---------------------------------------------------------------------------
+  # Global IH, sub-marcas y partners. Estos archivos quedan disponibles para
+  # composición y revisión, pero no se consideran equivalentes al logo core de IH.
+  # ---------------------------------------------------------------------------
+  - name: ih-world-black
+    variant: black
+    format: svg
+    file: global/ih-world/ih-logo-black.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: global
+    brand: International House World Organisation
+    country: null
+    source_folder: ih sin país
+    source_file_id: 1XOeT6lhvUOqQjlZ6v-ra0uF19IgMw6SA
+    notes: "Activo global provisto por el cliente; no es el lockup dual-branding pendiente."
+  - name: ih-world-primary
+    variant: classic
+    format: svg
+    file: global/ih-world/ih-logo-primary.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: global
+    brand: International House World Organisation
+    country: null
+    source_folder: ih sin país
+    source_file_id: 1NpH6t2WLTaQCvXPFvoLdQ414O_p32H36
+    notes: "Activo global provisto por el cliente; no es el lockup dual-branding pendiente."
+  - name: ihwo-color
+    variant: classic
+    format: png
+    file: global/ih-world/ihwo-color.png
+    allowed_backgrounds: [white]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: global
+    brand: International House World Organisation
+    country: null
+    source_folder: IH World
+    source_file_id: 1z9dWDKHLR3G_04T5mh2axaTYk79bElwm
+    notes: "Activo global provisto por el cliente."
+  - name: ihwo-white
+    variant: white
+    format: png
+    file: global/ih-world/ihwo-white.png
+    allowed_backgrounds: [knowledge-blue, photo-high-contrast]
+    clear_space_rule: "exclusion-zone-half-globe-diameter"
+    approved: true
+    scope: global
+    brand: International House World Organisation
+    country: null
+    source_folder: IH World
+    source_file_id: 1mnxFVMdVpNbo9SI8wPG59pkPrGcIPDfg
+    notes: "Activo global provisto por el cliente."
+  - name: hello-live-kids-ai
+    variant: classic
+    format: ai
+    file: sub-brands/hello-live/live-kids-new-logo.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live Kids
+    country: null
+    source_folder: Hello Live
+    source_file_id: 187RnU2Hwsxn8k7xyXuu_3JvzrjMfevUN
+    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+  - name: hello-live-kids-svg
+    variant: classic
+    format: svg
+    file: sub-brands/hello-live/live-kids-new-logo.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live Kids
+    country: null
+    source_folder: Hello Live
+    source_file_id: 1_0vWnn8Zdd78DqXRdWtlLFjVXeCnyfkz
+    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+  - name: hello-live-ai
+    variant: classic
+    format: ai
+    file: sub-brands/hello-live/live-new-logo.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    source_file_id: 1YYD2fQ3qWWMLD1JKLwTuCGP_dBY4bG1_
+    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+  - name: hello-live-svg
+    variant: classic
+    format: svg
+    file: sub-brands/hello-live/live-new-logo.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    source_file_id: 1I9RHQgrSKMHTxt5Dm2ZZ4sbbo7LmOmWT
+    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+  - name: qc-2026-color-svg
+    variant: classic
+    format: svg
+    file: sub-brands/qc/logotipo-2026-qc-color.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: QC
+    country: MX
+    source_folder: QC
+    source_file_id: 1_e8TK4eQufnRkSr9xg8g6fifXq_XoADM
+    notes: "Activo de sub-marca provisto por el cliente."
+  - name: qc-2026-ai
+    variant: classic
+    format: ai
+    file: sub-brands/qc/logotipo-2026-qc.ai
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: QC
+    country: MX
+    source_folder: QC
+    source_file_id: 1LsMW-hbpQPNL-uVceAJNTwg2Zjt1cFL4
+    notes: "Activo de sub-marca provisto por el cliente."
+  - name: qc-2026-svg
+    variant: classic
+    format: svg
+    file: sub-brands/qc/logotipo-2026-qc.svg
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: QC
+    country: MX
+    source_folder: QC
+    source_file_id: 1vEhxuKnVJ9BLt61CMVod9YM7y_AT1CJV
+    notes: "Activo de sub-marca provisto por el cliente."
+
+  # Partners: se conservan para composiciones autorizadas y piezas de producto.
+  # No son logos IH ni deben sustituir al logo institucional.
+  - name: cambridge-ceq-black-cmyk-ai
+    variant: black
+    format: ai
+    file: partner-brands/cambridge-english/ceq-d-black-cmyk.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1hYFowW65bAXXOoprhmmu3Dj0Q2YkbPiX
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-black-cmyk-jpg
+    variant: black
+    format: jpg
+    file: partner-brands/cambridge-english/ceq-d-black-cmyk.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 15LHmqMJ04yUpoRNsLqAlIByDQu-qGL9u
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-black-rgb-ai
+    variant: black
+    format: ai
+    file: partner-brands/cambridge-english/ceq-d-black-rgb.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1qFgGy79RRd18dD8aHaxqce5qc-5in9oA
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-black-rgb-png
+    variant: black
+    format: png
+    file: partner-brands/cambridge-english/ceq-d-black-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1qWWinU6cjkH7snFWc8tj-NYOZXSAoUCi
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-full-colour-cmyk-ai
+    variant: classic
+    format: ai
+    file: partner-brands/cambridge-english/ceq-d-full-colour-cmyk.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1HXosODO7YF3QeNlaNupSG_YKillaU4Ad
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-full-colour-cmyk-jpg
+    variant: classic
+    format: jpg
+    file: partner-brands/cambridge-english/ceq-d-full-colour-cmyk.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1D3qe7ZtLlVA5eKSj__oMx5kenSBW3nkg
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-full-colour-rgb-ai
+    variant: classic
+    format: ai
+    file: partner-brands/cambridge-english/ceq-d-full-colour-rgb.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1F5Y-7Yyf4HzMhOOjDz6T_HTV4eHAmBze
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-full-colour-rgb-png
+    variant: classic
+    format: png
+    file: partner-brands/cambridge-english/ceq-d-full-colour-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1QtvDLpmSeZedbvFSUF8s9iW0N0cLDKVD
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-white-cmyk-ai
+    variant: white
+    format: ai
+    file: partner-brands/cambridge-english/ceq-d-white-cmyk.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1MkJPlM89Y80HGy9JQKsWKOUWNiRfL41P
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-white-rgb-ai
+    variant: white
+    format: ai
+    file: partner-brands/cambridge-english/ceq-d-white-rgb.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1CkiHueQrKVExWcEBXE-rufuRMlWIxUJz
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-white-rgb-png
+    variant: white
+    format: png
+    file: partner-brands/cambridge-english/ceq-d-white-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1UzPwWOHyxLAgqSEtq8zdt5VbMJMef6wF
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-stacked-rgb-jpg
+    variant: classic
+    format: jpg
+    file: partner-brands/cambridge-english/ceq-stacked-rgb.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1YchsCizjOPywtkzoGC1Rv6plIaL2knjh
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-ceq-stacked-rgb-png
+    variant: classic
+    format: png
+    file: partner-brands/cambridge-english/ceq-stacked-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English Qualifications
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1MN4pRcgbMtIdPW6nZTQ71D41FZ6JijH9
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-aec-negative-png
+    variant: white
+    format: png
+    file: partner-brands/cambridge-english/english-aec-negative-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1ZAi-Qm42C7obuZhPKM6C2YEP2-UMHZ2G
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-aec-positive-ai
+    variant: classic
+    format: ai
+    file: partner-brands/cambridge-english/english-aec-positive-rgb.ai
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English
+    country: null
+    source_folder: Cambridge
+    source_file_id: 14m8vlkZ8EKxyrJrdnPXrj0FjBFqxaeoB
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-aec-positive-png
+    variant: classic
+    format: png
+    file: partner-brands/cambridge-english/english-aec-positive-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1QK4K956se_nxPWb2dyrmAoy10UMwTtwj
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-platinum-white-png
+    variant: white
+    format: png
+    file: partner-brands/cambridge-english/cambridge-platinum-white.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1cLfYJut1zpVzxtzNJISzZm9qVgi2Jdrv
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: cambridge-platinum-jpg
+    variant: classic
+    format: jpg
+    file: partner-brands/cambridge-english/cambridge-platinum.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Cambridge English
+    country: null
+    source_folder: Cambridge
+    source_file_id: 1Am4QJYMWEaOtCbioAdhDWr6eB93_tkCe
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Cambridge."
+  - name: ielts-from-idp-horizontal-png
+    variant: classic
+    format: png
+    file: partner-brands/ielts/ielts-from-idp-horizontal.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: IELTS from IDP
+    country: null
+    source_folder: IELTS
+    source_file_id: 1srTY0gijR5gP4vdXWs_EhBU7lcXnLtAN
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de IELTS/IDP."
+  - name: ielts-from-idp-horizontal-svg
+    variant: classic
+    format: svg
+    file: partner-brands/ielts/ielts-from-idp-horizontal.svg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: IELTS from IDP
+    country: null
+    source_folder: IELTS
+    source_file_id: 1Ef4BRx9r5SqHvZMdzAmwLYyX3oB4N4PK
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de IELTS/IDP."
+  - name: ielts-test-centre-red-jpg
+    variant: classic
+    format: jpg
+    file: partner-brands/ielts/ielts-test-centre-red.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: IELTS Test Centre
+    country: null
+    source_folder: IELTS
+    source_file_id: 1ek0nhZID4_OFeLUPCUc5nh7tH-Qk26JC
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de IELTS/IDP."
+  - name: ielts-test-centre-pantone-svg
+    variant: classic
+    format: svg
+    file: partner-brands/ielts/ielts-test-centre-pantone.svg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: IELTS Test Centre
+    country: null
+    source_folder: IELTS
+    source_file_id: 1mFWsThIOALZ0Mr1uAH2SKq37sYvsZHI2
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de IELTS/IDP."
+  - name: ielts-test-centre-rgb-png
+    variant: classic
+    format: png
+    file: partner-brands/ielts/ielts-test-centre-rgb.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: IELTS Test Centre
+    country: null
+    source_folder: IELTS
+    source_file_id: 1gbE9L-x8nwNwLUHSODGEzOR9IgBBgR-6
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de IELTS/IDP."
+  - name: ielts-from-idp-positive-png
+    variant: classic
+    format: png
+    file: partner-brands/ielts/ielts-from-idp-horizontal-positive.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: IELTS from IDP
+    country: null
+    source_folder: IELTS
+    source_file_id: 14fckO5GTElh8JuwShUTpLkITerHcQJ-l
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de IELTS/IDP."
+  - name: michigan-met-c-color-nm-eps
+    variant: classic
+    format: eps
+    file: partner-brands/michigan/met-c-color-nm.eps
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1e8nNRd3uiUmOQJF6wMYLiuOr80X6DpwO
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-met-c-color-eps
+    variant: classic
+    format: eps
+    file: partner-brands/michigan/met-c-color.eps
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1vFiobU0RYuYyPgi-gjGitvP3Y1ACw62v
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-met-c-color-svg
+    variant: classic
+    format: svg
+    file: partner-brands/michigan/met-c-color.svg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1Fd5o_seOIbcIsLdiaXTmMHY9hkqDpG40
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-met-c-gray-eps
+    variant: black
+    format: eps
+    file: partner-brands/michigan/met-c-gray.eps
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1CAYosahlCvdA6S9If7pG_8AoS3qArN3j
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-met-c-gray-svg
+    variant: black
+    format: svg
+    file: partner-brands/michigan/met-c-gray.svg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1Ctju0Pq1ORwON4A3A30qs3ySlwHEqqg7
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-met-id-01
+    variant: classic
+    format: png
+    file: partner-brands/michigan/met-id-01.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1nlsWScCRP_doyZGwfS5gjKSxU0nY8v15
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-met-r-color
+    variant: classic
+    format: png
+    file: partner-brands/michigan/met-r-color.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1diYktaGuxPSS7vC-quAIXzERysygWmrT
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-logo
+    variant: classic
+    format: png
+    file: partner-brands/michigan/michigan-logo.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1ViCWmCHXFZvxoQyyxNc__TysntRBP6uH
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-prepcenter-eps
+    variant: classic
+    format: eps
+    file: partner-brands/michigan/mla-prepcenter.eps
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1wVxVN910E-C13lVt6PXRcnkDUggPFW8C
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-prepcenter-jpg
+    variant: classic
+    format: jpg
+    file: partner-brands/michigan/mla-prepcenter.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1GImOALqQLyvpyuYfvs3thoxRhH-0hzMc
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-prepcenter-png
+    variant: classic
+    format: png
+    file: partner-brands/michigan/mla-prepcenter.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 15UnZsxFemmb73ibq8m_kh76abvju03PG
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-prepcenter-svg
+    variant: classic
+    format: svg
+    file: partner-brands/michigan/mla-prepcenter.svg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1AUeNBRv9Z-whowspkLcorYxwZRTen992
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-r-testcenter
+    variant: classic
+    format: png
+    file: partner-brands/michigan/mla-r-testcenter.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1af3VM_ce0WmgcTfW8ZrXfESgBtNra-hm
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-ro-logo-eps
+    variant: classic
+    format: eps
+    file: partner-brands/michigan/mla-ro-logo.eps
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1xabgjOMTN7-yrZdFyRVQX5UsN9eJ5Z1H
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-ro-logo-jpg
+    variant: classic
+    format: jpg
+    file: partner-brands/michigan/mla-ro-logo.jpg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1hgojpOYeh_crB8_SKerWxTNF6ZFGgORY
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-ro-logo-png
+    variant: classic
+    format: png
+    file: partner-brands/michigan/mla-ro-logo.png
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1eR53lW7vXJ_-nHaIK50nQ3aswTGnQ32U
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+  - name: michigan-mla-ro-logo-svg
+    variant: classic
+    format: svg
+    file: partner-brands/michigan/mla-ro-logo.svg
+    allowed_backgrounds: [partner-guidelines-required]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: partner
+    brand: Michigan Language Assessment
+    country: null
+    source_folder: Michigan
+    source_file_id: 1PM_QruyuAsoaJ7Zv9cOWORvQsvcaKkgU
+    notes: "Activo de partner provisto por el cliente; aplicar el manual de Michigan."
+
+# Pendiente de carga: white-reversed y dual-branding (ver expected_variants arriba). No se
+# encontraron en la carpeta local ni en la carpeta de Google Drive compartida el 2026-08-05.

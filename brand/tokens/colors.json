@@ -1,0 +1,314 @@
+{
+  "$schema": "generated-by-generate_tokens.py",
+  "version": "1.0.0",
+  "status": "approved",
+  "source_of_truth": "International House Brand Guidelines (1).pdf — Primary Colour Palette / Secondary Colour Palette",
+  "primary_palette": {
+    "knowledge": {
+      "official_name": "Knowledge Blue",
+      "hex": "#3B44B5",
+      "rgb": [
+        59,
+        68,
+        181
+      ],
+      "cmyk": [
+        67,
+        62,
+        0,
+        29
+      ],
+      "role": "primary",
+      "usage": "Color insignia de la marca. Fondos institucionales, University Programmes, texto sobre fondo blanco, logo sobre fondo Knowledge Blue en blanco."
+    },
+    "technology": {
+      "official_name": "Technology Purple",
+      "hex": "#923472",
+      "rgb": [
+        146,
+        52,
+        114
+      ],
+      "cmyk": [
+        0,
+        64,
+        22,
+        43
+      ],
+      "role": "primary",
+      "aliases_mx": [
+        "Magenta",
+        "Purple"
+      ],
+      "usage": "Pilar Cambridge (color principal)."
+    },
+    "youth": {
+      "official_name": "Youth Green",
+      "hex": "#B7DB6E",
+      "rgb": [
+        183,
+        219,
+        110
+      ],
+      "cmyk": [
+        16,
+        0,
+        50,
+        14
+      ],
+      "role": "primary",
+      "usage": "Pilar Inglés General (color principal)."
+    },
+    "joy": {
+      "official_name": "Joy Yellow",
+      "hex": "#F4CF80",
+      "rgb": [
+        244,
+        207,
+        128
+      ],
+      "cmyk": [
+        0,
+        15,
+        48,
+        4
+      ],
+      "role": "primary",
+      "aliases_mx": [
+        "Gold"
+      ],
+      "usage": "Color de cierre del rainbow (regla de oro: el rainbow siempre inicia en salmon y termina en joy/yellow)."
+    }
+  },
+  "secondary_palette": {
+    "light": {
+      "official_name": "Light Orange",
+      "hex": "#F4AB63",
+      "rgb": [
+        244,
+        171,
+        99
+      ],
+      "cmyk": [
+        0,
+        30,
+        59,
+        4
+      ],
+      "role": "secondary",
+      "aliases_mx": [
+        "Ámbar"
+      ],
+      "usage": "Pilar Spanish Courses (color principal)."
+    },
+    "salmon": {
+      "official_name": "Salmon",
+      "hex": "#F06C6A",
+      "rgb": [
+        240,
+        108,
+        106
+      ],
+      "cmyk": [
+        0,
+        55,
+        56,
+        6
+      ],
+      "role": "secondary",
+      "usage": "Color de apertura del rainbow (regla de oro: siempre inicia en salmon)."
+    },
+    "pink": {
+      "official_name": "Pink",
+      "hex": "#E070A2",
+      "rgb": [
+        224,
+        112,
+        162
+      ],
+      "cmyk": [
+        0,
+        50,
+        28,
+        12
+      ],
+      "role": "secondary",
+      "usage": "Color secundario del pilar IELTS."
+    },
+    "green": {
+      "official_name": "Green",
+      "hex": "#28AE62",
+      "rgb": [
+        40,
+        174,
+        98
+      ],
+      "cmyk": [
+        77,
+        0,
+        44,
+        32
+      ],
+      "role": "secondary",
+      "usage": "Pilar Inglés para Empresas (color principal)."
+    }
+  },
+  "extended_colors": {
+    "ielts_red": {
+      "name": "Rojo IELTS (oficial México)",
+      "hex": "#E31736",
+      "rgb": [
+        227,
+        23,
+        54
+      ],
+      "cmyk": null,
+      "role": "extension",
+      "status": "confirmed",
+      "confirmed_by": "Axel Estrada, 2026-08-05 — documento IH_BRANDING_MARCA, texto: 'Rojo IELTS oficial'.",
+      "usage": "Color principal del pilar IELTS. No sustituye ni se mezcla con la paleta institucional de 8 colores."
+    }
+  },
+  "neutrals": {
+    "white": {
+      "hex": "#FFFFFF",
+      "usage": "Fondo de logo clásico, texto sobre fondos oscuros/color."
+    },
+    "black": {
+      "hex": "#000000",
+      "usage": "Texto de alto contraste, logo negro."
+    },
+    "dark_navy": {
+      "hex": "#1A2566",
+      "name": "Dark Blue / Azul marino",
+      "status": "mx_extension",
+      "usage": "Badges oscuros, CTA de Empresas en una de las dos fuentes MX (ver contradicción documentada)."
+    },
+    "gray_100": {
+      "hex": "#F5F5F5"
+    },
+    "gray_300": {
+      "hex": "#D0D0D0"
+    },
+    "surface_1": {
+      "hex": "#F8F8F8"
+    },
+    "surface_2": {
+      "hex": "#FAFAFA"
+    },
+    "surface_tint_blue": {
+      "hex": "#F0F4FF"
+    }
+  },
+  "rainbow": {
+    "status": "approved",
+    "rule": "Inicia siempre en salmon, termina siempre en joy (yellow). No reordenar, no gradientes, no rotar ni mezclar variantes distintas en la misma pieza.",
+    "colors_hex": [
+      "#F06C6A",
+      "#3B44B5",
+      "#28AE62",
+      "#923472",
+      "#B7DB6E",
+      "#F4AB63",
+      "#F4CF80",
+      "#E070A2"
+    ],
+    "note": "El orden visual exacto de las franjas dentro de cada variante gráfica (Line, Rhythm, Flat Wavy Up/Down, Double Line) está definido por los archivos SVG oficiales en brand/assets/rainbows/ — no se debe regenerar ni reordenar el rainbow manualmente.\n",
+    "rejected_variant": {
+      "source": "IH_Mexico_Sistema_Diseno_Web.docx, Tabla 9",
+      "reason": "Sustituía Light Orange (#F4AB63) por un color 'Teal' #407B98 inexistente en la paleta oficial del manual global. Rechazada por el cliente el 2026-08-05."
+    }
+  },
+  "product_colors": {
+    "ingles_general": {
+      "display_name": "Inglés General",
+      "commercial_alias": "Hello!",
+      "alias_note": "Confirmado por el cliente (Axel Estrada, 2026-08-05): este pilar se comercializa actualmente como \"Hello!\" (antes \"Live!\" en `Color por producto.pdf`). Es un alias comercial del mismo pilar \"Inglés General\" — usa el mismo color institucional (Youth Green #B7DB6E), no una paleta propia. NOTA: existe material de marketing (deck \"Hello Live English — Presentación Directores\") que describe a \"Hello Live English\" con una identidad visual propia (paleta Navy/Cian/Verde/Naranja/Magenta/Morado, logo de burbuja de chat, tipografía Poppins, dominio helloliveenglish.com) separada de la paleta institucional de IH. Esa identidad NO se adopta aquí por decisión explícita del cliente: \"Hello!\" se trata como el mismo pilar de siempre con nombre comercial nuevo, usando Youth Green. Si en el futuro se decide adoptar la identidad visual independiente del deck, este archivo debe actualizarse explícitamente — no asumir la paleta separada por inferencia.\n",
+      "primary_hex": "#B7DB6E",
+      "primary_token": "youth",
+      "secondary_hex": "#28AE62",
+      "secondary_token": "green",
+      "background_hex": "#F0FAF0",
+      "cta": {
+        "background_hex": "#28AE62",
+        "text_hex": "#FFFFFF"
+      },
+      "sensation": "Fresca, accesible, dinámica",
+      "justification": "Verde joven transmite accesibilidad y oportunidad de crecimiento."
+    },
+    "cambridge": {
+      "display_name": "Cambridge",
+      "primary_hex": "#923472",
+      "primary_token": "technology",
+      "secondary_hex": "#3B44B5",
+      "secondary_token": "knowledge",
+      "background_hex": "#F5EBF2",
+      "cta": {
+        "background_hex": "#923472",
+        "text_hex": "#FFFFFF"
+      },
+      "sensation": "Académico, serio, distinguido",
+      "justification": "El magenta denota prestigio y certificación de alto nivel."
+    },
+    "university_programmes": {
+      "display_name": "University Programmes",
+      "commercial_alias": "UP",
+      "alias_note": "Confirmado por el cliente (Axel Estrada, 2026-08-05): \"UP\" (de `Color por producto.pdf`) es el nombre corto/comercial de este mismo pilar \"University Programmes\", mismo color institucional (Knowledge Blue #3B44B5).\n",
+      "primary_hex": "#3B44B5",
+      "primary_token": "knowledge",
+      "secondary_hex": "#F4CF80",
+      "secondary_token": "joy",
+      "background_hex": "#EEF0FF",
+      "cta": {
+        "background_hex": "#3B44B5",
+        "text_hex": "#FFFFFF"
+      },
+      "sensation": "Confianza, global, aspiracional",
+      "justification": "Azul IH principal. Transmite credibilidad y apertura internacional."
+    },
+    "empresas": {
+      "display_name": "Inglés para Empresas",
+      "primary_hex": "#28AE62",
+      "primary_token": "green",
+      "secondary_hex": "#B7DB6E",
+      "secondary_token": "youth",
+      "background_hex": "#EBF7F0",
+      "cta": {
+        "background_hex": "#28AE62",
+        "text_hex": "#FFFFFF",
+        "note": "El documento fuente tiene una errata de tipeo ('#2BAE62'); se normaliza al token oficial green (#28AE62)."
+      },
+      "sensation": "Profesional, crecimiento, resultados",
+      "justification": "Verde asocia crecimiento empresarial y resultados medibles."
+    },
+    "ielts": {
+      "display_name": "IELTS",
+      "primary_hex": "#E31736",
+      "primary_token": "ielts_red",
+      "primary_token_source": "extended_colors",
+      "secondary_hex": "#E070A2",
+      "secondary_token": "pink",
+      "background_hex": "#FFF0F0",
+      "cta": {
+        "background_hex": "#E31736",
+        "text_hex": "#FFFFFF"
+      },
+      "sensation": "Urgente, enfocado, competitivo",
+      "justification": "Rojo IELTS oficial. Comunica urgencia y alto rendimiento."
+    },
+    "spanish_courses": {
+      "display_name": "Spanish Courses",
+      "primary_hex": "#F4AB63",
+      "primary_token": "light",
+      "secondary_hex": "#923472",
+      "secondary_token": "technology",
+      "background_hex": "#FFF8F0",
+      "cta": {
+        "background_hex": "#923472",
+        "text_hex": "#FFFFFF"
+      },
+      "sensation": "Cálido, cultural, auténtico",
+      "justification": "Ámbar evoca México, calidez cultural y experiencia auténtica."
+    }
+  }
+}

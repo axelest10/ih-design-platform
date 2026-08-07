@@ -1,0 +1,50 @@
+# brand/assets/icons/manifest.yaml
+# Manifest de iconografía oficial de International House México.
+# Fuente: IH_Mexico_Sistema_Diseno_Web.docx, sección 5 + PDF oficial (sección "Icons").
+version: "1.0.0"
+status: approved
+icons:
+  - name: Knowledge
+    description: "Libro abierto — conocimiento y aprendizaje profundo."
+    svg_path: svg/Knowledge.svg
+    png_path: png/Knowledge.png
+    min_size_px: 24
+    recommended_size_px: [40, 48]
+  - name: Excellence
+    description: "Estrella de 5 picos — excelencia y reconocimiento."
+    svg_path: svg/Excellence.svg
+    png_path: png/Excellence.png
+    min_size_px: 24
+    recommended_size_px: [40, 48]
+  - name: Communication
+    description: "Burbuja de diálogo con elementos de comunicación oral."
+    svg_path: svg/Communication.svg
+    png_path: png/Communication.png
+    min_size_px: 24
+    recommended_size_px: [40, 48]
+  - name: Innovation
+    description: "Cuatro cuadrantes — pensamiento lateral e innovación."
+    svg_path: svg/Innovation.svg
+    png_path: png/Innovation.png
+    min_size_px: 24
+    recommended_size_px: [40, 48]
+  - name: Growth
+    description: "Flecha diagonal ascendente — progresión y crecimiento."
+    svg_path: svg/Growth.svg
+    png_path: png/Growth.png
+    min_size_px: 24
+    recommended_size_px: [40, 48]
+  - name: Study
+    description: "Pantalla/dispositivo — estudio digital y tecnología."
+    svg_path: svg/Study.svg
+    png_path: png/Study.png
+    min_size_px: 24
+    recommended_size_px: [40, 48]
+rules:
+  - "Usar siempre el SVG original — no convertir a PNG para uso web (pierde escalabilidad)."
+  - "El PNG se conserva solo para contextos que no soportan SVG (ej. algunos correos)."
+  - "Cambiar el fill del path directamente: fill=\"white\" en fondos oscuros, fill=\"[color del pilar]\" en fondos claros."
+  - "No aplicar sombras, gradientes ni efectos sobre los íconos."
+  - "No rotar, invertir/reflejar, recortar ni distorsionar los íconos."
+  - "No expandir el ícono fuera de sus proporciones originales."
+  - "Incluir siempre atributo aria-label para accesibilidad."

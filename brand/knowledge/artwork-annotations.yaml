@@ -1,0 +1,1278 @@
+# brand/knowledge/artwork-annotations.yaml
+#
+# Capa de anotaciones semánticas (curadas) sobre las 454 referencias visuales. Es una fuente
+# de verdad SEPARADA de brand/assets/artwork-references/manifest.yaml: el manifest documenta
+# hechos técnicos crawleados de Drive (nombre, país, ruta, checksum); este archivo documenta
+# juicios de selección (producto, pilar, composición, etc.) que un humano o un pase de análisis
+# de imagen añade encima. Se fusiona con el manifest al generar
+# brand/knowledge/artwork-reference-knowledge.json vía
+# brand/scripts/build_design_knowledge.py (que ahora acepta --annotations).
+#
+# Ver brand/knowledge/artwork-annotation-schema.json para el vocabulario controlado completo.
+#
+# Orden de aplicación (cada capa sobreescribe la anterior):
+#   1. default_annotation       — aplicado a los 454 assets.
+#   2. heuristic_rules (en orden) — aplicado solo si `when` matchea.
+#   3. overrides[asset_id]      — máxima prioridad; usado para los assets con revisión visual
+#      humana real (ver `annotation_source: human-visual-review-2026-08-06`).
+#
+# IMPORTANTE: reuse_permission=client-authorized-reuse refleja la autorización general del
+# cliente (2026-08-06) para reutilizar/tomar como referencia TODA la biblioteca — no implica
+# que review.approval_status cambie a "approved"; eso sigue pendiente de revisión pieza por
+# pieza (requires_human_approval se mantiene true).
+
+version: "1.1.0"
+status: partial
+coverage_note: >
+  454/454 assets reciben el default + heurísticas (cobertura completa de campos con valores
+  conservadores). 40/454 (8 por país + 8 del grupo IELTS LATAM, tras dos pasadas el 2026-08-06)
+  recibieron revisión visual humana real — siguen siendo una muestra de calibración ampliada, no
+  cobertura total. El resto queda con annotation_status=metadata-only y needs_review=true hasta
+  un pase de anotación más amplio (ver brand/knowledge/README.md).
+
+default_annotation:
+  product_slug: null
+  product_status: null
+  campaign_or_theme: null
+  content_pillar: null
+  audience: null
+  funnel_stage: unknown
+  visual_tags: []
+  background_type: unknown
+  composition_type: unknown
+  layout_pattern: unknown
+  image_subject: null
+  people_count: null
+  logo_present: null
+  logo_placement: unknown
+  logo_variant: null
+  logo_scale: unknown
+  headline_present: null
+  headline_treatment: null
+  supporting_text_present: null
+  cta_present: null
+  cta_treatment: null
+  typography_style: null
+  photo_style: null
+  graphic_elements: []
+  recommended_use: null
+  reuse_permission: client-authorized-reuse
+  annotation_status: metadata-only
+  annotation_confidence: null
+  annotation_source: "default-unannotated"
+  needs_review: true
+
+heuristic_rules:
+  # Se evalúan en orden. `when` soporta: tag_contains (substring en cualquier tag del entry),
+  # country / country_not (comparación exacta contra el país normalizado del asset).
+  - id: layout-pattern-from-orientation-square
+    when: { orientation: square }
+    apply:
+      layout_pattern: square-social-post
+      annotation_source: "heuristic:orientation=square"
+
+  - id: layout-pattern-from-orientation-portrait
+    when: { orientation: portrait }
+    apply:
+      layout_pattern: portrait-social-post
+      annotation_source: "heuristic:orientation=portrait"
+
+  - id: ielts-latam-group
+    when: { country: "ielts-latam" }
+    apply:
+      product_slug: ielts-preparation
+      product_status: inferred
+      content_pillar: ielts
+      annotation_source: "heuristic:country=ielts-latam — confirmado por el cliente 2026-08-06 como la misma carpeta de marketing regional de ielts-preparation, no un producto distinto"
+      annotation_confidence: high
+
+  - id: ielts-tag-country-specific
+    when: { tag_contains: "ielts", country_not: "ielts-latam" }
+    apply:
+      product_slug: ielts-preparation
+      product_status: inferred
+      content_pillar: ielts
+      annotation_source: "heuristic:tag contains 'ielts' + country pillar (brand/knowledge/product-catalog.yaml#ielts-preparation)"
+      annotation_confidence: medium
+
+overrides:
+  # ————————————————————————————————————————————
+  # Muestra de calibración con revisión visual humana real (2026-08-06).
+  # 3 por país + 3 del grupo IELTS LATAM = 15/454.
+  # ————————————————————————————————————————————
+
+  drive-artwork-1OpEwegZYXs6uL6SS8tH4jl_5mJyLi1KD: # chile/5-ene-chile.png
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: reyes-magos
+    audience: "adultos"
+    funnel_stage: awareness
+    composition_type: centered
+    background_type: geometric
+    image_subject: illustration-only
+    people_count: 3
+    logo_present: true
+    logo_placement: integrated
+    logo_variant: classic
+    logo_scale: medium
+    headline_present: true
+    headline_treatment: minimal
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif institucional, encabezado subrayado"
+    photo_style: illustration
+    graphic_elements: ["holiday-illustration", "paper-clip", "stripe-background", "three-kings"]
+    visual_tags: ["reyes-magos", "holiday-campaign"]
+    recommended_use: "Plantilla de temporada (Reyes Magos) reutilizada de forma casi idéntica en Chile y Perú — ver override de peru/5-ene-lima-1."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1-ewl7DO1F3C09N8f7sxiFaFmngeA6P0a: # chile/11-nov1.jpg
+    product_slug: michigan-language-assessment
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: null
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: hands-object-closeup
+    people_count: 1
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold, blanco sobre azul institucional"
+    photo_style: candid-lifestyle
+    graphic_elements: ["icon-row-pattern", "partner-logo-met", "geometric-footer-pattern"]
+    visual_tags: ["met-exam", "partner-content"]
+    recommended_use: "Precedente de plantilla foto+bloque de color para explicar un examen partner (MET/Michigan)."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-14wICDZp-zYaQPBO92jPnPPQvbhEERY9v: # chile/1-feb2.jpg
+    product_slug: teacher-training-certifications
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: consideration
+    composition_type: centered
+    background_type: white
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: centered
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif bold, badges de color redondeados"
+    photo_style: no-photo
+    graphic_elements: ["colored-pill-badges", "arrow-icon", "rainbow-footer-strip"]
+    visual_tags: ["teacher-training", "certification-badges"]
+    recommended_use: "Precedente de layout tipo 'badges' para anunciar varias certificaciones docentes en una sola pieza."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1H1BXyLaVcRF8s3GhuuFeMccXZMQ9ikT8: # colombia/20-feb.jpg
+    product_slug: null
+    product_status: null
+    content_pillar: null
+    campaign_or_theme: back-to-school
+    audience: "público general"
+    funnel_stage: awareness
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 3
+    logo_present: true
+    logo_placement: top-right
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif bold + itálica en el CTA"
+    photo_style: candid-lifestyle
+    graphic_elements: ["seasonal-badge-sticker", "icon-row-footer", "rainbow-footer-strip"]
+    visual_tags: ["back-to-school"]
+    recommended_use: "Campaña cruzada de pilares (no vende un producto único) — precedente de layout estacional 'Back to School', reutilizado en Colombia y Perú."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1Nfpcv8Q67S91llghT91ecLnvIPqjwSoq: # colombia/2-mar3.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: hands-object-closeup
+    people_count: 1
+    logo_present: true
+    logo_placement: top-right
+    logo_variant: white
+    logo_scale: small
+    headline_present: false
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: null
+    typography_style: "sans-serif regular, frase de cierre en bold"
+    photo_style: candid-lifestyle
+    graphic_elements: ["gradient-color-footer-strip", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "exam-prep"]
+    recommended_use: "Precedente de pieza informativa (no promocional) sobre el proceso de certificado IELTS."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1jWJRJlmBEGPnt_DKAum-dgohDfzIV16k: # colombia/17-ene2s.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: null
+    funnel_stage: awareness
+    composition_type: card-based
+    background_type: photographic
+    image_subject: campus-interior
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: white
+    logo_scale: medium
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold en badge naranja, texto blanco sobre azul"
+    photo_style: campus-documentary
+    graphic_elements: ["highlighted-box-badge", "dual-photo-collage", "gradient-footer-strip"]
+    visual_tags: ["ielts", "cupo-limitado", "campus-photo"]
+    recommended_use: "Precedente de collage de fotos de campus para reforzar credibilidad institucional junto a un mensaje de urgencia."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1YW4HRF1RJxZVs1WOft2jAwEY4CVIdhK1: # mexico/10-feb3.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "estudiantes"
+    funnel_stage: conversion
+    composition_type: full-bleed-image
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 3
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif bold, blanco sobre rojo"
+    photo_style: candid-lifestyle
+    graphic_elements: ["partner-logo-ielts-official-test-centre", "rounded-card-overlay"]
+    visual_tags: ["ielts", "study-abroad"]
+    recommended_use: "Precedente de pieza de conversión pura (solo logo partner IELTS, sin logo IH visible en el crop)."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1XD3QAuL9_RqBQ3Emjb4V0Hyd_WJ4E2oY: # mexico/6-nov4.jpg
+    product_slug: qc-2026
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 3
+    logo_present: true
+    logo_placement: centered
+    logo_variant: white
+    logo_scale: small
+    headline_present: false
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif regular, copy en inglés"
+    photo_style: candid-lifestyle
+    graphic_elements: ["webinar-announcement", "rounded-cta-button"]
+    visual_tags: ["webinar", "ai-lesson-planning", "quality-circle"]
+    recommended_use: "Precedente de pieza dirigida a profesores/colegios en convenio (Quality Circle) — webinar de IA para planeación de clases."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06; reasignado a qc-2026 con input del cliente 2026-08-06 ('esto seguramente es de QC')"
+    annotation_status: human-reviewed
+    needs_review: true
+    review_note: >
+      El cliente indicó (2026-08-06) que "esto seguramente es de QC" (Quality Circle, programa
+      para colegios en convenio) en vez de teacher-training-certifications o Cambridge — palabra
+      "seguramente" indica probabilidad alta, no confirmación cerrada, por lo que needs_review
+      se mantiene en true. El color Technology Purple (#923472, pilar Cambridge) sigue sin
+      explicación certera; podría ser coincidencia de paleta o QC podría reutilizar ese tono.
+
+  drive-artwork-1KEW6oN2NOpzqs7a9sJb1LcXyJweq9zRV: # mexico/10-feb1.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "estudiantes"
+    funnel_stage: awareness
+    composition_type: text-left-image-right
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold en caja blanca, texto blanco sobre rojo"
+    photo_style: candid-lifestyle
+    graphic_elements: ["partner-logo-ielts-official-test-centre", "diagonal-color-split", "highlighted-text-box"]
+    visual_tags: ["ielts", "educational-explainer"]
+    recommended_use: "Precedente de pieza explicativa (define qué es IELTS) sin CTA, para etapa de awareness."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1UhPgCrTvxYbrZyKY_QgM6-FVyk07TDpb: # peru/5-ene-lima-1.png
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: reyes-magos
+    audience: "adultos"
+    funnel_stage: awareness
+    composition_type: centered
+    background_type: geometric
+    image_subject: illustration-only
+    people_count: 3
+    logo_present: true
+    logo_placement: integrated
+    logo_variant: classic
+    logo_scale: medium
+    headline_present: true
+    headline_treatment: minimal
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif institucional, encabezado subrayado"
+    photo_style: illustration
+    graphic_elements: ["holiday-illustration", "paper-clip", "stripe-background", "three-kings"]
+    visual_tags: ["reyes-magos", "holiday-campaign"]
+    recommended_use: "Misma plantilla de temporada Reyes Magos reutilizada en Chile — confirma reutilización de templates entre países."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-14xZyVr59t47hBraHgTVe7EWcSN0__xlF: # peru/6-nov1.jpg
+    product_slug: teacher-training-certifications
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 4
+    logo_present: true
+    logo_placement: top-right
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold sobre verde institucional"
+    photo_style: candid-lifestyle
+    graphic_elements: ["icon-row-footer-pattern"]
+    visual_tags: ["teacher-training", "celta"]
+    recommended_use: "Segundo precedente (junto con chile/1-feb2) de promoción de certificación CELTA para profesores."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1VFINTcSCefL5lrOrffEBbDdmWAqefiWr: # peru/23-feb.jpg
+    product_slug: null
+    product_status: null
+    content_pillar: null
+    campaign_or_theme: back-to-school
+    audience: "público general"
+    funnel_stage: awareness
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 3
+    logo_present: true
+    logo_placement: top-right
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif bold + itálica en el CTA"
+    photo_style: candid-lifestyle
+    graphic_elements: ["seasonal-badge-sticker", "icon-row-footer", "rainbow-footer-strip"]
+    visual_tags: ["back-to-school"]
+    recommended_use: "Misma plantilla 'Back to School' reutilizada en Colombia — confirma reutilización de templates entre países."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1JxVOIUNL3gEVPZO6gCbBXYHPVod5K0_Z: # ielts-latam/12-enero1.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: consideration
+    composition_type: centered
+    background_type: solid-color
+    image_subject: text-only
+    people_count: 0
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold, lista con iconos de flecha"
+    photo_style: no-photo
+    graphic_elements: ["bullet-list-arrows", "textured-paper-background", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "motivational-list"]
+    recommended_use: "Precedente de pieza 100% tipográfica (sin foto) con lista de motivos, útil para variedad visual."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1b4dl0QxzbCEHeVQewYwgHfqJGvVqBztL: # ielts-latam/7-abr5.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: awareness
+    composition_type: full-bleed-image
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold blanco, recorte de forma orgánica"
+    photo_style: candid-lifestyle
+    graphic_elements: ["torn-edge-color-block", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["study-abroad", "australia"]
+    recommended_use: "Precedente de pieza aspiracional (destino de estudio) sin IH branding, solo IELTS."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1rIRbJ3jeblFckHJitPiVvi6CjeYM0yq9: # ielts-latam/28-ene.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: retention
+    composition_type: full-bleed-image
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold blanco, degradado oscuro inferior"
+    photo_style: candid-lifestyle
+    graphic_elements: ["gradient-overlay-bottom", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["motivational", "study-tips"]
+    recommended_use: "Precedente de pieza motivacional/retención (no promocional) para candidatos ya inscritos."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  # ————————————————————————————————————————————
+  # Ampliación de la muestra de revisión visual humana (2026-08-06, segunda pasada).
+  # +25 assets (5 por país + 5 de IELTS LATAM) seleccionados al azar entre los que no
+  # tenían revisión previa. Total acumulado: 15 + 25 = 40/454.
+  # ————————————————————————————————————————————
+
+  drive-artwork-1k9W2-YUIlys-7zFcVWRCYvYlWZBztFAz: # chile/2-marchile2.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: retention
+    composition_type: text-left-image-right
+    background_type: photographic
+    image_subject: document-closeup
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: medium
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif regular, fondo oscuro"
+    photo_style: moody-editorial
+    graphic_elements: ["dark-overlay"]
+    visual_tags: ["ielts", "certificate-delivery-times", "informational"]
+    recommended_use: "Pieza informativa (tiempos de entrega del certificado IELTS) — útil para contenido de retención/FAQ, no de conversión."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1thNjvkkS9utYqLbS6MCtfHngOxI4Pml0: # chile/12-dic.jpg
+    product_slug: null
+    product_status: null
+    content_pillar: null
+    campaign_or_theme: institutional
+    audience: "público general"
+    funnel_stage: awareness
+    composition_type: full-bleed-image
+    background_type: photographic
+    image_subject: people-group
+    people_count: 20
+    logo_present: true
+    logo_placement: integrated
+    logo_variant: classic
+    logo_scale: large
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif institucional sobre banner rainbow"
+    photo_style: documentary
+    graphic_elements: ["rainbow-banner", "group-photo"]
+    visual_tags: ["ih-world", "institutional", "network"]
+    recommended_use: "Contenido institucional (red mundial IH, calidad e innovación) sin producto específico — reforzar credibilidad de marca, no vender un pilar."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1rskApL9wmd0iKeZr25tWnaIo_KYGik-B: # chile/23-mar3.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: consideration
+    composition_type: centered
+    background_type: solid-color
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold, lista de dos modalidades"
+    photo_style: no-photo
+    graphic_elements: []
+    visual_tags: ["ielts", "academic-vs-general-training", "informational"]
+    recommended_use: "Pieza explicativa sobre las dos modalidades de IELTS (Academic / General Training) — mismo rol educativo que mexico/10-feb1."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1upTIUkMxzF-0RW6sQ10BAT-TsmHAcuVA: # chile/6-nov1.jpg
+    product_slug: general-english
+    product_status: inferred
+    content_pillar: ingles_general
+    campaign_or_theme: null
+    audience: "público general"
+    funnel_stage: awareness
+    composition_type: centered
+    background_type: solid-color
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: minimal
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif regular, fondo plano"
+    photo_style: no-photo
+    graphic_elements: []
+    visual_tags: ["general-english", "brand-awareness"]
+    recommended_use: "Pieza minimalista de awareness genérica ('Your journey to confident communication starts here') sin campaña ni oferta específica."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-15OdcgNYKaC6rRD3oXXgbaV0lIf9CJOMo: # chile/10-feb1.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "estudiantes"
+    funnel_stage: awareness
+    composition_type: text-left-image-right
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: true
+    logo_placement: top-right
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold en caja blanca, texto blanco sobre rojo"
+    photo_style: candid-lifestyle
+    graphic_elements: ["partner-logo-ielts-official-test-centre", "diagonal-color-split", "highlighted-text-box"]
+    visual_tags: ["ielts", "educational-explainer"]
+    recommended_use: "Misma plantilla base que mexico/10-feb1 y ielts-latam/3-abr ('joven con mochila'), pero esta versión de Chile SÍ incluye el logo IH (clásico) además del logo partner IELTS — a diferencia de la versión de México, que no lo lleva. Útil para decidir si el logo IH debe ser obligatorio en reutilizaciones futuras de esta plantilla."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1KASbvhqS7eiTjNOpwGXE2TkSU-BVD4dj: # colombia/1-feb3.jpg
+    product_slug: teacher-training-certifications
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 2
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold institucional"
+    photo_style: candid-lifestyle
+    graphic_elements: ["rainbow-footer-strip"]
+    visual_tags: ["teacher-training", "spanish-certification", "dieele"]
+    recommended_use: "Diplomado de Formación de Profesores de Español — variante DIEELE de teacher-training-certifications, ver también mexico/1-feb2 (spanish variant)."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1Iqvf75Z-OM4YP8uVf4e0pmikgNDZiyO6: # colombia/6-nov4.jpg
+    product_slug: qc-2026
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 3
+    logo_present: true
+    logo_placement: centered
+    logo_variant: white
+    logo_scale: small
+    headline_present: false
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif regular, copy en inglés"
+    photo_style: candid-lifestyle
+    graphic_elements: ["webinar-announcement", "rounded-cta-button"]
+    visual_tags: ["webinar", "ai-lesson-planning", "quality-circle"]
+    recommended_use: "Duplicado exacto de mexico/6-nov4 (misma pieza, solo cambia el lockup de país a IH Bogotá) — confirma que esta plantilla de webinar se distribuye entre países bajo el mismo product_slug."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06; misma ambigüedad de mexico/6-nov4 ('esto seguramente es de QC')"
+    annotation_status: human-reviewed
+    needs_review: true
+    review_note: >
+      Duplicado de mexico/6-nov4 (drive-artwork-1XD3QAuL9_RqBQ3Emjb4V0Hyd_WJ4E2oY). El cliente
+      indicó "seguramente" para esa pieza, no confirmación cerrada — la misma reserva aplica
+      aquí por tratarse de la misma plantilla reutilizada en Colombia.
+
+  drive-artwork-12n1mcSabeKKg4-eaVE_AYGVNhIuocHKM: # colombia/21-feb2.jpg
+    product_slug: null
+    product_status: null
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: awareness
+    composition_type: grid
+    background_type: solid-color
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold, calendario de fechas por ciudad"
+    photo_style: no-photo
+    graphic_elements: ["date-calendar-grid", "partner-logo-tea"]
+    visual_tags: ["exam-dates", "multi-city", "tea", "test-of-english-for-aviation"]
+    recommended_use: "Calendario de fechas de examen por ciudad (Bogotá/Medellín/Barranquilla/Cali) que incluye la insignia TEA (Test of English for Aviation) — primer avistamiento de un producto/certificación no catalogado previamente (ver colombia/16-ene1 y brand/knowledge/product-catalog.yaml#tea-test-of-english-for-aviation)."
+    annotation_confidence: low
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: true
+    review_note: >
+      Pieza tipo calendario multi-examen (posiblemente incluye IELTS y TEA en el mismo diseño);
+      no se pudo confirmar con certeza qué examen(es) exactos se listan en cada ciudad sin una
+      inspección de imagen a mayor resolución. product_slug se deja en null a propósito — no
+      inventar una atribución única cuando la pieza parece cubrir más de un producto.
+
+  drive-artwork-1qepr4xurA8WoewUwZJYjOk4smR3DztYr: # colombia/10-feb1.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: awareness
+    composition_type: full-bleed-image
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: false
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sin texto, solo logo partner"
+    photo_style: editorial-portrait
+    graphic_elements: ["partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "official-test-centre", "brand-only"]
+    recommended_use: "Pieza tipo retrato de marca (solo logo partner IELTS Official Test Centre, sin logo IH ni copy) — sirve como fondo/portada, no como pieza informativa o de conversión."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1gjs7FZniV3rtPtN9p1eFvf9HUJEl_UIv: # colombia/16-ene1.jpg
+    product_slug: tea-test-of-english-for-aviation
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesionales de aviación"
+    funnel_stage: awareness
+    composition_type: centered
+    background_type: solid-color
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold, urgencia de temporada"
+    photo_style: no-photo
+    graphic_elements: ["partner-logo-tea"]
+    visual_tags: ["tea", "test-of-english-for-aviation", "aviation"]
+    recommended_use: "Segundo avistamiento real de TEA ('¡Certifícate en el TEA a inicios de 2026!') — junto con colombia/21-feb2, confirma TEA como certificación recurrente no catalogada previamente. Se agregó a product-catalog.yaml como partner/producto nuevo."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1UakLyOaU0G_AReihSUdL-V7_uPY1ELhd: # mexico/5-ene-mx-1.png
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: reyes-magos
+    audience: "adultos"
+    funnel_stage: awareness
+    composition_type: centered
+    background_type: geometric
+    image_subject: illustration-only
+    people_count: 3
+    logo_present: true
+    logo_placement: integrated
+    logo_variant: classic
+    logo_scale: medium
+    headline_present: true
+    headline_treatment: minimal
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif institucional, encabezado subrayado"
+    photo_style: illustration
+    graphic_elements: ["holiday-illustration", "paper-clip", "stripe-background", "three-kings"]
+    visual_tags: ["reyes-magos", "holiday-campaign"]
+    recommended_use: "Tercer país (junto con Chile y Perú) confirmado usando la plantilla de temporada Reyes Magos — plantilla compartida entre al menos 3 países con el mismo diseño."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1JeVUbLZXtkyRnyHWzS2m4z738NtzbF4v: # mexico/1-feb2.jpg
+    product_slug: teacher-training-certifications
+    product_status: confirmed
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: conversion
+    composition_type: centered
+    background_type: white
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: centered
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif bold, badges de color redondeados"
+    photo_style: no-photo
+    graphic_elements: ["colored-pill-badges", "arrow-icon-watermark", "rainbow-footer-strip"]
+    visual_tags: ["teacher-training", "certification-badges", "dieele", "celta", "delta", "cam", "tkt"]
+    recommended_use: "Confirma visualmente que teacher-training-certifications se vende también en México ('Certifícate en: DIEELE, CELTA, DELTA, CAM, TKT') — plantilla de badges casi idéntica a chile/1-feb2, mismo formato reutilizado entre países."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1VV6e98JoS2FhdHKWHguFhdh1kw-mgn3Q: # mexico/4-junielts.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: consideration
+    composition_type: grid
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif regular, formato testimonio en 4 paneles"
+    photo_style: testimonial-portrait
+    graphic_elements: ["multi-panel-grid", "testimonial-quote"]
+    visual_tags: ["ielts", "success-story", "testimonial"]
+    recommended_use: "Formato de historia de éxito en 4 paneles (testimonio de 'Ana') — precedente de prueba social para IELTS, distinto de las plantillas informativas/promocionales ya catalogadas."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-14nk6ra1enHEehIPVdXKybkYkxhIi33ht: # mexico/12-ene3.jpg
+    product_slug: null
+    product_status: null
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "público general"
+    funnel_stage: awareness
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 6
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold institucional"
+    photo_style: candid-lifestyle
+    graphic_elements: ["rainbow-footer-strip"]
+    visual_tags: ["online-courses", "group-photo"]
+    recommended_use: "Campaña de cursos en línea con foto de grupo, sin pilar/producto específico visible en el crop revisado."
+    annotation_confidence: low
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: true
+    review_note: >
+      No se pudo determinar con certeza a qué pilar/producto pertenece esta campaña de "cursos
+      en línea" — podría ser general-english u otro pilar; se deja product_slug en null en vez
+      de adivinar.
+
+  drive-artwork-11kjChAej9mAMhNXwcP1hpIu2H8maI5sH: # mexico/1-feb2.jpg (segundo archivo con el mismo slug de fecha)
+    product_slug: teacher-training-certifications
+    product_status: confirmed
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "aspirantes a profesores de español"
+    funnel_stage: awareness
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: people-group
+    people_count: 4
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: classic
+    logo_scale: small
+    headline_present: false
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold, blanco sobre azul institucional"
+    photo_style: candid-lifestyle
+    graphic_elements: ["rounded-color-block", "rainbow-footer-strip"]
+    visual_tags: ["teacher-training", "spanish-certification", "dieele"]
+    recommended_use: "Segundo ángulo (enfoque en certificación DIEELE para profesores de Español, sin mencionar CELTA/DELTA) del mismo pilar teacher-training-certifications — ver también colombia/1-feb3."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-13pRDs0SlRrNcCiS05YVcqRldKzZntvvY: # peru/10-dic2.jpg
+    product_slug: teacher-training-certifications
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: consideration
+    composition_type: centered
+    background_type: white
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: top-center
+    logo_variant: classic
+    logo_scale: small
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif regular, badge de color para el nombre de la certificación"
+    photo_style: no-photo
+    graphic_elements: ["colored-pill-badge", "speech-bubble-icon", "rainbow-footer-strip"]
+    visual_tags: ["teacher-training", "celta"]
+    recommended_use: "Tercer precedente (junto con chile/1-feb2 y peru/6-nov1) enfocado únicamente en CELTA, con formato de badge único en vez de lista de varias certificaciones."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1pk2THNDvdjhB7s7PjHaWcvljuFelpzML: # peru/1feb1.jpg
+    product_slug: university-programmes
+    product_status: inferred
+    content_pillar: university_programmes
+    campaign_or_theme: null
+    audience: "profesores"
+    funnel_stage: conversion
+    composition_type: split-layout
+    background_type: solid-color
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: white
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: true
+    cta_treatment: highlighted-box
+    typography_style: "sans-serif bold, CTA en píldora morada"
+    photo_style: candid-lifestyle
+    graphic_elements: ["arrow-accent", "rainbow-side-strip"]
+    visual_tags: ["university-programmes", "teacher-certification"]
+    recommended_use: "Pieza que promueve certificarse como docente de idiomas 'con University Programmes' — se etiquetó como university-programmes por ser la marca explícita en el diseño, pero el contenido (certificación docente) se superpone conceptualmente con teacher-training-certifications."
+    annotation_confidence: low
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: true
+    review_note: >
+      Ambigüedad entre university-programmes y teacher-training-certifications: el copy dice
+      "certifícate como docente de idiomas con University Programmes!", lo que podría significar
+      que University Programmes es el vehículo/pilar que ofrece esta certificación específica en
+      Perú, o que es simplemente branding cruzado. Se necesita confirmación del cliente sobre si
+      University Programmes incluye certificación docente en algunos países.
+
+  drive-artwork-18upqhfFGIQXdmRTuG4RBhxwW5Ie_oqrI: # peru/18-abr.jpg
+    product_slug: michigan-language-assessment
+    product_status: inferred
+    content_pillar: null
+    campaign_or_theme: null
+    audience: "estudiantes"
+    funnel_stage: consideration
+    composition_type: split-layout
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: white
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: false
+    typography_style: "sans-serif bold headline + lista de viñetas regular"
+    photo_style: candid-lifestyle
+    graphic_elements: ["bullet-list-icons", "partner-logo-met", "rounded-white-card-overlay"]
+    visual_tags: ["met-exam", "partner-content"]
+    recommended_use: "Segundo precedente de MET (junto con chile/11-nov1) — refuerza el layout de foto arriba + tarjeta blanca de beneficios abajo + logo partner MET."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1oVUAFjiAO55bfGp0o61tv9zWJN4FS__B: # peru/10-dic1.jpg
+    product_slug: null
+    product_status: null
+    content_pillar: null
+    campaign_or_theme: gratificacion-diciembre
+    audience: "público general"
+    funnel_stage: awareness
+    composition_type: centered
+    background_type: solid-color
+    image_subject: text-only
+    people_count: 0
+    logo_present: true
+    logo_placement: top-left
+    logo_variant: white
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: true
+    cta_treatment: highlighted-box
+    typography_style: "sans-serif bold, blanco sobre verde institucional"
+    photo_style: no-photo
+    graphic_elements: ["rainbow-footer-strip"]
+    visual_tags: ["seasonal-campaign", "gratificacion", "peru-specific"]
+    recommended_use: "Campaña estacional peruana ligada a la 'gratificación' de diciembre (aguinaldo), promoviendo 'programas de nivel internacional' de forma genérica — no vende un pilar único."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1YplMPtzGl47-M7GT7lxcgESskhG3vb-Z: # peru/10-novs.jpg
+    product_slug: general-english
+    product_status: inferred
+    content_pillar: ingles_general
+    campaign_or_theme: "4x3-oferta-especial"
+    audience: "adultos"
+    funnel_stage: conversion
+    composition_type: split-layout
+    background_type: solid-color
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: true
+    logo_placement: top-center
+    logo_variant: null
+    logo_scale: small
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: true
+    cta_present: true
+    cta_treatment: button-solid
+    typography_style: "sans-serif bold, oferta grande en diagonal"
+    photo_style: candid-lifestyle
+    graphic_elements: ["special-offer-badge", "dotted-pattern", "rainbow-footer-strip"]
+    visual_tags: ["live-hello", "4x3-offer", "online-courses"]
+    recommended_use: "Pieza pre-rebranding: usa el logo/marca 'Live!' (no 'Hello!') confirmado por el cliente como alias comercial de general-english/ingles_general (2026-08-05) — útil como referencia histórica de la promoción 4x3, pero el logo debería actualizarse a 'Hello!' en piezas nuevas."
+    annotation_confidence: medium
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1TmkGMJbONCeIJNkoQquNZi4Bow7EOjGV: # ielts-latam/12-mar.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: retention
+    composition_type: text-left-image-right
+    background_type: photographic
+    image_subject: hands-object-closeup
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold+regular mixto, blanco sobre foto oscura"
+    photo_style: moody-editorial
+    graphic_elements: ["dark-overlay", "divider-line", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "certificate-validity", "informational"]
+    recommended_use: "Pieza informativa regional (validez de 2 años del certificado IELTS) sin logo IH, solo logo partner — mismo rol que chile/2-marchile2 pero sin lockup de país."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1n__Q5gbkZwKGVGNWz-l75hGLHar0rAmg: # ielts-latam/7-abr2.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "profesionales"
+    funnel_stage: awareness
+    composition_type: full-bleed-image
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold blanco sobre píldora negra"
+    photo_style: aspirational-lifestyle
+    graphic_elements: ["torn-edge-color-block", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "study-abroad", "work-experience"]
+    recommended_use: "Pieza aspiracional orientada a experiencia laboral internacional — ángulo profesional, distinto del ángulo académico/viaje de otras piezas IELTS LATAM."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1ttVvVUf3lsoWkLJUKJctsCZIDByKfM9m: # ielts-latam/3-abr.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "estudiantes"
+    funnel_stage: conversion
+    composition_type: text-left-image-right
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: bold-large
+    supporting_text_present: false
+    cta_present: true
+    cta_treatment: text-italic
+    typography_style: "sans-serif bold + itálica en el CTA"
+    photo_style: candid-lifestyle
+    graphic_elements: ["partner-logo-ielts-official-test-centre", "rounded-color-block-footer"]
+    visual_tags: ["ielts", "key-to-opportunities"]
+    recommended_use: "Tercera variante de la plantilla 'joven con mochila' (junto con chile/10-feb1 y mexico/10-feb1) — esta versión regional IELTS LATAM no lleva logo IH, solo el logo partner IELTS Official Test Centre."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1B1sfYPCxD11DSCB9t9mxbeYgyOMPa6oV: # ielts-latam/10-oct4.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: awareness
+    composition_type: text-top-image-bottom
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold, tarjeta roja redondeada"
+    photo_style: aspirational-lifestyle
+    graphic_elements: ["rounded-card-overlay", "jagged-edge-block", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "travel-aspiration", "study-abroad"]
+    recommended_use: "Pieza aspiracional de viaje/confianza cultural sin logo IH, solo logo partner."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false
+
+  drive-artwork-1WGiQd4k19tVk1-4i-YoZZQRIrF-GaZQt: # ielts-latam/7-abr4.jpg
+    product_slug: ielts-preparation
+    product_status: inferred
+    content_pillar: ielts
+    campaign_or_theme: null
+    audience: "candidatos a examen"
+    funnel_stage: awareness
+    composition_type: text-left-image-right
+    background_type: photographic
+    image_subject: person-portrait
+    people_count: 1
+    logo_present: false
+    logo_placement: absent
+    headline_present: true
+    headline_treatment: highlighted-box
+    supporting_text_present: false
+    cta_present: false
+    typography_style: "sans-serif bold blanco sobre píldora negra"
+    photo_style: conceptual-lifestyle
+    graphic_elements: ["torn-edge-color-block", "speech-bubble-props", "partner-logo-ielts-official-test-centre"]
+    visual_tags: ["ielts", "independence", "global-opportunities"]
+    recommended_use: "Pieza conceptual (props de burbujas de diálogo) sobre independencia y oportunidades globales — ángulo distinto al de viaje/trabajo de otras piezas IELTS LATAM."
+    annotation_confidence: high
+    annotation_source: "human-visual-review-2026-08-06"
+    annotation_status: human-reviewed
+    needs_review: false

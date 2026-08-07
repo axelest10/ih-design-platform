@@ -1,0 +1,107 @@
+/* Generado automáticamente por brand/scripts/generate_tokens.py.
+No editar a mano — editar los YAML fuente en brand/tokens/ y brand/product-colors/. */
+
+:root {
+  /* Colores institucionales */
+  --ih-knowledge: #3B44B5;
+  --ih-technology: #923472;
+  --ih-youth: #B7DB6E;
+  --ih-joy: #F4CF80;
+  --ih-light: #F4AB63;
+  --ih-salmon: #F06C6A;
+  --ih-pink: #E070A2;
+  --ih-green: #28AE62;
+  --ih-ielts-red: #E31736;
+  --ih-neutral-white: #FFFFFF;
+  --ih-neutral-black: #000000;
+  --ih-neutral-dark-navy: #1A2566;
+  --ih-neutral-gray-100: #F5F5F5;
+  --ih-neutral-gray-300: #D0D0D0;
+  --ih-neutral-surface-1: #F8F8F8;
+  --ih-neutral-surface-2: #FAFAFA;
+  --ih-neutral-surface-tint-blue: #F0F4FF;
+
+  /* Colores por pilar/producto (ver brand/product-colors/) */
+  --ih-pillar-ingles-general-primary: #B7DB6E;
+  --ih-pillar-ingles-general-secondary: #28AE62;
+  --ih-pillar-ingles-general-background: #F0FAF0;
+  --ih-pillar-ingles-general-cta-bg: #28AE62;
+  --ih-pillar-ingles-general-cta-text: #FFFFFF;
+  --ih-pillar-cambridge-primary: #923472;
+  --ih-pillar-cambridge-secondary: #3B44B5;
+  --ih-pillar-cambridge-background: #F5EBF2;
+  --ih-pillar-cambridge-cta-bg: #923472;
+  --ih-pillar-cambridge-cta-text: #FFFFFF;
+  --ih-pillar-university-programmes-primary: #3B44B5;
+  --ih-pillar-university-programmes-secondary: #F4CF80;
+  --ih-pillar-university-programmes-background: #EEF0FF;
+  --ih-pillar-university-programmes-cta-bg: #3B44B5;
+  --ih-pillar-university-programmes-cta-text: #FFFFFF;
+  --ih-pillar-empresas-primary: #28AE62;
+  --ih-pillar-empresas-secondary: #B7DB6E;
+  --ih-pillar-empresas-background: #EBF7F0;
+  --ih-pillar-empresas-cta-bg: #28AE62;
+  --ih-pillar-empresas-cta-text: #FFFFFF;
+  --ih-pillar-ielts-primary: #E31736;
+  --ih-pillar-ielts-secondary: #E070A2;
+  --ih-pillar-ielts-background: #FFF0F0;
+  --ih-pillar-ielts-cta-bg: #E31736;
+  --ih-pillar-ielts-cta-text: #FFFFFF;
+  --ih-pillar-spanish-courses-primary: #F4AB63;
+  --ih-pillar-spanish-courses-secondary: #923472;
+  --ih-pillar-spanish-courses-background: #FFF8F0;
+  --ih-pillar-spanish-courses-cta-bg: #923472;
+  --ih-pillar-spanish-courses-cta-text: #FFFFFF;
+
+  /* Tipografía */
+  --ih-font-heading: Aptos, Arial, sans-serif;
+  --ih-font-body: 'Open Sans', sans-serif;
+  --ih-type-h1-display-size: 56px;
+  --ih-type-h1-display-line-height: 64px;
+  --ih-type-h2-section-size: 40px;
+  --ih-type-h2-section-line-height: 48px;
+  --ih-type-h3-subsection-size: 28px;
+  --ih-type-h3-subsection-line-height: 36px;
+  --ih-type-h4-card-title-size: 22px;
+  --ih-type-h4-card-title-line-height: 28px;
+  --ih-type-body-large-size: 18px;
+  --ih-type-body-large-line-height: 28px;
+  --ih-type-body-base-size: 16px;
+  --ih-type-body-base-line-height: 24px;
+  --ih-type-body-small-size: 14px;
+  --ih-type-body-small-line-height: 20px;
+  --ih-type-caption-size: 12px;
+  --ih-type-caption-line-height: 18px;
+  --ih-type-cta-button-size: 16px;
+  --ih-type-badge-tag-size: 12px;
+
+  /* Espaciado */
+  --ih-space-xs: 8px;
+  --ih-space-sm: 16px;
+  --ih-space-md: 24px;
+  --ih-space-lg: 32px;
+  --ih-space-xl: 48px;
+  --ih-space-2xl: 64px;
+  --ih-space-3xl: 80px;
+  --ih-space-4xl: 120px;
+
+  /* Radios */
+  --ih-radius-button: 8px;
+  --ih-radius-card: 12px;
+  --ih-radius-input: 8px;
+  --ih-radius-pill: 100px;
+
+  /* Sombras */
+  --ih-shadow-level-1: 0 2px 8px rgba(0,0,0,0.08);
+  --ih-shadow-level-2: 0 8px 24px rgba(0,0,0,0.12);
+  --ih-shadow-level-3: 0 16px 48px rgba(0,0,0,0.16);
+  --ih-shadow-card: 0 8px 24px rgba(0,0,0,0.10);
+
+  /* Motion — NOT_OFFICIAL_PENDING_BRAND_APPROVAL, NO usar como regla de marca aprobada */
+  --ih-motion-duration-fast: 120ms;
+  --ih-motion-duration-base: 200ms;
+  --ih-motion-duration-slow: 320ms;
+  --ih-motion-easing-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ih-motion-easing-entrance: cubic-bezier(0, 0, 0.2, 1);
+  --ih-motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+}
