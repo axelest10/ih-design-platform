@@ -19,5 +19,16 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements-dev.txt
       - run: ruff check .
+      - run: python brand/scripts/generate_tokens.py --check
+      - run: python brand/scripts/generate_product_catalog.py --check
+      - name: Verify generated design knowledge
+        shell: bash
+        run: |
+          output_file="$(mktemp)"
+          python brand/scripts/build_design_knowledge.py \
+            brand/assets/artwork-references/manifest.yaml \
+            "$output_file" \
+            --annotations brand/knowledge/artwork-annotations.yaml
+          cmp --silent "$output_file" brand/knowledge/artwork-reference-knowledge.json
       - run: python manage.py check
       - run: pytest

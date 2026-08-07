@@ -6,8 +6,15 @@ __pycache__/
 .coverage
 htmlcov/
 db.sqlite3
+db.sqlite3-journal
+*.sqlite3
+*.sqlite3-journal
 .env
 staticfiles/
 media/
+uploaded-logos/
+*.zip
+_tmp_*/
+_tmp_*.txt
 *.log
 .DS_Store

@@ -10,14 +10,15 @@
 
 ## Fase 2 — Composición controlada
 
-- Biblioteca de plantillas HTML/SVG versionadas.
-- Renderizador de formatos 1080 px y previsualización.
+- Biblioteca de plantillas HTML/SVG versionadas (primer template `square-v1` implementado).
+- Renderizador de formatos 1080 px y previsualización (primer flujo implementado).
 - Verificación automática de zona de seguridad, legibilidad y campos críticos.
+- Templates adicionales para story y portrait.
 
 ## Fase 3 — Revisión y operación
 
 - Autenticación corporativa y roles.
-- Flujo de revisión/aprobación con comentarios.
+- Flujo de revisión/aprobación con comentarios persistidos.
 - Historial visible y exportación para redes/WhatsApp.
 
 ## Fase 4 — Inteligencia aplicada
