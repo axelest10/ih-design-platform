@@ -1,13 +1,40 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ih-mexico.example/contracts/design-brief.schema.json",
-  "title": "IH Mexico Design Brief",
+  "title": "IH LATAM Design Brief",
   "type": "object",
   "additionalProperties": false,
   "required": ["title", "format", "audience", "objective"],
   "properties": {
     "title": { "type": "string", "minLength": 1, "maxLength": 180 },
-    "format": { "type": "string", "enum": ["square", "story", "portrait"] },
+    "format": {
+      "type": "string",
+      "enum": ["square", "story", "portrait", "reel", "carousel", "banner", "html", "svg"]
+    },
+    "country": { "type": "string", "enum": ["MX", "CO", "CL", "PE"] },
+    "product_slug": {
+      "type": "string",
+      "enum": [
+        "university-programmes",
+        "business-english",
+        "general-english",
+        "ielts-preparation",
+        "spanish-courses"
+      ]
+    },
+    "brand_logo_key": { "type": "string", "minLength": 1 },
+    "additional_logo_keys": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "visual_reference_urls": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri" }
+    },
+    "language": { "type": "string", "enum": ["es", "en", "pt"] },
+    "channel": { "type": "string", "maxLength": 40 },
+    "brief_data": { "type": "object", "additionalProperties": true },
     "audience": { "type": "string", "minLength": 1 },
     "objective": { "type": "string", "minLength": 1 },
     "requested_message": { "type": "string" },

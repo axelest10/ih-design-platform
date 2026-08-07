@@ -1,12 +1,20 @@
 import os
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+DJANGO_ENV = os.getenv("DJANGO_ENV", "local").strip().casefold()
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-only-insecure-key")
+if DJANGO_ENV in {"staging", "production"} and SECRET_KEY == "local-only-insecure-key":
+    raise ImproperlyConfigured("DJANGO_SECRET_KEY es obligatorio fuera de local.")
 DEBUG = os.getenv("DJANGO_DEBUG", "0") == "1"
 ALLOWED_HOSTS = [
-    host.strip() for host in os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",") if host.strip()
+    host.strip()
+    for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+    if host.strip()
 ]
 
 INSTALLED_APPS = [
@@ -24,6 +32,8 @@ INSTALLED_APPS = [
     "ai",
     "assets",
     "validations",
+    "security",
+    "materials",
 ]
 
 MIDDLEWARE = [
@@ -39,7 +49,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "frontend" / "templates"],
+        "DIRS": [BASE_DIR / "frontend", BASE_DIR / "frontend" / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {"context_processors": [
             "django.template.context_processors.request",
@@ -50,8 +60,32 @@ TEMPLATES = [
 ]
 WSGI_APPLICATION = "config.wsgi.application"
 
+def _database_from_url(database_url: str) -> dict:
+    parsed = urlparse(database_url)
+    if parsed.scheme not in {"postgres", "postgresql"}:
+        raise ImproperlyConfigured("DATABASE_URL debe usar el esquema postgres:// o postgresql://.")
+    query = parse_qs(parsed.query)
+    options = {
+        key: values[-1]
+        for key, values in query.items()
+        if key in {"sslmode", "connect_timeout"} and values
+    }
+    return {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": parsed.path.lstrip("/"),
+        "USER": unquote(parsed.username or ""),
+        "PASSWORD": unquote(parsed.password or ""),
+        "HOST": parsed.hostname or "localhost",
+        "PORT": str(parsed.port or "5432"),
+        "OPTIONS": options,
+    }
+
+
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").lower()
-if DB_ENGINE == "postgresql":
+if DATABASE_URL:
+    DATABASES = {"default": _database_from_url(DATABASE_URL)}
+elif DB_ENGINE == "postgresql":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -77,15 +111,39 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
-    "DEFAULT_AUTHENTICATION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": ["security.permissions.CorporateDomainPermission"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
 }
+
+def _env_list(name: str) -> tuple[str, ...]:
+    return tuple(value.strip() for value in os.getenv(name, "").split(",") if value.strip())
+
+
+CORS_ALLOWED_ORIGINS = _env_list("CORS_ALLOWED_ORIGINS")
+CSRF_TRUSTED_ORIGINS = _env_list("CSRF_TRUSTED_ORIGINS")
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "0") == "1"
+SESSION_COOKIE_SECURE = os.getenv("DJANGO_SECURE_COOKIES", "0") == "1"
+CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
+SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_HSTS_SECONDS", "0"))
+
+CORPORATE_AUTH_REQUIRED = os.getenv("DJANGO_REQUIRE_CORPORATE_AUTH", "1") == "1"
+CORPORATE_ALLOWED_EMAIL_DOMAINS = tuple(
+    domain.strip().casefold().lstrip("@").rstrip(".")
+    for domain in os.getenv(
+        "CORPORATE_ALLOWED_EMAIL_DOMAINS",
+        "ihmexico.com,ihbogota.com,ihsantiago.cl,ihlima.com",
+    ).split(",")
+    if domain.strip()
+)
 
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "0") == "1"
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
+DESIGN_TEST_MODE = os.getenv("DESIGN_TEST_MODE", "1") == "1"
+DESIGN_TEST_LIMIT = int(os.getenv("DESIGN_TEST_LIMIT", "50"))
 
 if os.getenv("AWS_STORAGE_BUCKET_NAME"):
     STORAGES = {

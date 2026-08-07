@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Brief de diseño · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/panel.css" />
+  </head>
+  <body>
+    <div class="panel-shell">
+      <header class="panel-header">
+        <a class="brand-lockup" href="index.html">
+          <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+          <span>Design Platform</span>
+        </a>
+        <div class="user-context">
+          <span id="user-label">Cargando perfil…</span>
+          <span id="role-label" class="role-pill">Usuario</span>
+        </div>
+      </header>
+
+      <main class="panel-main">
+        <section class="intro-block">
+          <p class="eyebrow">Nuevo brief</p>
+          <h1>Cuéntanos qué necesitas crear.</h1>
+          <p>Con tus respuestas prepararemos una pieza coherente con la marca, el país y el producto seleccionado.</p>
+        </section>
+
+        <div id="notice" class="notice" role="status" aria-live="polite"></div>
+
+        <section class="workspace-grid">
+          <form id="brief-form" class="card brief-card">
+            <div class="card-heading">
+              <div><span class="step-label">01 · Contexto</span><h2>La pieza</h2></div>
+              <span class="required-note">Campos con * obligatorios</span>
+            </div>
+
+            <div class="form-grid">
+              <label>1. ¿En qué país o mercado se publicará? *
+                <select id="country" name="country" required></select>
+              </label>
+              <label>2. ¿Qué logo IH debe aparecer? *
+                <select id="brand_logo_key" name="brand_logo_key" required></select>
+                <small>Las opciones se limitan al país y permisos de tu perfil.</small>
+              </label>
+              <label>3. ¿Qué producto o servicio comunicas? *
+                <select id="product_slug" name="product_slug" required></select>
+                <small>El color autorizado se asigna automáticamente.</small>
+              </label>
+              <label>4. ¿Cuál es el objetivo principal? *
+                <select id="objective" name="objective" required>
+                  <option value="awareness">Dar a conocer</option>
+                  <option value="leads">Generar registros</option>
+                  <option value="enrollment">Conseguir inscripciones</option>
+                  <option value="promotion">Promocionar una oferta</option>
+                  <option value="event">Comunicar un evento</option>
+                  <option value="information">Informar</option>
+                  <option value="community">Fortalecer comunidad</option>
+                </select>
+              </label>
+              <label>5. ¿A quién queremos hablarle? *
+                <input id="audience" name="audience" required placeholder="Ej. Jóvenes de 18 a 25 años" />
+              </label>
+              <label>6. ¿Qué necesidad o deseo tiene ese público? *
+                <textarea id="audience_need" name="audience_need" required rows="3"></textarea>
+              </label>
+            </div>
+
+            <div class="section-divider"><span>Logos adicionales</span></div>
+            <fieldset class="logo-fieldset">
+              <legend>7. ¿Necesitas incluir algún logo adicional?</legend>
+              <div id="additional-logos" class="checkbox-grid"></div>
+              <label class="inline-check"><input type="checkbox" id="upload-logo-toggle" /> Subir un logo nuevo</label>
+              <div id="upload-logo-fields" class="upload-fields" hidden>
+                <label>8. Archivo del logo (opcional)
+                  <input type="file" id="logo-file" accept=".svg,.png,.jpg,.jpeg,.ai,.eps,.pdf" />
+                </label>
+                <div class="form-grid form-grid--compact">
+                  <label>Nombre de la marca<input id="logo-name" /></label>
+                  <label>Tipo de marca
+                    <select id="logo-type"><option value="partner">Partner</option><option value="branch">Sede</option><option value="product">Producto</option><option value="school">Escuela asociada</option><option value="other">Otro</option></select>
+                  </label>
+                </div>
+                <label>Uso previsto y notas<input id="logo-notes" /></label>
+              </div>
+            </fieldset>
+
+            <div class="form-grid">
+              <label>9. ¿Qué variante y ubicación prefieres para los logos?
+                <select id="logo_variant"><option value="auto">La plataforma decide según el fondo</option><option value="color">Color</option><option value="black">Negro</option><option value="white">Blanco</option></select>
+              </label>
+              <label>10. ¿Hay campaña, promoción, fecha, precio o cupo?
+                <input id="campaign_info" placeholder="Si no aplica, déjalo vacío" />
+              </label>
+              <label>11. ¿Cuál es el mensaje principal? *
+                <input id="requested_message" required />
+              </label>
+              <label>12. ¿Qué información debe aparecer obligatoriamente?
+                <textarea id="required_information" rows="3"></textarea>
+              </label>
+              <label>13. ¿Qué acción quieres que realice la persona?
+                <select id="cta"><option value="message">Enviar mensaje</option><option value="register">Registrarse</option><option value="buy">Comprar</option><option value="information">Solicitar información</option><option value="visit">Visitar una página</option><option value="event">Asistir a un evento</option></select>
+              </label>
+              <label>14. ¿A dónde debe dirigir esa acción?
+                <input id="cta_destination" placeholder="WhatsApp, URL, formulario…" />
+              </label>
+              <label>15. ¿En qué idioma debe estar?
+                <select id="language"><option value="es">Español</option><option value="en">Inglés</option><option value="es-en">Bilingüe</option></select>
+              </label>
+              <label>16. ¿En qué canal se publicará?
+                <select id="channel"><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="meta-ads">Meta Ads</option><option value="linkedin">LinkedIn</option><option value="website">Sitio web</option><option value="email">Email</option><option value="internal">Material interno</option></select>
+              </label>
+              <label>17. ¿Qué formato necesitas?
+                <select id="format"><option value="square">Post cuadrado</option><option value="portrait">Post vertical</option><option value="story">Historia</option><option value="reel">Reel</option><option value="carousel">Carrusel</option><option value="banner">Banner</option><option value="html">HTML</option><option value="svg">SVG</option></select>
+              </label>
+              <label>18. ¿Qué estilo quieres transmitir?
+                <select id="tone"><option value="institutional">Institucional</option><option value="warm">Cercano</option><option value="youthful">Juvenil</option><option value="academic">Académico</option><option value="aspirational">Aspiracional</option><option value="commercial">Comercial</option><option value="urgent">Urgente</option></select>
+              </label>
+              <label>19. ¿Qué elementos visuales incluir o evitar?
+                <textarea id="visual_elements" rows="3" placeholder="Personas, aulas, viajes, ilustraciones…"></textarea>
+              </label>
+              <label>20. ¿Tienes una referencia visual?
+                <input type="url" id="visual_reference_url" placeholder="Pega un enlace opcional" />
+                <input type="file" id="visual_reference_file" accept="image/*,.pdf" />
+                <small>La usaremos como orientación y la adaptaremos a los lineamientos IH.</small>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button class="button button--primary" type="submit">Guardar brief y continuar <span>→</span></button>
+              <span id="form-status" class="form-status"></span>
+            </div>
+          </form>
+
+          <aside class="side-column">
+            <section class="card product-card">
+              <span class="step-label">Color autorizado</span>
+              <div id="product-preview" class="product-preview product-preview--empty">Selecciona un producto para ver su color.</div>
+            </section>
+            <section class="card admin-card" id="admin-panel" hidden>
+              <div class="card-heading"><div><span class="step-label">Panel administrador</span><h2>Control de plataforma</h2></div></div>
+              <div class="admin-stats"><div><strong id="brief-count">—</strong><span>briefs</span></div><div><strong id="logo-count">—</strong><span>logos subidos</span></div></div>
+              <p>Desde aquí podrás gestionar el catálogo, usuarios, permisos y las primeras 50 pruebas.</p>
+              <button id="refresh-admin" class="button button--secondary" type="button">Actualizar resumen</button>
+              <a class="button button--secondary" href="admin.html">Abrir panel completo</a>
+            </section>
+            <section class="card guidance-card">
+              <span class="step-label">Durante las primeras 50 pruebas</span>
+              <h2>Sin aprobación formal</h2>
+              <p>La pieza se genera, pasa por revisión de calidad y queda lista para evaluar. La aprobación humana se activará después.</p>
+            </section>
+          </aside>
+        </section>
+      </main>
+    </div>
+    <script src="scripts/panel.js"></script>
+  </body>
+</html>

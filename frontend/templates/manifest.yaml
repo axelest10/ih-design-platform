@@ -1,0 +1,37 @@
+# Catálogo de templates renderizables del MVP.
+# Este archivo describe implementaciones de composición; no agrega reglas nuevas de marca.
+version: "1.0.0"
+templates:
+  - key: square-v1
+    version: "1.0.0"
+    status: pilot
+    format: square
+    dimensions_px: [1080, 1080]
+    html_file: designs/square-v1.html
+    svg_file: designs/square-v1.svg
+    required_fields: [headline, body]
+    optional_fields: [eyebrow, cta, logo_name, background_token, accent_token, text_token]
+    approved_asset_required: true
+    review_flow: designs-preview-and-review
+  - key: story-v1
+    version: "1.0.0"
+    status: pilot
+    format: story
+    dimensions_px: [1080, 1920]
+    html_file: designs/story-v1.html
+    svg_file: designs/story-v1.svg
+    required_fields: [headline, body]
+    optional_fields: [eyebrow, cta, logo_name, background_token, accent_token, text_token]
+    approved_asset_required: true
+    review_flow: designs-preview-and-review
+  - key: portrait-v1
+    version: "1.0.0"
+    status: pilot
+    format: portrait
+    dimensions_px: [1080, 1350]
+    html_file: designs/portrait-v1.html
+    svg_file: designs/portrait-v1.svg
+    required_fields: [headline, body]
+    optional_fields: [eyebrow, cta, logo_name, background_token, accent_token, text_token]
+    approved_asset_required: true
+    review_flow: designs-preview-and-review

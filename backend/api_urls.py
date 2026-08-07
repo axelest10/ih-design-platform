@@ -1,13 +1,15 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from assets.views import OfficialAssetViewSet
-from branding.views import BrandGuidelineViewSet
-from briefs.views import DesignBriefViewSet
+from assets.views import ArtworkReferenceViewSet, OfficialAssetViewSet, UploadedLogoViewSet
+from branding.views import BrandGuidelineViewSet, brand_logos, brand_tokens, validate_color
+from briefs.views import BriefReferenceUploadViewSet, DesignBriefViewSet
 from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
 from common.views import health
 from designs.views import DesignViewSet
+from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
+from security.views import current_user
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -18,6 +20,25 @@ router.register("campaigns", CampaignViewSet, basename="campaigns")
 router.register("briefs", DesignBriefViewSet, basename="briefs")
 router.register("designs", DesignViewSet, basename="designs")
 router.register("assets", OfficialAssetViewSet, basename="assets")
+router.register("uploaded-logos", UploadedLogoViewSet, basename="uploaded-logo")
+router.register("artwork-references", ArtworkReferenceViewSet, basename="artwork-reference")
+router.register(
+    "brief-reference-uploads",
+    BriefReferenceUploadViewSet,
+    basename="brief-reference-upload",
+)
 router.register("validations", ValidationRunViewSet, basename="validations")
+router.register("material-types", MaterialTypeViewSet, basename="material-type")
+router.register("material-templates", MaterialTemplateViewSet, basename="material-template")
+router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
 
-urlpatterns = [path("health/", health), path("", include(router.urls))]
+urlpatterns = [
+    path("health/", health),
+    path("me/", current_user),
+    # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
+    # para no chocar con el patrón branding/<pk>/ del ModelViewSet.
+    path("branding/tokens/", brand_tokens),
+    path("branding/logos/", brand_logos),
+    path("branding/validate-color/", validate_color),
+    path("", include(router.urls)),
+]

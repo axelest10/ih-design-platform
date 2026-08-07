@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" role="img" aria-labelledby="title desc" data-template-key="story-v1" data-template-version="1.0.0">
+  <title id="title">{{ headline }}</title>
+  <desc id="desc">{{ body }}</desc>
+  <rect width="1080" height="1920" fill="{{ background_hex }}" />
+  <rect x="72" y="72" width="936" height="1776" rx="32" fill="{{ surface_hex }}" />
+  <image x="120" y="120" width="280" height="92" preserveAspectRatio="xMinYMid meet" href="{{ logo_data_uri }}" aria-label="{{ logo_alt }}" />
+  {{ additional_logos_svg }}
+  <text x="120" y="548" fill="{{ accent_hex }}" font-family="Open Sans, sans-serif" font-size="18" font-weight="600" letter-spacing="1.5" text-transform="uppercase">{{ eyebrow }}</text>
+  <text x="120" y="650" fill="{{ accent_hex }}" font-family="Aptos, Arial, sans-serif" font-size="72" font-weight="700">{{ headline }}</text>
+  <text x="120" y="780" fill="{{ text_hex }}" font-family="Open Sans, sans-serif" font-size="34" font-weight="400">{{ body }}</text>
+  <rect x="120" y="1040" width="300" height="72" rx="36" fill="{{ accent_hex }}" />
+  <text x="270" y="1086" text-anchor="middle" fill="{{ surface_hex }}" font-family="Aptos, Arial, sans-serif" font-size="24" font-weight="600">{{ cta }}</text>
+</svg>

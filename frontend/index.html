@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3B44B5" />
+    <meta
+      name="description"
+      content="IH Design Platform: composición y revisión de piezas de marca para LATAM."
+    />
+    <title>IH Design Platform — Inicio</title>
+    <link rel="stylesheet" href="styles/home.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+        <div class="sidebar__brand">
+          <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+          <span>Design Platform</span>
+        </div>
+
+        <div class="sidebar__section-label">Workspace</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item nav-item--active" href="#overview" aria-current="page">
+            <span class="nav-item__icon" aria-hidden="true">⌂</span>
+            <span>Inicio</span>
+          </a>
+          <a class="nav-item" href="#briefs">
+            <span class="nav-item__icon" aria-hidden="true">＋</span>
+            <span>Briefs</span>
+          </a>
+          <a class="nav-item" href="#catalog">
+            <span class="nav-item__icon" aria-hidden="true">▦</span>
+            <span>Catálogo de marca</span>
+          </a>
+          <a class="nav-item" href="#templates">
+            <span class="nav-item__icon" aria-hidden="true">◈</span>
+            <span>Plantillas</span>
+          </a>
+          <a class="nav-item" href="#review">
+            <span class="nav-item__icon" aria-hidden="true">✓</span>
+            <span>Revisiones</span>
+            <span class="nav-item__badge">1</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__section-label sidebar__section-label--secondary">Sistema</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item" href="#brand-rules">
+            <span class="nav-item__icon" aria-hidden="true">◌</span>
+            <span>Reglas de marca</span>
+          </a>
+          <a class="nav-item" href="#settings">
+            <span class="nav-item__icon" aria-hidden="true">⚙</span>
+            <span>Configuración</span>
+          </a>
+        </nav>
+
+        <div class="sidebar__footer">
+          <div class="sidebar__status-dot"></div>
+          <div>
+            <strong>Catálogo LATAM</strong>
+            <span>Sincronizado</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content" id="overview">
+        <header class="topbar">
+          <button class="icon-button topbar__menu" id="menu-toggle" type="button" aria-label="Abrir navegación">
+            ☰
+          </button>
+          <div class="breadcrumbs"><span>Workspace</span><strong>/</strong><span>Inicio</span></div>
+          <div class="topbar__actions">
+            <label class="country-select" for="country-filter">
+              <span class="country-select__globe" aria-hidden="true">◎</span>
+              <select id="country-filter" aria-label="Seleccionar cobertura">
+                <option value="all">LATAM · Todos</option>
+                <option value="MX">México</option>
+                <option value="CO">Colombia</option>
+                <option value="PE">Perú</option>
+                <option value="CL">Chile</option>
+              </select>
+            </label>
+            <button class="icon-button" type="button" aria-label="Notificaciones">
+              <span aria-hidden="true">♧</span>
+              <i class="notification-dot"></i>
+            </button>
+            <button class="profile-chip" type="button" aria-label="Abrir perfil de Axel Estrada">
+              <span class="profile-chip__avatar">AE</span>
+              <span class="profile-chip__name">Axel Estrada</span>
+              <span aria-hidden="true">⌄</span>
+            </button>
+          </div>
+        </header>
+
+        <div class="content-wrap">
+          <section class="hero-panel" aria-labelledby="hero-title">
+            <div class="hero-panel__copy">
+              <div class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span> Sistema LATAM activo</div>
+              <h1 id="hero-title">Crea piezas de marca con control.</h1>
+              <p>
+                Convierte un brief autorizado en una pieza lista para revisar, usando los logos,
+                colores y templates correctos para cada país.
+              </p>
+              <div class="hero-panel__actions">
+                <a class="button button--light" href="panel.html#briefs" data-toast="Abriendo el brief guiado">
+                  Crear nuevo brief <span aria-hidden="true">↗</span>
+                </a>
+                <a class="text-link text-link--light" href="#catalog">Explorar catálogo <span aria-hidden="true">→</span></a>
+              </div>
+            </div>
+            <div class="hero-panel__visual" aria-hidden="true">
+              <div class="hero-orbit hero-orbit--one"></div>
+              <div class="hero-orbit hero-orbit--two"></div>
+              <div class="hero-orbit hero-orbit--three"></div>
+              <div class="hero-card hero-card--back"></div>
+              <div class="hero-card hero-card--front">
+                <div class="hero-card__topline"><span></span><span></span><span></span></div>
+                <div class="hero-card__logo-block">
+                  <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="" />
+                </div>
+                <div class="hero-card__line hero-card__line--long"></div>
+                <div class="hero-card__line hero-card__line--medium"></div>
+                <div class="hero-card__button"></div>
+              </div>
+              <div class="hero-sticker hero-sticker--green">Brand<br />ready</div>
+              <div class="hero-sticker hero-sticker--yellow">LATAM</div>
+            </div>
+          </section>
+
+          <section class="metrics-grid" aria-label="Resumen del sistema">
+            <article class="metric-card">
+              <div class="metric-card__icon metric-card__icon--blue">▦</div>
+              <div><strong data-logo-count>78</strong><span>logos aprobados</span></div>
+              <a href="#catalog" aria-label="Ver logos aprobados">→</a>
+            </article>
+            <article class="metric-card">
+              <div class="metric-card__icon metric-card__icon--purple">◈</div>
+              <div><strong>1</strong><span>template piloto</span></div>
+              <a href="#templates" aria-label="Ver templates">→</a>
+            </article>
+            <article class="metric-card">
+              <div class="metric-card__icon metric-card__icon--orange">✓</div>
+              <div><strong>4</strong><span>países regionales</span></div>
+              <a href="#catalog" aria-label="Ver países regionales">→</a>
+            </article>
+            <article class="metric-card metric-card--status">
+              <div class="metric-card__icon metric-card__icon--green">●</div>
+              <div><strong>Activo</strong><span>catálogo LATAM</span></div>
+              <span class="metric-card__status">●</span>
+            </article>
+          </section>
+
+          <section class="section-heading" id="briefs">
+            <div>
+              <div class="eyebrow">Flujo de trabajo</div>
+              <h2>Empieza por lo que necesitas hoy</h2>
+            </div>
+            <a class="text-link" href="#templates">Ver todas las opciones <span aria-hidden="true">→</span></a>
+          </section>
+
+          <section class="quick-grid" aria-label="Accesos rápidos">
+            <a class="quick-card quick-card--primary" href="panel.html#briefs" data-toast="Abriendo el brief guiado">
+              <div class="quick-card__number">01</div>
+              <div class="quick-card__icon">＋</div>
+              <h3>Crear un brief</h3>
+              <p>Define audiencia, objetivo, mensaje y formato de la pieza.</p>
+              <span class="quick-card__link">Comenzar <span aria-hidden="true">↗</span></span>
+            </a>
+            <a class="quick-card" id="catalog" href="/api/v1/branding/logos/" data-toast="Abriendo el catálogo LATAM">
+              <div class="quick-card__number">02</div>
+              <div class="quick-card__icon">▦</div>
+              <h3>Explorar la marca</h3>
+              <p>Encuentra logos por país, marca, alcance y variante aprobada.</p>
+              <span class="quick-card__link">Abrir catálogo <span aria-hidden="true">↗</span></span>
+            </a>
+            <a class="quick-card" id="templates" href="#template-preview" data-toast="Preview de square-v1 disponible">
+              <div class="quick-card__number">03</div>
+              <div class="quick-card__icon">◈</div>
+              <h3>Elegir un template</h3>
+              <p>Empieza con square-v1 para crear una primera previsualización.</p>
+              <span class="quick-card__link">Ver template <span aria-hidden="true">↗</span></span>
+            </a>
+          </section>
+
+          <section class="lower-grid">
+            <article class="panel panel--review" id="review">
+              <div class="panel__header">
+                <div><div class="eyebrow">Revisión</div><h2>Tu próximo paso</h2></div>
+                <span class="status-pill">En progreso</span>
+              </div>
+              <div class="review-flow">
+                <div class="review-step review-step--done"><span>✓</span><div><strong>Catálogo LATAM</strong><small>Logos y variantes disponibles</small></div></div>
+                <div class="review-step review-step--active"><span>2</span><div><strong>Crear un brief</strong><small>Define la intención de la pieza</small></div></div>
+                <div class="review-step"><span>3</span><div><strong>Generar preview</strong><small>HTML y SVG con validación</small></div></div>
+                <div class="review-step"><span>4</span><div><strong>Enviar a revisión</strong><small>Aprueba o solicita cambios</small></div></div>
+              </div>
+              <a class="button button--dark" href="panel.html#briefs">Continuar <span aria-hidden="true">→</span></a>
+            </article>
+
+            <article class="panel panel--template" id="template-preview">
+              <div class="panel__header">
+                <div><div class="eyebrow">Template piloto</div><h2>square-v1</h2></div>
+                <span class="version-label">v1.0.0</span>
+              </div>
+              <div class="template-preview">
+                <div class="template-preview__top"></div>
+                <div class="template-preview__content">
+                  <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="" />
+                  <div class="template-preview__accent"></div>
+                  <div class="template-preview__line template-preview__line--wide"></div>
+                  <div class="template-preview__line template-preview__line--short"></div>
+                  <div class="template-preview__cta"></div>
+                </div>
+              </div>
+              <div class="panel__footer"><span>1080 × 1080 px</span><a class="text-link" href="#templates">Usar template <span aria-hidden="true">→</span></a></div>
+            </article>
+          </section>
+
+          <footer class="page-footer"><span>IH Design Platform</span><span>Brand system LATAM · v1.0</span></footer>
+        </div>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="scripts/home.js"></script>
+  </body>
+</html>

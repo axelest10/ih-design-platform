@@ -3,6 +3,9 @@ DJANGO_SETTINGS_MODULE = "config.settings"
 pythonpath = ["backend"]
 testpaths = ["tests"]
 addopts = "-ra"
+markers = [
+    "corporate_auth: test that explicitly enables the corporate access gate",
+]
 
 [tool.ruff]
 line-length = 100
