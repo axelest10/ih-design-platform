@@ -27,6 +27,7 @@ def school_kit_products(country: str = "", priority: list[str] | None = None) ->
                 "product_slug": product["product_slug"],
                 "canonical_name": product.get("canonical_name", product["product_slug"]),
                 "brand_scope": product.get("brand_scope", "core"),
+                "pillar": product.get("pillar"),
                 "status": product.get("status", "needs_confirmation"),
                 "needs_confirmation": product.get("needs_confirmation", False),
                 "priority": product["product_slug"] in priority,

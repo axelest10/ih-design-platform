@@ -1,8 +1,9 @@
 # Propuesta: modelo genérico de tipos de material
 
-Estado: diseño aprobado para la primera implementación. `materials/` ya contiene el modelo inicial
-de `MaterialType`, `MaterialTemplate`, `MaterialBundle` y `MaterialBundleItem`; `school-kit-v1` fue
-sembrado por migración. Las extensiones futuras siguen siendo propuesta.
+Estado: diseño aprobado para la primera implementación. `materials/` contiene el modelo inicial de
+`MaterialType`, `MaterialTemplate`, `MaterialBundle` y `MaterialBundleItem`; `school-kit-v1` fue
+sembrado por migración y ya puede generar piezas HTML/SVG por producto. Las extensiones futuras
+siguen siendo propuesta.
 
 ## Objetivo
 
@@ -64,6 +65,21 @@ Campos propuestos:
 
 Cada pieza del paquete conserva su propia versión, revisión y resultado de validación. Esto evita
 que aprobar una pieza apruebe automáticamente todas las demás.
+
+### Primer `school-kit` implementado
+
+Cada producto seleccionado genera tres briefs hijos y tres diseños independientes:
+
+- `hero-square` → `square-v1`;
+- `story-call-to-action` → `story-v1`;
+- `portrait-information` → `portrait-v1`.
+
+El endpoint `POST /api/v1/material-bundles/{id}/generate/` persiste el HTML y el SVG en la
+`DesignVersion`. La revisión de Claude usa exclusivamente `DesignVersion.claude_review_status` y
+`Design.claude-review`; no existe un estado paralelo para los paquetes. Cambridge, IELTS, MET, QC y
+otros logos se conservan como logos secundarios mediante `additional_logo_keys`, no como productos
+principales del brief. Los productos sin pilar/color confirmado quedan marcados como
+`needs_confirmation` en la validación de la pieza.
 
 ## Encaje con el modelo actual
 
@@ -146,7 +162,7 @@ Cada migración debe incluir pruebas de reversibilidad lógica, no borrar versio
 - procedencia, `needs_review` y guardrails: una referencia inspira, pero no convierte una regla
   individual en regla oficial.
 
-## Decisiones que deben aprobarse antes de implementar
+## Decisiones que deben aprobarse antes de extender el catálogo genérico
 
 - si una paquetería se modelará como `MaterialBundle` o solo como un conjunto de briefs relacionados;
 - qué tipos de material iniciales entran en el primer catálogo;
@@ -161,4 +177,5 @@ Cada migración debe incluir pruebas de reversibilidad lógica, no borrar versio
 - no crea productos comerciales nuevos;
 - la primera definición `school-kit` reutiliza todos los productos activos del catálogo y prioriza
   `qc-2026` y `teacher-training-certifications`, confirmado por Axel el 2026-08-08;
-- no modifica `brand/`, `backend/assets/`, `backend/briefs/services/options.py` ni el manifest.
+- no modifica los archivos generados de `brand/`; consume el catálogo y los colores autorizados
+  mediante los loaders existentes.

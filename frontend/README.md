@@ -5,6 +5,8 @@ visual. Los templates sociales reutilizables ya están versionados en:
 
 - `index.html` — Home responsive del workspace LATAM.
 - `panel.html` — brief guiado, carga de logos y paneles según rol.
+- `school-kit.html` — creación, edición, generación y registro de revisión por pieza para la
+  paquetería de colegios.
 - `styles/home.css` y `scripts/home.js` — sistema visual e interacción básica de la Home.
 - `styles/panel.css` y `scripts/panel.js` — formulario de 20 preguntas conectado a la API.
 
@@ -29,6 +31,11 @@ redistribuye sus archivos `.ttf`.
    cambia el diseño a `self_review` dentro del modo de primeras 50 pruebas.
 4. `POST /api/v1/designs/{id}/claude-review/` guarda el resultado `pass|needs_changes` sin
    aprobar humanamente la pieza. La aprobación formal queda para después de las 50 pruebas.
+
+La vista `school-kit.html` crea un paquete, permite seleccionar varios productos y genera los tres
+entregables iniciales por producto (`square-v1`, `story-v1`, `portrait-v1`). Los colores de producto
+con pilar documentado se resuelven desde `brand/product-colors/authorized-colors.yaml`; un producto
+sin color confirmado queda señalado para revisión, no recibe una paleta inventada.
 
 El renderizador rechaza templates desconocidos, logos no aprobados, colores fuera de tokens, texto
 crítico vacío o demasiado largo, desbordamiento de ancho, colisiones, salida de zona segura y

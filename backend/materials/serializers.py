@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from .models import MaterialBundle, MaterialBundleItem, MaterialTemplate, MaterialType
 from .services.catalog import school_kit_products
+from .services.school_kit import school_kit_deliverables
 
 
 class MaterialTemplateSerializer(serializers.ModelSerializer):
@@ -12,10 +13,26 @@ class MaterialTemplateSerializer(serializers.ModelSerializer):
 
 class MaterialTypeSerializer(serializers.ModelSerializer):
     available_products = serializers.SerializerMethodField()
+    default_deliverables = serializers.SerializerMethodField()
 
     class Meta:
         model = MaterialType
-        fields = "__all__"
+        fields = (
+            "id",
+            "slug",
+            "name",
+            "renderer_family",
+            "channel",
+            "schema_version",
+            "supported_formats",
+            "priority_product_slugs",
+            "product_scope",
+            "active",
+            "created_at",
+            "updated_at",
+            "available_products",
+            "default_deliverables",
+        )
 
     def get_available_products(self, obj):
         if obj.slug != "school-kit":
@@ -24,11 +41,32 @@ class MaterialTypeSerializer(serializers.ModelSerializer):
         country = request.query_params.get("country", "") if request else ""
         return school_kit_products(country=country, priority=obj.priority_product_slugs)
 
+    def get_default_deliverables(self, obj):
+        return school_kit_deliverables() if obj.slug == "school-kit" else []
+
 
 class MaterialBundleItemSerializer(serializers.ModelSerializer):
+    design = serializers.SerializerMethodField()
+
     class Meta:
         model = MaterialBundleItem
-        fields = "__all__"
+        fields = ("id", "bundle", "brief", "deliverable_key", "sort_order", "design")
+
+    def get_design(self, obj):
+        design = getattr(obj.brief, "design", None)
+        if design is None:
+            return None
+        latest_version = design.versions.first()
+        return {
+            "id": design.pk,
+            "status": design.status,
+            "test_number": design.test_number,
+            "latest_version": latest_version.number if latest_version else None,
+            "claude_review_status": (
+                latest_version.claude_review_status if latest_version else None
+            ),
+            "claude_review": latest_version.claude_review if latest_version else {},
+        }
 
 
 class MaterialBundleSerializer(serializers.ModelSerializer):

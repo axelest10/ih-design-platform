@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Paquetería escolar · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/school-kit.css" />
+  </head>
+  <body>
+    <header class="kit-header">
+      <a class="brand" href="index.html">
+        <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+        <span>Design Platform</span>
+      </a>
+      <a href="panel.html">Volver al brief</a>
+    </header>
+    <main class="kit-main">
+      <section class="intro">
+        <p class="eyebrow">School-kit</p>
+        <h1>Arma una paquetería para colegios.</h1>
+        <p>Elige los productos que reutilizará el paquete, define un mensaje común y genera tres piezas por producto.</p>
+      </section>
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
+      <section class="layout">
+        <form id="kit-form" class="card">
+          <div class="card-heading"><div><span class="eyebrow">01 · Brief del paquete</span><h2>Información compartida</h2></div><button id="reset" class="button button--quiet" type="button">Nuevo</button></div>
+          <div class="form-grid">
+            <label>Nombre del paquete *<input id="name" required placeholder="Ej. Campaña colegios 2026" /></label>
+            <label>País o mercado *<select id="country" required></select></label>
+            <label>Logo IH principal *<select id="brand_logo_key" required></select><small>Debe corresponder al país seleccionado.</small></label>
+            <label>Audiencia *<input id="audience" required placeholder="Colegios con convenio institucional" /></label>
+            <label>Objetivo *<input id="objective" required placeholder="Comunicar la propuesta para colegios" /></label>
+            <label>Eyebrow opcional<input id="eyebrow_text" placeholder="International House" /></label>
+            <label class="full">Titular principal *<input id="headline" required placeholder="Una alianza que impulsa a tu comunidad educativa" /></label>
+            <label class="full">Mensaje de apoyo *<textarea id="body" required rows="3"></textarea></label>
+            <label>CTA *<input id="cta" required placeholder="Conoce más" /></label>
+            <label>Canal<input id="channel" value="instagram" /></label>
+          </div>
+
+          <div class="divider">Productos reutilizados</div>
+          <p class="hint">Cada producto seleccionado recibirá las tres piezas iniciales. Los productos con color pendiente quedan identificados para revisión.</p>
+          <div id="products" class="check-grid"></div>
+
+          <div class="divider">Logos adicionales</div>
+          <div id="additional-logos" class="check-grid"></div>
+
+          <div class="actions">
+            <button class="button button--secondary" type="submit">Guardar paquete</button>
+            <button id="generate" class="button button--primary" type="button">Guardar y generar piezas</button>
+            <span id="form-status" class="status-text"></span>
+          </div>
+        </form>
+
+        <aside class="side-column">
+          <section class="card guidance">
+            <span class="eyebrow">Contenido inicial</span>
+            <h2>3 piezas por producto</h2>
+            <ul id="deliverables"></ul>
+            <p>La revisión de Claude se registra por pieza en su propia DesignVersion.</p>
+          </section>
+          <section class="card">
+            <div class="card-heading"><div><span class="eyebrow">02 · Paquetes guardados</span><h2>Producción</h2></div><button id="refresh" class="button button--quiet" type="button">Actualizar</button></div>
+            <div id="bundles" class="bundle-list"><p class="muted">Cargando paquetes…</p></div>
+          </section>
+        </aside>
+      </section>
+    </main>
+    <script src="scripts/school-kit.js"></script>
+  </body>
+</html>

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import base64
 import html
+import json
 import mimetypes
 from dataclasses import dataclass
 from pathlib import Path
@@ -95,6 +96,22 @@ def _color_hex(token: str, *, default: str) -> str:
     if value is None:
         raise RenderValidationError(f"Color token '{token}' no está autorizado.")
     return value
+
+
+def _product_colors(product_slug: str) -> dict[str, Any] | None:
+    """Resuelve solo colores de producto documentados; devuelve None si no hay pilar/color."""
+    if not product_slug:
+        return None
+    catalog_path = Path(settings.BASE_DIR) / "brand" / "knowledge" / "product-catalog.json"
+    catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+    product = next(
+        (item for item in catalog.get("products", []) if item.get("product_slug") == product_slug),
+        None,
+    )
+    pillar = product.get("pillar") if product else None
+    if not pillar:
+        return None
+    return loader.load_product_colors().get("pillars", {}).get(pillar)
 
 
 def _approved_logo(logo_name: str) -> tuple[dict[str, Any], Path]:
@@ -254,19 +271,24 @@ def _validate_template_layout(
     }
 
 
-def _validate_contrast(accent_hex: str, text_hex: str, surface_hex: str) -> dict:
+def _validate_contrast(
+    accent_hex: str, text_hex: str, surface_hex: str, *, allow_warnings: bool = False
+) -> dict:
     pairs = [
         ("accent_on_surface", accent_hex, surface_hex),
         ("text_on_surface", text_hex, surface_hex),
         ("surface_on_accent", surface_hex, accent_hex),
     ]
     results = []
+    has_failures = False
     for name, foreground, background in pairs:
         ratio = round(_contrast_ratio(foreground, background), 2)
         if ratio < 4.5:
-            raise RenderValidationError(
-                f"El contraste '{name}' no alcanza el mínimo 4.5:1 ({ratio}:1)."
-            )
+            if not allow_warnings:
+                raise RenderValidationError(
+                    f"El contraste '{name}' no alcanza el mínimo 4.5:1 ({ratio}:1)."
+                )
+            has_failures = True
         results.append(
             {
                 "name": name,
@@ -274,10 +296,10 @@ def _validate_contrast(accent_hex: str, text_hex: str, surface_hex: str) -> dict
                 "background": background,
                 "ratio": ratio,
                 "minimum": 4.5,
-                "status": "passed",
+                "status": "needs_changes" if ratio < 4.5 else "passed",
             }
         )
-    return {"status": "passed", "pairs": results}
+    return {"status": "needs_changes" if has_failures else "passed", "pairs": results}
 
 
 def render_preview(payload: dict[str, Any]) -> RenderedPreview:
@@ -296,15 +318,30 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
         additional_logo_keys
     )
 
+    product_slug = str(payload.get("product_slug") or "")
+    product_colors = _product_colors(product_slug)
     background_token = str(payload.get("background_token") or "knowledge")
     accent_token = str(payload.get("accent_token") or "knowledge")
     text_token = str(payload.get("text_token") or "dark_navy")
-    background_hex = _color_hex(background_token, default="knowledge")
-    accent_hex = _color_hex(accent_token, default="knowledge")
+    background_hex = (
+        product_colors["background_hex"]
+        if product_colors
+        else _color_hex(background_token, default="knowledge")
+    )
+    accent_hex = (
+        product_colors.get("cta", {}).get("background_hex", product_colors["primary_hex"])
+        if product_colors
+        else _color_hex(accent_token, default="knowledge")
+    )
     text_hex = _color_hex(text_token, default="dark_navy")
     surface_hex = _color_hex("white", default="white")
     layout_summary = _validate_template_layout(template_key, headline, body, eyebrow, cta)
-    contrast_summary = _validate_contrast(accent_hex, text_hex, surface_hex)
+    contrast_summary = _validate_contrast(
+        accent_hex,
+        text_hex,
+        surface_hex,
+        allow_warnings=bool(payload.get("_allow_validation_warnings")),
+    )
     values = {
         "template_key": _escape(template_key),
         "background_hex": background_hex,
@@ -327,15 +364,25 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
         svg_template = svg_template.replace("{{ " + key + " }}", value)
 
     validation_summary = {
-        "status": "passed",
+        "status": "needs_changes" if contrast_summary["status"] == "needs_changes" else "passed",
         "checks": [
             {"name": "template_registered", "status": "passed"},
             {"name": "logo_approved", "status": "passed", "asset": logo_name},
             {"name": "brand_colors_authorized", "status": "passed"},
+            {
+                "name": "product_color",
+                "status": "passed" if product_colors else "needs_confirmation",
+                "product_slug": product_slug or None,
+                "source": (
+                    "authorized-colors.yaml"
+                    if product_colors
+                    else "no_pillar_color_in_catalog"
+                ),
+            },
             {"name": "critical_text_present", "status": "passed"},
             {"name": "safe_area", "status": "passed", **layout_summary},
             {"name": "text_layout", "status": "passed", "items": layout_summary["text_layout"]},
-            {"name": "contrast", "status": "passed", **contrast_summary},
+            {"name": "contrast", "status": contrast_summary["status"], **contrast_summary},
             {"name": "html_and_svg_generated", "status": "passed"},
             {
                 "name": "dual_branding_spacing",
@@ -348,6 +395,7 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
     render_data = {
         "template_key": template_key,
         "template_version": TEMPLATE_VERSION,
+        "product_slug": product_slug,
         "headline": headline,
         "body": body,
         "eyebrow": eyebrow,

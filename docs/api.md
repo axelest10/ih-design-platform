@@ -35,9 +35,13 @@ hasta desactivar el modo.
   `country`, `media_type`, `format`, `orientation`, `tag` y `limit`.
 - `GET /me/` — perfil, roles, paneles disponibles y acceso regional del usuario actual.
 - `GET /material-types/` — tipos de material activos; `school-kit` expone todos los productos
-  activos del catálogo y prioriza `qc-2026` y `teacher-training-certifications`.
-- `GET|POST /material-bundles/` — paquetes de materiales con productos del catálogo y briefs hijos
-  futuros; crear requiere `platform_admin`, `marketing` o `designer`.
+  activos del catálogo, prioriza `qc-2026` y `teacher-training-certifications` y declara tres
+  entregables iniciales (`square-v1`, `story-v1`, `portrait-v1`).
+- `GET|POST /material-bundles/` — paquetes de materiales con productos del catálogo y briefs hijos;
+  crear requiere `platform_admin`, `marketing` o `designer`.
+- `PATCH /material-bundles/{id}/` — edita un paquete antes de generar sus piezas.
+- `POST /material-bundles/{id}/generate/` — crea un brief, un design y una DesignVersion HTML/SVG
+  por combinación producto/entregable; cada pieza queda disponible para revisión de Claude.
 - `GET /material-templates/` — templates versionados asociados a un tipo de material.
 - `POST /artwork-references/{id}/approve/` — aprueba una referencia como reviewer/admin.
 - `POST /artwork-references/{id}/reject/` — rechaza una referencia como reviewer/admin.

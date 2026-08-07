@@ -11,6 +11,11 @@ urlpatterns = [path("api/v1/", include("api_urls"))]
 urlpatterns += [
     path("", TemplateView.as_view(template_name="index.html"), name="frontend-home"),
     path("panel.html", TemplateView.as_view(template_name="panel.html"), name="frontend-panel"),
+    path(
+        "school-kit.html",
+        TemplateView.as_view(template_name="school-kit.html"),
+        name="frontend-school-kit",
+    ),
     path("admin.html", TemplateView.as_view(template_name="admin.html"), name="frontend-admin"),
     path(
         "styles/<path:path>",
