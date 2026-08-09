@@ -149,10 +149,15 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 DESIGN_TEST_MODE = os.getenv("DESIGN_TEST_MODE", "1") == "1"
 DESIGN_TEST_LIMIT = int(os.getenv("DESIGN_TEST_LIMIT", "50"))
 
-if os.getenv("AWS_STORAGE_BUCKET_NAME"):
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "").strip()
+if AWS_STORAGE_BUCKET_NAME:
     STORAGES = {
         "default": {"BACKEND": "storages.backends.s3.S3Storage"},
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
     AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
+    # Vacío = AWS S3 real (boto3 resuelve el endpoint por región); con valor = proveedor
+    # S3-compatible (Backblaze, DigitalOcean Spaces, etc.).
     AWS_S3_ENDPOINT_URL = os.getenv("AWS_S3_ENDPOINT_URL") or None
+    AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
