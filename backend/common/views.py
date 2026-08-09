@@ -1,9 +1,8 @@
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+from django.http import JsonResponse
+from django.views.decorators.http import require_GET
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
+@require_GET
 def health(request):
-    return Response({"status": "ok", "service": "ih-design-platform"})
+    """Liveness probe independiente de autenticación, base de datos y DRF."""
+    return JsonResponse({"status": "ok", "service": "ih-design-platform"})

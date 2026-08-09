@@ -16,6 +16,9 @@ ALLOWED_HOSTS = [
     for host in os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
     if host.strip()
 ]
+RAILWAY_HEALTHCHECK_HOST = "healthcheck.railway.app"
+if RAILWAY_HEALTHCHECK_HOST not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RAILWAY_HEALTHCHECK_HOST)
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",

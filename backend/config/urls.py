@@ -3,10 +3,15 @@ from django.urls import include, path
 from django.views.generic import TemplateView
 from django.views.static import serve
 
+from common.views import health
+
 frontend_root = settings.BASE_DIR / "frontend"
 brand_assets_root = settings.BASE_DIR / "brand" / "assets"
 
-urlpatterns = [path("api/v1/", include("api_urls"))]
+urlpatterns = [
+    path("api/v1/health/", health, name="health"),
+    path("api/v1/", include("api_urls")),
+]
 
 urlpatterns += [
     path("", TemplateView.as_view(template_name="index.html"), name="frontend-home"),

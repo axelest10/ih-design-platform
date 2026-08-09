@@ -6,7 +6,6 @@ from branding.views import BrandGuidelineViewSet, brand_logos, brand_tokens, val
 from briefs.views import BriefReferenceUploadViewSet, DesignBriefViewSet
 from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
-from common.views import health
 from designs.views import DesignViewSet
 from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
 from security.views import current_user
@@ -33,7 +32,6 @@ router.register("material-templates", MaterialTemplateViewSet, basename="materia
 router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
 
 urlpatterns = [
-    path("health/", health),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.
