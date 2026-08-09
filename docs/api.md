@@ -41,7 +41,9 @@ hasta desactivar el modo.
   crear requiere `platform_admin`, `marketing` o `designer`.
 - `PATCH /material-bundles/{id}/` — edita un paquete antes de generar sus piezas.
 - `POST /material-bundles/{id}/generate/` — crea un brief, un design y una DesignVersion HTML/SVG
-  por combinación producto/entregable; cada pieza queda disponible para revisión de Claude.
+  por combinación producto/entregable y dispara su revisión visual mediante `ai.services`. Hasta
+  confirmar la integración real con Claude, el stub conserva `pending` y registra
+  `integration_status=needs_confirmation` dentro de `claude_review`.
 - `GET /material-templates/` — templates versionados asociados a un tipo de material.
 - `POST /artwork-references/{id}/approve/` — aprueba una referencia como reviewer/admin.
 - `POST /artwork-references/{id}/reject/` — rechaza una referencia como reviewer/admin.

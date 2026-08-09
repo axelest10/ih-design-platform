@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import Max
 
+from ai.services import VisualReviewProvider, run_automatic_design_review
 from briefs.models import DesignBrief
 from briefs.services.options import validate_brief_logo_access, validate_uploaded_logo_access
 from designs.models import Design, DesignVersion
@@ -117,7 +118,12 @@ def _required_context(context: dict[str, Any], product_slug: str) -> dict[str, s
 
 
 @transaction.atomic
-def generate_school_kit(bundle, *, user=None) -> list[Any]:
+def generate_school_kit(
+    bundle,
+    *,
+    user=None,
+    review_provider: VisualReviewProvider | None = None,
+) -> list[Any]:
     """Crea briefs, diseños, versiones HTML/SVG y estados de revisión por pieza."""
     if bundle.material_type.slug != "school-kit":
         raise SchoolKitGenerationError("Solo se puede generar este paquete desde un school-kit.")
@@ -209,7 +215,7 @@ def generate_school_kit(bundle, *, user=None) -> list[Any]:
             except RenderValidationError as exc:
                 raise SchoolKitGenerationError(f"{title}: {exc}") from exc
 
-            DesignVersion.objects.create(
+            version = DesignVersion.objects.create(
                 design=design,
                 number=1,
                 template_key=rendered.template_key,
@@ -222,6 +228,7 @@ def generate_school_kit(bundle, *, user=None) -> list[Any]:
                 asset_refs=rendered.asset_refs,
                 validation_summary=rendered.validation_summary,
             )
+            run_automatic_design_review(version, provider=review_provider)
             items.append(
                 MaterialBundleItem.objects.create(
                     bundle=bundle,

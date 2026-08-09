@@ -133,7 +133,10 @@
         const design = item.design;
         row.innerHTML = `<div><strong></strong><span></span></div>`;
         row.querySelector("strong").textContent = item.deliverable_key;
-        row.querySelector("span").textContent = design ? `${design.status} · Claude: ${design.claude_review_status || "pending"}` : "Sin diseño";
+        const integrationStatus = design?.claude_review?.integration_status;
+        row.querySelector("span").textContent = design
+          ? `${design.status} · Claude: ${design.claude_review_status || "pending"}${integrationStatus ? ` · Integración: ${integrationStatus}` : ""}`
+          : "Sin diseño";
         if (design) {
           const controls = document.createElement("div");
           controls.className = "review-controls";

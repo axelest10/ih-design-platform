@@ -1,7 +1,8 @@
 import pytest
 from rest_framework.test import APIClient
 
-from designs.models import DesignVersion
+from ai.services import VisualReviewResult, run_automatic_design_review
+from designs.models import Design, DesignVersion
 
 
 @pytest.mark.django_db
@@ -109,6 +110,14 @@ def test_school_kit_generation_creates_three_rendered_pieces_per_product():
     assert len(generated["items"]) == 3
     assert {item["design"]["status"] for item in generated["items"]} == {"self_review"}
     assert {item["design"]["claude_review_status"] for item in generated["items"]} == {"pending"}
+    assert {
+        item["design"]["claude_review"]["integration_status"]
+        for item in generated["items"]
+    } == {"needs_confirmation"}
+    assert {
+        item["design"]["claude_review"]["provider"] for item in generated["items"]
+    } == {"claude-stub"}
+    assert all(item["design"]["claude_review"]["automated"] for item in generated["items"])
     version = DesignVersion.objects.get(design_id=generated["items"][0]["design"]["id"])
     assert version.render_data["product_slug"] == "general-english"
     assert version.render_data["html"].startswith("<!doctype html>")
@@ -182,9 +191,11 @@ def test_school_kit_piece_uses_existing_claude_review_status():
         },
         format="json",
     )
-    generated = client.post(
+    generated_response = client.post(
         f"/api/v1/material-bundles/{bundle.json()['id']}/generate/", format="json"
-    ).json()
+    )
+    assert generated_response.status_code == 201, generated_response.json()
+    generated = generated_response.json()
     design_id = generated["items"][0]["design"]["id"]
 
     review = client.post(
@@ -196,3 +207,71 @@ def test_school_kit_piece_uses_existing_claude_review_status():
     assert review.status_code == 200
     assert review.json()["claude_review_status"] == "pass"
     assert review.json()["status"] == "test_ready"
+    version = DesignVersion.objects.get(design_id=design_id)
+    assert version.claude_review["provider"] == "claude-manual"
+    assert version.claude_review["automated"] is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("decision", "expected_design_status"),
+    [
+        ("pass", Design.Status.TEST_READY),
+        ("needs_changes", Design.Status.REVISION_REQUESTED),
+    ],
+)
+def test_automatic_review_provider_reuses_design_version_status(
+    decision, expected_design_status
+):
+    client = APIClient()
+    material_type = next(
+        item
+        for item in client.get("/api/v1/material-types/").json()
+        if item["slug"] == "school-kit"
+    )
+    bundle = client.post(
+        "/api/v1/material-bundles/",
+        {
+            "material_type": material_type["id"],
+            "name": "Paquetería revisión automática",
+            "country": "MX",
+            "product_slugs": ["general-english"],
+            "brief_context": {
+                "brand_logo_key": "ih-mexico-classic-png",
+                "headline": "Titular automático",
+                "body": "Mensaje de prueba.",
+                "cta": "Conoce más",
+                "audience": "Colegios",
+                "objective": "Probar revisión automática",
+            },
+        },
+        format="json",
+    )
+    generated_response = client.post(
+        f"/api/v1/material-bundles/{bundle.json()['id']}/generate/", format="json"
+    )
+    assert generated_response.status_code == 201, generated_response.json()
+    generated = generated_response.json()
+    version = DesignVersion.objects.get(
+        design_id=generated["items"][0]["design"]["id"]
+    )
+
+    class TestProvider:
+        name = "test-claude"
+
+        def review(self, request):
+            assert request.render_data["html"].startswith("<!doctype html>")
+            assert request.render_data["svg"].startswith("<svg")
+            return VisualReviewResult(
+                decision=decision,
+                report={"summary": "Resultado controlado de prueba."},
+            )
+
+    run_automatic_design_review(version, provider=TestProvider())
+
+    version.refresh_from_db()
+    version.design.refresh_from_db()
+    assert version.claude_review_status == decision
+    assert version.claude_review["provider"] == "test-claude"
+    assert version.claude_review["automated"] is True
+    assert version.design.status == expected_design_status

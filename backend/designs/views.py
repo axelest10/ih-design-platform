@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from ai.services import persist_design_review
 from security.permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
@@ -155,15 +156,14 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         if version is None:
             return Response({"detail": "No existe una versiÃ³n para revisar."}, status=404)
 
-        version.claude_review_status = decision
-        version.claude_review = request.data.get("report", {})
-        version.save(update_fields=["claude_review_status", "claude_review"])
-        design.status = (
-            Design.Status.TEST_READY
-            if decision == "pass"
-            else Design.Status.REVISION_REQUESTED
+        persist_design_review(
+            version,
+            decision=decision,
+            report=request.data.get("report", {}),
+            provider="claude-manual",
+            automated=False,
         )
-        design.save(update_fields=["status", "updated_at"])
+        design.refresh_from_db(fields=["status", "updated_at"])
         return Response(
             {
                 "design_id": str(design.pk),
