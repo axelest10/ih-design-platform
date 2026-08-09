@@ -1,8 +1,9 @@
 # Preparación de despliegue
 
-Estado actual: no hay un entorno desplegado. El repositorio sigue operando localmente con
-SQLite; `infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para desarrollo. Esta
-guía deja preparada la configuración, pero no crea cuentas ni despliega servicios.
+Estado actual: el staging de Railway está desplegado y su endpoint de salud fue confirmado el
+2026-08-09. El repositorio conserva SQLite para desarrollo local;
+`infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para pruebas locales de la
+arquitectura de servicios.
 
 ## Base técnica actual
 
@@ -58,8 +59,11 @@ login de Microsoft/Google.
 El comando de arranque es:
 
 ```text
-gunicorn config.wsgi:application --bind 0.0.0.0:8000
+gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}
 ```
+
+Railway inyecta `PORT`; `8000` es únicamente el fallback local. El comando completo del
+Dockerfile también fija un worker, timeout de 120 segundos y envía access/error logs a stdout.
 
 Antes del primer arranque se debe ejecutar, como pre-deploy o job controlado:
 
@@ -85,12 +89,71 @@ menor fricción con el Dockerfile y los servicios administrados, Render si se pr
 claridad web, worker y comandos pre-deploy. Fly.io lo dejaría para una necesidad concreta de región
 o control de infraestructura.
 
+## Troubleshooting: healthcheck correcto pero dominio público sin respuesta
+
+### Incidente de Railway del 2026-08-09
+
+El primer despliegue de staging necesitó resolver tres problemas diferentes, en este orden:
+
+1. Gunicorn escuchaba siempre en `8000`, aunque Railway inyecta un valor dinámico en `PORT`. Se
+   corrigió en `infrastructure/Dockerfile` usando `${PORT:-8000}` (commit `a5f4f85`).
+2. El healthcheck interno usa `Host: healthcheck.railway.app`; Django rechazaba ese hostname porque
+   no estaba en `ALLOWED_HOSTS`. Se agregó como host técnico permitido en
+   `backend/config/settings.py` (commit `a5f4f85`).
+3. Después de esas correcciones, Railway marcaba el deploy como `ACTIVE`, pero el dominio público
+   devolvía `502`. El dominio conservaba manualmente el target port `8000`, mientras el log del
+   deploy mostraba `Listening at: http://0.0.0.0:8080`. El healthcheck podía llegar al puerto
+   dinámico correcto, pero el proxy público seguía enviando tráfico a `8000`. Se corrigió en
+   **Settings > Networking** actualizando el target port del dominio a `8080`; fue un cambio de
+   configuración en Railway, no de código.
+
+Señales que permiten reconocer esta combinación:
+
+- el deploy aparece como `ACTIVE`, pero el dominio público responde `502`;
+- los Network Logs públicos no muestran requests que alcancen la aplicación;
+- el deploy log sí muestra a Gunicorn vivo y declara
+  `Listening at: http://0.0.0.0:<puerto-real>`;
+- el target port guardado en el dominio no coincide con `<puerto-real>`.
+
+Para corregirlo, revisar el puerto reportado por Gunicorn en **cada deploy** y confirmar que el
+target port de todos los dominios públicos apunta al mismo valor. No asumir que una configuración
+manual anterior sigue sincronizada con el `PORT` asignado actualmente. Railway documenta este caso
+en [Application Failed to Respond](https://docs.railway.com/networking/troubleshooting/application-failed-to-respond).
+
+### Smoke test del despliegue real
+
+`tests/smoke_deployment.py` es un script standalone porque depende de red y de un entorno real. Su
+nombre evita que pytest lo recolecte como parte de la suite local/CI. No contiene dominios
+hardcodeados: exige `SMOKE_TEST_BASE_URL`, solicita `/api/v1/health/` y comprueba status `200` y el
+JSON exacto esperado.
+
+PowerShell:
+
+```powershell
+$env:SMOKE_TEST_BASE_URL="https://ih-design-platform-production.up.railway.app"
+python tests/smoke_deployment.py
+```
+
+Shell compatible con POSIX:
+
+```bash
+SMOKE_TEST_BASE_URL=https://ih-design-platform-production.up.railway.app \
+  python tests/smoke_deployment.py
+```
+
+Resultado exitoso esperado:
+
+```text
+OK 200 https://<dominio>/api/v1/health/ {'status': 'ok', 'service': 'ih-design-platform'}
+```
+
 ## Checklist antes de desplegar
 
 1. Crear el proyecto y los servicios administrados de PostgreSQL/Redis en el proveedor elegido.
 2. Configurar las variables anteriores fuera del repositorio.
 3. Confirmar el proveedor de login corporativo y el dominio de staging.
 4. Configurar almacenamiento S3-compatible para logos, referencias y futuras exportaciones.
-5. Ejecutar migraciones, `check --deploy` y smoke tests contra `/api/v1/health/`.
+5. Ejecutar migraciones, `check --deploy` y `tests/smoke_deployment.py` contra el dominio real
+   antes de iniciar o reanudar el lote de pruebas.
 6. Crear el primer usuario `platform_admin` de forma controlada.
 7. Recién entonces iniciar el lote de 50 pruebas.
