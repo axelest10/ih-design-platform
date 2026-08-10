@@ -2,7 +2,7 @@ import pytest
 from rest_framework.test import APIClient
 
 from briefs.models import DesignBrief
-from designs.models import Design
+from designs.models import Design, DesignVersion
 from designs.services.renderer import RenderValidationError, render_preview
 
 
@@ -123,6 +123,9 @@ def test_preview_versions_design_and_moves_it_to_review():
     assert payload["preview"]["html"].startswith("<!doctype html>")
     assert payload["preview"]["svg"].startswith("<svg")
     assert design.versions.count() == 1
+    version = DesignVersion.objects.get(design=design)
+    assert version.render_data["html"].startswith("<!doctype html>")
+    assert version.render_data["svg"].startswith("<svg")
 
 
 @pytest.mark.django_db

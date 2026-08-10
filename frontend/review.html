@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Revisión de diseños · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
+    <link rel="stylesheet" href="styles/panel.css" />
+    <link rel="stylesheet" href="styles/review.css" />
+  </head>
+  <body>
+    <div class="panel-shell">
+      <header class="panel-header">
+        <a href="index.html" class="brand-lockup"><img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" /><span>Design Platform</span></a>
+        <div class="user-context"><span id="reviewer-label">Validando acceso…</span><a class="role-pill" href="panel.html">Volver al panel</a></div>
+      </header>
+      <main class="panel-main review-main">
+        <section class="intro-block"><p class="eyebrow">Flujo de revisión</p><h1>Diseños listos para revisar.</h1><p>Consulta la pieza más reciente y conserva la retroalimentación dentro del mismo hilo.</p></section>
+        <div id="review-notice" class="notice" role="status"></div>
+        <section id="review-access-denied" class="card" hidden><h2>Acceso restringido</h2><p>Necesitas capacidad de revisión para consultar esta página.</p></section>
+        <section id="review-list" class="review-list" aria-live="polite"></section>
+      </main>
+    </div>
+    <script src="scripts/review.js"></script>
+  </body>
+</html>

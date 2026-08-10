@@ -153,6 +153,7 @@
     setBriefFormDisabled(false);
     $("user-label").textContent = user.email || "Sesión local";
     $("role-label").textContent = user.is_admin ? "Administrador" : (user.roles[0] || "Usuario");
+    if (user.can_review) $("review-panel").hidden = false;
     if (user.is_admin) $("admin-panel").hidden = false;
     return fetch("/api/v1/briefs/").then(json);
   }).then((briefs) => {

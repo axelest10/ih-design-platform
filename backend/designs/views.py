@@ -14,13 +14,15 @@ from security.permissions import (
     RoleAwareViewSet,
 )
 
-from .models import Design, DesignVersion
-from .serializers import DesignSerializer
+from .models import Design, DesignReviewComment, DesignVersion
+from .serializers import DesignReviewCommentSerializer, DesignSerializer
 from .services.renderer import RenderValidationError, render_preview
 
 
 class DesignViewSet(RoleAwareViewSet, ModelViewSet):
-    queryset = Design.objects.prefetch_related("versions").all()
+    queryset = Design.objects.select_related("brief", "approved_version").prefetch_related(
+        "versions"
+    )
     serializer_class = DesignSerializer
     role_rules = {
         "create": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
@@ -30,6 +32,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         "preview": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "claude_review": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "comments": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
     }
 
     @action(detail=True, methods=["post"], url_path="preview")
@@ -54,7 +57,11 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 design=design,
                 number=next_number,
                 template_key=rendered.template_key,
-                render_data=rendered.data,
+                render_data={
+                    **rendered.data,
+                    "html": rendered.html,
+                    "svg": rendered.svg,
+                },
                 asset_refs=rendered.asset_refs,
                 validation_summary=rendered.validation_summary,
             )
@@ -129,6 +136,14 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         else:
             design.status = Design.Status.REJECTED
         design.save(update_fields=["status", "approved_version", "updated_at"])
+        comment = str(request.data.get("comment") or "").strip()
+        if comment:
+            DesignReviewComment.objects.create(
+                design=design,
+                version=version,
+                author=request.user,
+                comment=comment,
+            )
         return Response(
             {
                 "design_id": str(design.pk),
@@ -137,6 +152,22 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 "approved_version": design.approved_version_id,
             }
         )
+
+    @action(detail=True, methods=["get", "post"], url_path="comments")
+    def comments(self, request, pk=None):
+        """Lista o agrega retroalimentación humana sin alterar la decisión formal."""
+        design = self.get_object()
+        if request.method == "GET":
+            comments = design.review_comments.select_related("author", "version").all()
+            return Response(DesignReviewCommentSerializer(comments, many=True).data)
+
+        serializer = DesignReviewCommentSerializer(
+            data=request.data,
+            context={"request": request, "design": design},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(design=design, author=request.user)
+        return Response(serializer.data, status=201)
 
     @action(detail=True, methods=["post"], url_path="claude-review")
     def claude_review(self, request, pk=None):

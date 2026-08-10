@@ -23,6 +23,7 @@ urlpatterns += [
         name="frontend-verify",
     ),
     path("panel.html", TemplateView.as_view(template_name="panel.html"), name="frontend-panel"),
+    path("review.html", TemplateView.as_view(template_name="review.html"), name="frontend-review"),
     path(
         "school-kit.html",
         TemplateView.as_view(template_name="school-kit.html"),

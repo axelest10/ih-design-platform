@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 
 from briefs.models import DesignBrief
@@ -53,3 +54,24 @@ class DesignVersion(models.Model):
             models.UniqueConstraint(fields=["design", "number"], name="unique_design_version")
         ]
         ordering = ["-number"]
+
+
+class DesignReviewComment(models.Model):
+    design = models.ForeignKey(Design, on_delete=models.CASCADE, related_name="review_comments")
+    version = models.ForeignKey(
+        DesignVersion,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="review_comments",
+    )
+    author = models.ForeignKey(
+        get_user_model(),
+        on_delete=models.PROTECT,
+        related_name="design_review_comments",
+    )
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]

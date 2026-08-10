@@ -117,5 +117,7 @@ def current_user(request):
             ),
             "regional_brand_access": is_admin,
             "available_panels": ["admin", "user"] if is_admin else ["user"],
+            "design_test_mode": settings.DESIGN_TEST_MODE,
+            "design_test_limit": settings.DESIGN_TEST_LIMIT,
         }
     )
