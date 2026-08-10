@@ -1,6 +1,11 @@
 from django.conf import settings
 from django.contrib.auth import authenticate, login, update_session_auth_hash
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+    throttle_classes,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
@@ -19,6 +24,7 @@ from .throttles import LoginIPThrottle
 
 
 @api_view(["POST"])
+@authentication_classes([])
 @permission_classes([AllowAny])
 @throttle_classes([LoginIPThrottle])
 def password_login(request):

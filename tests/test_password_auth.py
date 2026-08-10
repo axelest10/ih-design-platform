@@ -40,6 +40,27 @@ def test_individual_login_creates_session_for_corporate_user():
     assert current_user.json()["email"] == user.email
 
 
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_authenticated_user_can_submit_login_again_without_csrf_error():
+    user = get_user_model().objects.create_user(
+        username="persona",
+        email="persona@ihmexico.com",
+        password="safe-password-123",
+    )
+    client = APIClient(enforce_csrf_checks=True)
+    assert client.login(username=user.username, password="safe-password-123")
+
+    response = client.post(
+        "/api/v1/auth/login/",
+        {"username": user.username, "password": "safe-password-123"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"authenticated": True, "username": user.username}
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "payload",
@@ -234,3 +255,14 @@ def test_password_forms_include_confirmation_and_shared_visibility_control():
     assert 'fetch("/api/v1/auth/change-password/"' in panel_script
     assert 'headers.set("X-CSRFToken"' in panel_script
     assert 'input.type = visible ? "text" : "password"' in shared_script
+
+
+def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
+    login_script = (
+        REPO_ROOT / "frontend" / "scripts" / "login.js"
+    ).read_text(encoding="utf-8")
+
+    assert 'cookie("csrftoken")' in login_script
+    assert 'headers.set("X-CSRFToken"' in login_script
+    assert 'request("/api/v1/me/")' in login_script
+    assert 'window.location.replace("/panel.html")' in login_script
