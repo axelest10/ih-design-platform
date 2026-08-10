@@ -7,6 +7,7 @@ from common.views import health
 
 frontend_root = settings.BASE_DIR / "frontend"
 brand_assets_root = settings.BASE_DIR / "brand" / "assets"
+brand_generated_root = settings.BASE_DIR / "brand" / "generated"
 
 urlpatterns = [
     path("api/v1/health/", health, name="health"),
@@ -39,5 +40,11 @@ urlpatterns += [
         serve,
         {"document_root": brand_assets_root},
         name="brand-assets",
+    ),
+    path(
+        "brand/generated/<path:path>",
+        serve,
+        {"document_root": brand_generated_root},
+        name="brand-generated",
     ),
 ]

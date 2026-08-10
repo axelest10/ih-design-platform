@@ -1,5 +1,3 @@
-@import url("../../brand/generated/ih-brand.css");
-
 :root {
   --home-ink: var(--ih-neutral-dark-navy);
   --home-muted: #66708a;
