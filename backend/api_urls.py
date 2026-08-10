@@ -6,6 +6,7 @@ from branding.views import BrandGuidelineViewSet, brand_logos, brand_tokens, val
 from briefs.views import BriefReferenceUploadViewSet, DesignBriefViewSet
 from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
+from common.views import stats_summary
 from designs.views import DesignViewSet
 from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
 from security.admin_views import corporate_user_detail, corporate_user_list, corporate_user_roles
@@ -33,6 +34,7 @@ router.register("material-templates", MaterialTemplateViewSet, basename="materia
 router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
 
 urlpatterns = [
+    path("stats/summary/", stats_summary, name="stats-summary"),
     path("security/users/", corporate_user_list, name="security-user-list"),
     path(
         "security/users/<int:user_id>/roles/",

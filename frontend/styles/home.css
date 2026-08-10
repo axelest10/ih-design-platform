@@ -155,6 +155,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .template-preview__line--wide { width: 86%; }
 .template-preview__line--short { width: 56%; margin-top: 7px; }
 .template-preview__cta { width: 54px; height: 16px; margin-top: 20px; border-radius: 10px; background: var(--ih-knowledge); }
+.template-preview-note { margin: 0 0 14px; color: var(--home-muted); font-size: 11px; }
 .panel__footer { display: flex; align-items: center; justify-content: space-between; color: var(--home-muted); font-size: 11px; }
 
 .page-footer { display: flex; justify-content: space-between; margin-top: 42px; padding-top: 19px; border-top: 1px solid var(--home-line); color: #9aa1b5; font-size: 11px; }

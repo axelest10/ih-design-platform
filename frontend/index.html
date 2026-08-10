@@ -27,32 +27,32 @@
             <span class="nav-item__icon" aria-hidden="true">⌂</span>
             <span>Inicio</span>
           </a>
-          <a class="nav-item" href="#briefs">
+          <a class="nav-item" href="panel.html">
             <span class="nav-item__icon" aria-hidden="true">＋</span>
             <span>Briefs</span>
           </a>
-          <a class="nav-item" href="#catalog">
+          <a class="nav-item" href="catalog.html">
             <span class="nav-item__icon" aria-hidden="true">▦</span>
             <span>Catálogo de marca</span>
           </a>
-          <a class="nav-item" href="#templates">
+          <a class="nav-item" href="templates-gallery.html">
             <span class="nav-item__icon" aria-hidden="true">◈</span>
             <span>Plantillas</span>
           </a>
-          <a class="nav-item" href="#review">
+          <a class="nav-item" href="review.html">
             <span class="nav-item__icon" aria-hidden="true">✓</span>
             <span>Revisiones</span>
-            <span class="nav-item__badge">1</span>
+            <span class="nav-item__badge" data-review-count hidden>0</span>
           </a>
         </nav>
 
         <div class="sidebar__section-label sidebar__section-label--secondary">Sistema</div>
         <nav class="sidebar__nav">
-          <a class="nav-item" href="#brand-rules">
+          <a class="nav-item" href="brand-rules.html">
             <span class="nav-item__icon" aria-hidden="true">◌</span>
             <span>Reglas de marca</span>
           </a>
-          <a class="nav-item" href="#settings">
+          <a class="nav-item" href="admin.html">
             <span class="nav-item__icon" aria-hidden="true">⚙</span>
             <span>Configuración</span>
           </a>
@@ -62,7 +62,7 @@
           <div class="sidebar__status-dot"></div>
           <div>
             <strong>Catálogo LATAM</strong>
-            <span>Sincronizado</span>
+            <span data-catalog-footer>Consultando…</span>
           </div>
         </div>
       </aside>
@@ -108,7 +108,7 @@
                 <a class="button button--light" href="panel.html#briefs" data-toast="Abriendo el brief guiado">
                   Crear nuevo brief <span aria-hidden="true">↗</span>
                 </a>
-                <a class="text-link text-link--light" href="#catalog">Explorar catálogo <span aria-hidden="true">→</span></a>
+                <a class="text-link text-link--light" href="catalog.html">Explorar catálogo <span aria-hidden="true">→</span></a>
               </div>
             </div>
             <div class="hero-panel__visual" aria-hidden="true">
@@ -134,31 +134,31 @@
             <article class="metric-card">
               <div class="metric-card__icon metric-card__icon--blue">▦</div>
               <div><strong data-logo-count>—</strong><span>logos aprobados</span></div>
-              <a href="#catalog" aria-label="Ver logos aprobados">→</a>
+              <a href="catalog.html" aria-label="Ver logos aprobados">→</a>
             </article>
             <article class="metric-card">
               <div class="metric-card__icon metric-card__icon--purple">◈</div>
-              <div><strong>1</strong><span>template piloto</span></div>
-              <a href="#templates" aria-label="Ver templates">→</a>
+              <div><strong data-material-type-count>—</strong><span>tipos de material activos</span></div>
+              <a href="templates-gallery.html" aria-label="Ver tipos de material">→</a>
             </article>
             <article class="metric-card">
               <div class="metric-card__icon metric-card__icon--orange">✓</div>
-              <div><strong>4</strong><span>países regionales</span></div>
-              <a href="#catalog" aria-label="Ver países regionales">→</a>
+              <div><strong data-country-count>—</strong><span>países con logos aprobados</span></div>
+              <a href="catalog.html" aria-label="Ver países representados">→</a>
             </article>
             <article class="metric-card metric-card--status">
               <div class="metric-card__icon metric-card__icon--green">●</div>
-              <div><strong>Activo</strong><span>catálogo LATAM</span></div>
+              <div><strong data-catalog-status>—</strong><span>catálogo LATAM</span></div>
               <span class="metric-card__status">●</span>
             </article>
           </section>
 
-          <section class="section-heading" id="briefs">
+          <section class="section-heading">
             <div>
               <div class="eyebrow">Flujo de trabajo</div>
               <h2>Empieza por lo que necesitas hoy</h2>
             </div>
-            <a class="text-link" href="#templates">Ver todas las opciones <span aria-hidden="true">→</span></a>
+            <a class="text-link" href="templates-gallery.html">Ver todas las opciones <span aria-hidden="true">→</span></a>
           </section>
 
           <section class="quick-grid" aria-label="Accesos rápidos">
@@ -169,14 +169,14 @@
               <p>Define audiencia, objetivo, mensaje y formato de la pieza.</p>
               <span class="quick-card__link">Comenzar <span aria-hidden="true">↗</span></span>
             </a>
-            <a class="quick-card" id="catalog" href="/api/v1/branding/logos/" data-toast="Abriendo el catálogo LATAM">
+            <a class="quick-card" href="catalog.html" data-toast="Abriendo el catálogo LATAM">
               <div class="quick-card__number">02</div>
               <div class="quick-card__icon">▦</div>
               <h3>Explorar la marca</h3>
               <p>Encuentra logos por país, marca, alcance y variante aprobada.</p>
               <span class="quick-card__link">Abrir catálogo <span aria-hidden="true">↗</span></span>
             </a>
-            <a class="quick-card" id="templates" href="#template-preview" data-toast="Preview de square-v1 disponible">
+            <a class="quick-card" href="templates-gallery.html" data-toast="Abriendo las plantillas disponibles">
               <div class="quick-card__number">03</div>
               <div class="quick-card__icon">◈</div>
               <h3>Elegir un template</h3>
@@ -186,23 +186,23 @@
           </section>
 
           <section class="lower-grid">
-            <article class="panel panel--review" id="review">
+            <article class="panel panel--review">
               <div class="panel__header">
                 <div><div class="eyebrow">Revisión</div><h2>Tu próximo paso</h2></div>
-                <span class="status-pill">En progreso</span>
+                <span class="status-pill" data-workflow-status>Consultando…</span>
               </div>
               <div class="review-flow">
-                <div class="review-step review-step--done"><span>✓</span><div><strong>Catálogo LATAM</strong><small>Logos y variantes disponibles</small></div></div>
-                <div class="review-step review-step--active"><span>2</span><div><strong>Crear un brief</strong><small>Define la intención de la pieza</small></div></div>
-                <div class="review-step"><span>3</span><div><strong>Generar preview</strong><small>HTML y SVG con validación</small></div></div>
-                <div class="review-step"><span>4</span><div><strong>Enviar a revisión</strong><small>Aprueba o solicita cambios</small></div></div>
+                <div class="review-step" data-workflow-step="brief"><span>1</span><div><strong>Crear un brief</strong><small>Define la intención de la pieza</small></div></div>
+                <div class="review-step" data-workflow-step="preview"><span>2</span><div><strong>Generar preview</strong><small>HTML, SVG o PDF según el material</small></div></div>
+                <div class="review-step" data-workflow-step="review"><span>3</span><div><strong>Revisar resultado</strong><small>Valida o solicita cambios</small></div></div>
+                <div class="review-step" data-workflow-step="approved"><span>4</span><div><strong>Usar la pieza aprobada</strong><small>Continúa desde el panel de revisiones</small></div></div>
               </div>
-              <a class="button button--dark" href="panel.html#briefs">Continuar <span aria-hidden="true">→</span></a>
+              <a class="button button--dark" data-workflow-link href="panel.html">Continuar <span aria-hidden="true">→</span></a>
             </article>
 
             <article class="panel panel--template" id="template-preview">
               <div class="panel__header">
-                <div><div class="eyebrow">Template piloto</div><h2>square-v1</h2></div>
+                <div><div class="eyebrow">Vista orientativa</div><h2>square-v1</h2></div>
                 <span class="version-label">v1.0.0</span>
               </div>
               <div class="template-preview">
@@ -215,7 +215,8 @@
                   <div class="template-preview__cta"></div>
                 </div>
               </div>
-              <div class="panel__footer"><span>1080 × 1080 px</span><a class="text-link" href="#templates">Usar template <span aria-hidden="true">→</span></a></div>
+              <p class="template-preview-note">Representación visual del formato; no es una pieza generada ni contiene datos de cliente.</p>
+              <div class="panel__footer"><span>1080 × 1080 px</span><a class="text-link" href="templates-gallery.html">Ver ficha <span aria-hidden="true">→</span></a></div>
             </article>
           </section>
 
