@@ -25,7 +25,7 @@ export const ihBrandTokens = {
     "ingles_general": {
       "display_name": "Inglés General",
       "commercial_alias": "Hello!",
-      "alias_note": "Confirmado por el cliente (Axel Estrada, 2026-08-05): este pilar se comercializa actualmente como \"Hello!\" (antes \"Live!\" en `Color por producto.pdf`). Es un alias comercial del mismo pilar \"Inglés General\" — usa el mismo color institucional (Youth Green #B7DB6E), no una paleta propia. NOTA: existe material de marketing (deck \"Hello Live English — Presentación Directores\") que describe a \"Hello Live English\" con una identidad visual propia (paleta Navy/Cian/Verde/Naranja/Magenta/Morado, logo de burbuja de chat, tipografía Poppins, dominio helloliveenglish.com) separada de la paleta institucional de IH. Esa identidad NO se adopta aquí por decisión explícita del cliente: \"Hello!\" se trata como el mismo pilar de siempre con nombre comercial nuevo, usando Youth Green. Si en el futuro se decide adoptar la identidad visual independiente del deck, este archivo debe actualizarse explícitamente — no asumir la paleta separada por inferencia.\n",
+      "alias_note": "Decisión actualizada por el cliente (Axel Estrada, 2026-08-09): \"Hello!\", el nombre comercial de cara al público de IH para el pilar \"Inglés General\", sigue usando el color institucional Youth Green (#B7DB6E) en materiales institucionales de IH. La decisión del 2026-08-05 se revierte únicamente para el sub-brand independiente \"Hello Live English\", que tiene dominio, producto y Brandfolder propios y cuya identidad visual separada fue adoptada formalmente. Ver `brand/product-colors/sub-brand-identities.yaml`; esa identidad no reemplaza la paleta institucional documentada en este pilar.\n",
       "primary_hex": "#B7DB6E",
       "primary_token": "youth",
       "secondary_hex": "#28AE62",
@@ -144,6 +144,20 @@ export const ihBrandTokens = {
         "fallback_stack": "'Open Sans', sans-serif",
         "license_status": "OFL",
         "license_note": "SIL Open Font License 1.1 — incluida en brand/assets/fonts/open-sans/OFL.txt. Uso y redistribución libres bajo los términos de la licencia."
+      }
+    },
+    "sub_brand_typefaces": {
+      "hello_live_english": {
+        "name": "Poppins",
+        "role": "Logotipo y títulos en Bold; textos de soporte en Regular",
+        "source": "Brandfolder-Hello Live English.pdf — página 'Tipografía'",
+        "weights_documented": [
+          "Bold",
+          "Regular"
+        ],
+        "fallback_stack": "Poppins, Arial, sans-serif",
+        "license_status": "OFL",
+        "license_note": "SIL Open Font License 1.1 — incluida en brand/assets/fonts/poppins/OFL.txt, copyright \"The Poppins Project Authors\". Aplica solo al sub-brand Hello Live English y su variante Live English Kids; no reemplaza Aptos/Open Sans en materiales institucionales de IH.\n"
       }
     },
     "leading": {

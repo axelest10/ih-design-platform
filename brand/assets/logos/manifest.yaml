@@ -16,10 +16,10 @@ schema:
   # Campos requeridos por cada entrada bajo `logos:`
   fields:
     - name          # nombre corto identificador, ej. "ih-mexico-classic"
-    - variant       # classic | black | white | white-reversed | dual-branding
+    - variant       # classic | black | white | monochrome-blue | monochrome-white | white-reversed | dual-branding
     - format        # svg | ai | png | jpg | eps
     - file          # ruta relativa dentro de brand/assets/logos/
-    - allowed_backgrounds  # lista: white | knowledge-blue | photo-high-contrast
+    - allowed_backgrounds  # lista: white | light | navy | dark | knowledge-blue | photo-high-contrast
     - clear_space_rule     # referencia a documentation/logo-rules.md
     - approved      # true/false — true si el archivo fue provisto por el cliente
     - notes
@@ -453,7 +453,7 @@ logos:
     country: null
     source_folder: Hello Live
     source_file_id: 187RnU2Hwsxn8k7xyXuu_3JvzrjMfevUN
-    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+    notes: "Paleta e identidad propia adoptadas formalmente el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf. Ver DECISIONS.md."
   - name: hello-live-kids-svg
     variant: classic
     format: svg
@@ -466,7 +466,7 @@ logos:
     country: null
     source_folder: Hello Live
     source_file_id: 1_0vWnn8Zdd78DqXRdWtlLFjVXeCnyfkz
-    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+    notes: "Paleta e identidad propia adoptadas formalmente el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf. Ver DECISIONS.md."
   - name: hello-live-ai
     variant: classic
     format: ai
@@ -479,7 +479,7 @@ logos:
     country: null
     source_folder: Hello Live
     source_file_id: 1YYD2fQ3qWWMLD1JKLwTuCGP_dBY4bG1_
-    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+    notes: "Paleta e identidad propia adoptadas formalmente el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf. Ver DECISIONS.md."
   - name: hello-live-svg
     variant: classic
     format: svg
@@ -492,7 +492,151 @@ logos:
     country: null
     source_folder: Hello Live
     source_file_id: 1I9RHQgrSKMHTxt5Dm2ZZ4sbbo7LmOmWT
-    notes: "Archivo provisto por el cliente. No se adopta aquí una paleta propia no documentada."
+    notes: "Paleta e identidad propia adoptadas formalmente el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf. Ver DECISIONS.md."
+  - name: hello-live-isotipo-color-navy-png
+    variant: classic
+    format: png
+    file: sub-brands/hello-live/hello-isotipo-color-fondo-navy.png
+    allowed_backgrounds: [navy]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Isotipo a color sobre fondo navy. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-isotipo-white-transparent-png
+    variant: white
+    format: png
+    file: sub-brands/hello-live/hello-isotipo-white-transparente.png
+    allowed_backgrounds: [navy, dark]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Isotipo blanco con transparencia para fondos oscuros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-isotipo-monochrome-blue-transparent-png
+    variant: monochrome-blue
+    format: png
+    file: sub-brands/hello-live/hello-isotipo-monocromatico-azul-transparente.png
+    allowed_backgrounds: [white, light]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Isotipo monocromático navy con transparencia para fondos claros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-isotipo-monochrome-white-transparent-png
+    variant: monochrome-white
+    format: png
+    file: sub-brands/hello-live/hello-isotipo-monocromatico-blanco-transparente.png
+    allowed_backgrounds: [navy, dark]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Isotipo monocromático blanco con transparencia para fondos oscuros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-logo-principal-navy-png
+    variant: classic
+    format: png
+    file: sub-brands/hello-live/hello-live-logo-principal-fondo-navy.png
+    allowed_backgrounds: [navy]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup principal a color sobre fondo navy. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-logo-principal-transparent-png
+    variant: classic
+    format: png
+    file: sub-brands/hello-live/hello-live-logo-principal-transparente.png
+    allowed_backgrounds: [white, light]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup principal a color y navy con transparencia para fondos claros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-kids-logo-principal-navy-png
+    variant: classic
+    format: png
+    file: sub-brands/hello-live/hello-live-kids-logo-principal-fondo-navy.png
+    allowed_backgrounds: [navy]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live Kids
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup Live English Kids a color sobre fondo navy. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-kids-logo-principal-transparent-png
+    variant: classic
+    format: png
+    file: sub-brands/hello-live/hello-live-kids-logo-principal-transparente.png
+    allowed_backgrounds: [white, light]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live Kids
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup Live English Kids a color y navy con transparencia para fondos claros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-logo-monochrome-white-navy-png
+    variant: monochrome-white
+    format: png
+    file: sub-brands/hello-live/hello-live-logo-monocromatico-fondo-navy.png
+    allowed_backgrounds: [navy]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup monocromático blanco sobre fondo navy. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-logo-monochrome-blue-white-jpg
+    variant: monochrome-blue
+    format: jpg
+    file: sub-brands/hello-live/hello-live-logo-monocromatico-fondo-blanco.jpg
+    allowed_backgrounds: [white]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup monocromático navy sobre fondo blanco. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-logo-monochrome-blue-transparent-png
+    variant: monochrome-blue
+    format: png
+    file: sub-brands/hello-live/hello-live-logo-monocromatico-transparente.png
+    allowed_backgrounds: [white, light]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup monocromático navy con transparencia para fondos claros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
+  - name: hello-live-kids-logo-monochrome-blue-transparent-png
+    variant: monochrome-blue
+    format: png
+    file: sub-brands/hello-live/hello-live-kids-logo-monocromatico-transparente.png
+    allowed_backgrounds: [white, light]
+    clear_space_rule: "partner-brand-guidelines-required"
+    approved: true
+    scope: sub-brand
+    brand: Hello Live Kids
+    country: null
+    source_folder: Hello Live
+    notes: "Lockup Live English Kids monocromático navy con transparencia para fondos claros. Identidad adoptada el 2026-08-09; fuente: Brandfolder-Hello Live English.pdf."
   - name: qc-2026-color-svg
     variant: classic
     format: svg

@@ -1,5 +1,24 @@
 # Decisiones técnicas
 
+## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
+
+Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,
+autora Alejandra Tello, creado el 2026-08-07), que no estaba disponible cuando se tomó la
+decisión anterior basándose en un deck interno impreciso. Tras verificar visualmente cada página
+del Brandfolder, Axel confirmó explícitamente “Adoptarla ahora” el 2026-08-09. Por tanto, se
+revierte la parte de la decisión del 2026-08-05 que trataba Hello Live English como una identidad
+sin paleta propia.
+
+“Hello!” continúa siendo el nombre comercial del pilar institucional Inglés General y conserva
+Youth Green cuando aparece en materiales institucionales de IH. La identidad independiente de la
+marca **hello**, el producto **Live English** y su sub-variante **Live English Kids** se registra
+por separado en `brand/product-colors/sub-brand-identities.yaml`; no se incorporó directamente a
+`authorized-colors.yaml` para evitar confundir la paleta institucional de IH con la del sub-brand.
+
+En la página de paleta también aparecen los códigos sueltos `#f4a261`, `#c4c4c4`, `#ef642e` y
+`#000000`. Se descartaron porque no tienen nombre ni relación visual con ninguno de los ocho
+swatches nombrados y corresponden a texto de plantilla de Canva sin editar.
+
 ## 2026-08-08 — Productos prioritarios del `school-kit` confirmados por Axel
 
 Axel ratificó `qc-2026` y `teacher-training-certifications` como productos prioritarios por

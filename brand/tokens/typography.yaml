@@ -31,6 +31,19 @@ typefaces:
     license_status: OFL
     license_note: "SIL Open Font License 1.1 — incluida en brand/assets/fonts/open-sans/OFL.txt. Uso y redistribución libres bajo los términos de la licencia."
 
+sub_brand_typefaces:
+  hello_live_english:
+    name: Poppins
+    role: "Logotipo y títulos en Bold; textos de soporte en Regular"
+    source: "Brandfolder-Hello Live English.pdf — página 'Tipografía'"
+    weights_documented: [Bold, Regular]
+    fallback_stack: "Poppins, Arial, sans-serif"
+    license_status: OFL
+    license_note: >
+      SIL Open Font License 1.1 — incluida en brand/assets/fonts/poppins/OFL.txt, copyright
+      "The Poppins Project Authors". Aplica solo al sub-brand Hello Live English y su variante
+      Live English Kids; no reemplaza Aptos/Open Sans en materiales institucionales de IH.
+
 leading:
   # Interlineado — manual oficial PDF (cita textual)
   heading: { ratio: 1.1, percent: "110%" }

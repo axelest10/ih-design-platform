@@ -1,0 +1,49 @@
+# Identidades visuales independientes de sub-marcas asociadas a International House.
+# Este archivo no modifica ni reemplaza la paleta institucional de IH.
+
+version: "1.0.0"
+status: approved
+confirmed_by: "Axel Estrada, 2026-08-09"
+confirmed_source: "Brandfolder-Hello Live English.pdf (Canva, Alejandra Tello, creado 2026-08-07)"
+
+sub_brands:
+  hello_live_english:
+    display_name: "Hello Live English"
+    brand_name: "hello"
+    product_name: "Live English"
+    sub_variant: "Live English Kids"
+    visual_descriptor: "Moderna, amigable y clara. Transmite confianza, cercanía y profesionalismo."
+    palette:
+      navy:
+        name: Navy
+        hex: "#0B1D3A"
+      blue:
+        name: Azul
+        hex: "#1565FF"
+      cyan:
+        name: Cian
+        hex: "#00C2C7"
+      green:
+        name: Verde
+        hex: "#22C55E"
+      orange:
+        name: Naranja
+        hex: "#FF9F1C"
+      magenta:
+        name: Magenta
+        hex: "#FF2DBD"
+      purple:
+        name: Morado
+        hex: "#7B2CBF"
+      light_white:
+        name: "Blanco claro"
+        hex: "#F2F4F7"
+    discarded_unnamed_hex_codes:
+      values: ["#f4a261", "#c4c4c4", "#ef642e", "#000000"]
+      note: >
+        Se descartaron porque aparecen como códigos sueltos de plantilla de Canva, sin nombre
+        ni relación visual con ninguno de los ocho swatches nombrados del Brandfolder.
+    usage_rules:
+      - "Usar esta paleta solo en materiales propios de Hello Live English: su web, sus redes sociales y sus anuncios."
+      - "La misma identidad aplica a la sub-variante Live English Kids."
+      - "No reemplaza Youth Green ni el sistema de color institucional de IH en materiales de marca IH."

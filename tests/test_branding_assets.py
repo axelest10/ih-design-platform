@@ -44,7 +44,13 @@ def test_logo_manifest_exists_and_is_partially_loaded():
     manifest = loader.load_logo_manifest()
     assert manifest["status"] == "partial"
     variants_loaded = {entry["variant"] for entry in manifest["logos"]}
-    assert variants_loaded == {"classic", "black", "white"}
+    assert {
+        "classic",
+        "black",
+        "white",
+        "monochrome-blue",
+        "monochrome-white",
+    }.issubset(variants_loaded)
     # Aún pendientes de carga, por instrucción explícita del proyecto.
     assert "white-reversed" not in variants_loaded
     assert "dual-branding" not in variants_loaded

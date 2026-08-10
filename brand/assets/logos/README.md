@@ -25,8 +25,8 @@ logos/
 
 ## Estado actual
 
-- 78 archivos registrados y aprobados en `manifest.yaml`: 4 activos originales de México y 74
-  archivos recuperados desde Drive.
+- 90 archivos registrados y aprobados en `manifest.yaml`: 4 activos originales de México, 74
+  archivos recuperados desde Drive y 12 variantes PNG/JPG de Hello Live English.
 - El catálogo incluye México, Colombia, Perú, Chile, IH World, Hello Live, QC, Cambridge English,
   IELTS y Michigan Language Assessment.
 - Los activos `partner` están disponibles para composiciones de producto, pero no son logos IH y
@@ -34,6 +34,10 @@ logos/
   logo institucional.
 - `white-reversed` y `dual-branding` siguen pendientes: los archivos disponibles no prueban que
   sean esas variantes oficiales.
+- Hello Live English y Live English Kids cuentan con identidad visual propia adoptada el
+  2026-08-09. Su paleta, tipografía, iconografía y estilo se documentan en
+  `brand/documentation/sub-brands/hello-live-english.md`; no sustituyen el sistema institucional
+  de IH.
 
 ## Elementos de Drive no incorporados como logos
 

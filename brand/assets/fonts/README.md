@@ -6,6 +6,14 @@ Incluida en este repositorio. Licencia: **SIL Open Font License 1.1** (`open-san
 Uso y redistribución libres bajo los términos de esa licencia. Variable fonts:
 `OpenSans-VariableFont_wdth,wght.ttf` y `OpenSans-Italic-VariableFont_wdth,wght.ttf`.
 
+## Poppins (`poppins/`)
+
+Incluida para el sub-brand Hello Live English y su variante Live English Kids. Licencia:
+**SIL Open Font License 1.1** (`poppins/OFL.txt`), confirmada; uso y redistribución permitidos
+bajo sus términos. Los únicos pesos incluidos y documentados por el Brandfolder son
+`Poppins-Bold.ttf` para logotipo y títulos, y `Poppins-Regular.ttf` para textos de soporte.
+Poppins no reemplaza Aptos/Open Sans en materiales institucionales de IH.
+
 ## Aptos (`aptos/`) — investigado 2026-08-05, redistribución restringida por licencia estándar
 
 Los archivos `.ttf` de Aptos **NO se incluyeron** en este repositorio. Aptos es la tipografía
