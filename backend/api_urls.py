@@ -8,7 +8,12 @@ from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
 from common.views import stats_summary
 from designs.views import DesignViewSet
-from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
+from materials.views import (
+    MaterialBundleViewSet,
+    MaterialTemplateViewSet,
+    MaterialTypeViewSet,
+    quick_design,
+)
 from security.admin_views import (
     corporate_user_detail,
     corporate_user_list,
@@ -39,6 +44,7 @@ router.register("material-templates", MaterialTemplateViewSet, basename="materia
 router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
 
 urlpatterns = [
+    path("materials/quick-design/", quick_design, name="materials-quick-design"),
     path("stats/summary/", stats_summary, name="stats-summary"),
     path("security/users/", corporate_user_list, name="security-user-list"),
     path(

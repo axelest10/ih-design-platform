@@ -24,7 +24,7 @@ class DesignVersionSerializer(serializers.ModelSerializer):
         )
 
     def get_document_url(self, obj):
-        path = obj.render_data.get("pdf_path")
+        path = obj.render_data.get("pdf_path") or obj.render_data.get("pptx_path")
         return default_storage.url(path) if path else None
 
 

@@ -52,6 +52,18 @@ def is_platform_admin_user(user) -> bool:
     )
 
 
+def can_create_briefs_user(user) -> bool:
+    """Centraliza la capacidad que también expone GET /me/ al frontend."""
+    return bool(
+        user
+        and user.is_authenticated
+        and (
+            is_platform_admin_user(user)
+            or user.groups.filter(name__in=(ROLE_MARKETING, ROLE_DESIGNER)).exists()
+        )
+    )
+
+
 class CorporateDomainPermission(BasePermission):
     """Permite acceso solo a usuarios autenticados con dominio corporativo autorizado."""
 
@@ -78,6 +90,17 @@ class PlatformAdminPermission(BasePermission):
 
     def has_permission(self, request, view) -> bool:
         return is_platform_admin_user(getattr(request, "user", None))
+
+
+class CanCreateBriefPermission(BasePermission):
+    """Permite crear piezas a los mismos roles declarados por la capacidad del perfil."""
+
+    message = "Tu rol corporativo no permite crear diseños."
+
+    def has_permission(self, request, view) -> bool:
+        if not getattr(settings, "CORPORATE_AUTH_REQUIRED", True):
+            return True
+        return can_create_briefs_user(getattr(request, "user", None))
 
 
 class RolePermission(BasePermission):

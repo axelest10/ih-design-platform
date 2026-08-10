@@ -55,6 +55,35 @@
         </div>
       </main>
     </div>
+    <dialog id="quick-design-dialog" class="quick-dialog" aria-labelledby="quick-design-title">
+      <form id="quick-design-form" class="quick-dialog__form">
+        <div class="quick-dialog__header">
+          <div><span class="eyebrow">Editor rápido</span><h2 id="quick-design-title">Usar plantilla</h2></div>
+          <button id="quick-design-close" class="quick-dialog__close" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <p class="quick-dialog__intro">Personaliza únicamente el contenido. La composición, tipografía y colores permanecen controlados por la plantilla.</p>
+        <div class="quick-dialog__layout">
+          <div class="quick-dialog__fields">
+            <label>País<select id="quick-country" required></select></label>
+            <label>Producto<select id="quick-product" required></select></label>
+            <label>Logo IH<select id="quick-logo" required></select></label>
+            <label>Logos adicionales (opcional)<select id="quick-additional-logos" multiple size="4"></select></label>
+            <div id="quick-content-fields"></div>
+            <div class="quick-dialog__actions">
+              <button class="button button--dark" type="submit">Guardar diseño</button>
+              <span id="quick-design-status" role="status" aria-live="polite"></span>
+            </div>
+          </div>
+          <aside class="quick-live-preview" aria-label="Previsualización de contenido">
+            <span>Vista previa del contenido</span>
+            <strong id="quick-preview-headline">Tu título aparecerá aquí</strong>
+            <p id="quick-preview-body">Completa los campos para revisar la jerarquía del contenido.</p>
+            <iframe id="quick-rendered-preview" title="Diseño guardado" hidden></iframe>
+            <a id="quick-download" class="button button--secondary" hidden>Descargar archivo</a>
+          </aside>
+        </div>
+      </form>
+    </dialog>
     <script src="scripts/templates-gallery.js"></script>
   </body>
 </html>

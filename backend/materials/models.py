@@ -40,6 +40,7 @@ class MaterialTemplate(models.Model):
     dimensions = models.JSONField(default=dict)
     output_formats = models.JSONField(default=list)
     required_fields = models.JSONField(default=list)
+    field_labels = models.JSONField(default=dict)
     constraints = models.JSONField(default=dict)
     active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

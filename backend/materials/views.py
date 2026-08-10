@@ -1,4 +1,4 @@
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -7,6 +7,8 @@ from security.permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
     ROLE_PLATFORM_ADMIN,
+    CanCreateBriefPermission,
+    CorporateDomainPermission,
     RoleAwareViewSet,
 )
 
@@ -16,7 +18,19 @@ from .serializers import (
     MaterialTemplateSerializer,
     MaterialTypeSerializer,
 )
+from .services.quick_design import QuickDesignError, create_quick_design
 from .services.school_kit import SchoolKitGenerationError, generate_school_kit
+
+
+@api_view(["POST"])
+@permission_classes([CorporateDomainPermission, CanCreateBriefPermission])
+def quick_design(request):
+    """Crea y versiona una pieza real desde los campos editables de un template."""
+    try:
+        result = create_quick_design(request.data, user=request.user)
+    except QuickDesignError as exc:
+        return Response({"detail": str(exc)}, status=400)
+    return Response(result, status=201)
 
 
 class PublicCatalogReadMixin:

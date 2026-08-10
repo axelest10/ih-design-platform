@@ -9,6 +9,7 @@ from .permissions import (
     ROLE_MARKETING,
     ROLE_REVIEWER,
     ROLE_VIEWER,
+    can_create_briefs_user,
     is_allowed_corporate_email,
     is_platform_admin_user,
 )
@@ -44,9 +45,7 @@ def current_user(request):
             "email": user.email if user.is_authenticated else None,
             "roles": roles,
             "is_admin": is_admin,
-            "can_create_briefs": bool(
-                is_admin or role_set.intersection({ROLE_MARKETING, ROLE_DESIGNER})
-            ),
+            "can_create_briefs": can_create_briefs_user(user),
             "can_review": bool(is_admin or ROLE_REVIEWER in role_set),
             "can_view_catalog": bool(
                 is_admin
