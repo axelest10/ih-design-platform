@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -5,6 +7,16 @@ from branding.services import loader
 from briefs.models import DesignBrief
 from designs.models import Design
 from materials.models import MaterialType
+
+
+def test_home_metrics_are_hidden_until_admin_identity_is_confirmed():
+    home = Path("frontend/index.html").read_text(encoding="utf-8")
+    script = Path("frontend/scripts/home.js").read_text(encoding="utf-8")
+
+    assert 'id="admin-metrics"' in home
+    assert 'aria-label="Resumen del sistema" hidden' in home
+    assert 'fetch("/api/v1/me/")' in script
+    assert "user?.is_admin" in script
 
 
 @pytest.mark.corporate_auth

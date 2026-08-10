@@ -71,6 +71,14 @@
     showToast(`Cobertura seleccionada: ${label}`);
   });
 
+  fetch("/api/v1/me/")
+    .then((response) => (response.ok ? response.json() : null))
+    .then((user) => {
+      const metrics = document.querySelector("#admin-metrics");
+      if (metrics && user?.is_admin) metrics.hidden = false;
+    })
+    .catch(() => undefined);
+
   fetch("/api/v1/stats/summary/")
     .then((response) => {
       if (!response.ok) throw new Error("summary unavailable");
