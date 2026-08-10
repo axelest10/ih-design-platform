@@ -3,7 +3,6 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import login
-from django.urls import reverse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -38,7 +37,7 @@ def request_magic_link(request):
 
     token, record = create_magic_link(email)
     verification_url = request.build_absolute_uri(
-        f"{reverse('magic-link-verify')}?{urlencode({'token': token})}"
+        f"/verify.html?{urlencode({'token': token})}"
     )
     safe_url = escape(verification_url, quote=True)
     max_age = settings.MAGIC_LINK_MAX_AGE_SECONDS

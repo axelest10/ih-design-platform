@@ -26,10 +26,11 @@
     $("user-label").textContent = "No has iniciado sesión";
     $("role-label").textContent = "Acceso restringido";
     setBriefFormDisabled(true);
-    notice(
-      "Inicia sesión con tu correo corporativo para crear briefs. La página de login todavía no está lista en la interfaz; contacta a la plataforma si la necesitas ya.",
-      "error",
-    );
+    notice("Inicia sesión con tu correo corporativo para crear briefs.", "error");
+    const loginLink = document.createElement("a");
+    loginLink.href = "login.html";
+    loginLink.textContent = "Iniciar sesión";
+    $("notice").append(" ", loginLink);
   };
   const handleOptionsError = (error) => {
     if (isAuthError(error)) {

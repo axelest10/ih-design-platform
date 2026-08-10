@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Verificar acceso · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
+    <link rel="stylesheet" href="styles/auth.css" />
+  </head>
+  <body class="auth-page">
+    <header class="auth-header">
+      <a class="auth-brand" href="index.html">
+        <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+        <span>Design Platform</span>
+      </a>
+    </header>
+
+    <main class="auth-main">
+      <section class="auth-card" aria-labelledby="verify-title">
+        <p class="auth-eyebrow">Acceso corporativo</p>
+        <h1 id="verify-title">Verificando tu enlace…</h1>
+        <p id="verify-status" class="auth-intro" role="status" aria-live="polite">
+          Espera un momento mientras iniciamos tu sesión.
+        </p>
+        <a id="retry-link" class="auth-secondary-link" href="login.html" hidden>Pedir un enlace nuevo</a>
+      </section>
+    </main>
+    <script src="scripts/verify.js"></script>
+  </body>
+</html>

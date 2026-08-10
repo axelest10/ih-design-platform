@@ -47,7 +47,7 @@ def test_magic_link_request_sends_expected_email_without_user_lookup(fake_email_
     assert message.sender == "International House <login@ihmexico.com>"
     assert message.recipients == ("persona@ihmexico.com",)
     assert message.subject == "Tu enlace de acceso a IH Design Platform"
-    assert "/api/v1/auth/magic-link/verify/?token=" in message.html
+    assert "/verify.html?token=" in message.html
 
 
 @pytest.mark.django_db

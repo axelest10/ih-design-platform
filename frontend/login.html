@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Iniciar sesión · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
+    <link rel="stylesheet" href="styles/auth.css" />
+  </head>
+  <body class="auth-page">
+    <header class="auth-header">
+      <a class="auth-brand" href="index.html">
+        <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+        <span>Design Platform</span>
+      </a>
+      <a class="auth-back" href="index.html">Volver al inicio</a>
+    </header>
+
+    <main class="auth-main">
+      <section class="auth-card" aria-labelledby="login-title">
+        <p class="auth-eyebrow">Acceso corporativo</p>
+        <h1 id="login-title">Inicia sesión sin contraseña.</h1>
+        <p class="auth-intro">Te enviaremos un enlace de acceso a tu correo corporativo autorizado.</p>
+
+        <form id="login-form" class="auth-form">
+          <label for="email">Correo corporativo</label>
+          <input id="email" name="email" type="email" autocomplete="email" required placeholder="nombre@empresa.com" />
+          <button id="submit-button" type="submit">Enviar enlace de acceso</button>
+        </form>
+
+        <div id="auth-notice" class="auth-notice" role="status" aria-live="polite"></div>
+        <p class="auth-help">El enlace solo puede utilizarse una vez y expira pronto por seguridad.</p>
+      </section>
+    </main>
+    <script src="scripts/login.js"></script>
+  </body>
+</html>
