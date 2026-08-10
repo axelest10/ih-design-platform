@@ -1,12 +1,31 @@
+from django.core.files.storage import default_storage
 from rest_framework import serializers
 
 from .models import Design, DesignReviewComment, DesignVersion
 
 
 class DesignVersionSerializer(serializers.ModelSerializer):
+    document_url = serializers.SerializerMethodField()
+
     class Meta:
         model = DesignVersion
-        fields = "__all__"
+        fields = (
+            "id",
+            "design",
+            "number",
+            "template_key",
+            "render_data",
+            "asset_refs",
+            "validation_summary",
+            "claude_review_status",
+            "claude_review",
+            "created_at",
+            "document_url",
+        )
+
+    def get_document_url(self, obj):
+        path = obj.render_data.get("pdf_path")
+        return default_storage.url(path) if path else None
 
 
 class DesignSerializer(serializers.ModelSerializer):

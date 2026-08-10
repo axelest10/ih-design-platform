@@ -180,7 +180,11 @@ def test_school_kit_bundle_accepts_catalog_products_and_reports_priorities():
 @pytest.mark.django_db
 def test_school_kit_bundle_rejects_deprecated_product_slug():
     client = APIClient()
-    material_type = client.get("/api/v1/material-types/").json()[0]
+    material_type = next(
+        item
+        for item in client.get("/api/v1/material-types/").json()
+        if item["slug"] == "school-kit"
+    )
 
     response = client.post(
         "/api/v1/material-bundles/",

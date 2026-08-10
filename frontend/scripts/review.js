@@ -21,7 +21,8 @@
   const commentMarkup = (comment) => `<article class="review-comment"><strong>${escapeHtml(comment.author_email)}</strong><p>${escapeHtml(comment.comment)}</p><time>${new Date(comment.created_at).toLocaleString("es-MX")}</time></article>`;
   const previewMarkup = (version) => {
     const svg = version?.render_data?.svg;
-    if (!svg) return '<p class="review-empty">La versión todavía no tiene un SVG persistido.</p>';
+    if (version?.document_url) return `<a class="button button--primary" href="${escapeHtml(version.document_url)}" target="_blank" rel="noopener">Abrir PDF</a>`;
+    if (!svg) return '<p class="review-empty">La versión todavía no tiene una vista previa persistida.</p>';
     return `<img src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}" alt="Vista previa del diseño" />`;
   };
   const cardMarkup = (design, comments, testMode) => {

@@ -1,4 +1,6 @@
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Max
 from rest_framework.decorators import action
@@ -6,6 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from ai.services import persist_design_review
+from materials.models import MaterialType
 from security.permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
@@ -17,12 +20,13 @@ from security.permissions import (
 from .models import Design, DesignReviewComment, DesignVersion
 from .serializers import DesignReviewCommentSerializer, DesignSerializer
 from .services.renderer import RenderValidationError, render_preview
+from .services.renderer_document import render_document_preview
 
 
 class DesignViewSet(RoleAwareViewSet, ModelViewSet):
-    queryset = Design.objects.select_related("brief", "approved_version").prefetch_related(
-        "versions"
-    )
+    queryset = Design.objects.select_related(
+        "brief", "brief__material_type", "approved_version"
+    ).prefetch_related("versions")
     serializer_class = DesignSerializer
     role_rules = {
         "create": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
@@ -44,6 +48,18 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             render_payload["logo_name"] = design.brief.brand_logo_key
         if not render_payload.get("additional_logo_keys"):
             render_payload["additional_logo_keys"] = design.brief.additional_logo_keys
+        material_type = design.brief.material_type
+        if material_type and material_type.renderer_family == MaterialType.RendererFamily.DOCUMENT:
+            return self._preview_document(design, render_payload, material_type)
+        if material_type and material_type.renderer_family != MaterialType.RendererFamily.HTML_SVG:
+            return Response(
+                {
+                    "detail": (
+                        f"Renderer '{material_type.renderer_family}' todavía no está implementado."
+                    )
+                },
+                status=400,
+            )
         try:
             rendered = render_preview(render_payload)
         except RenderValidationError as exc:
@@ -95,6 +111,65 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                     design.test_number and design.test_number >= settings.DESIGN_TEST_LIMIT
                 ),
                 "preview": {"html": rendered.html, "svg": rendered.svg},
+            },
+            status=201,
+        )
+
+    def _preview_document(self, design, render_payload, material_type):
+        try:
+            rendered = render_document_preview(
+                render_payload,
+                material_type=material_type,
+            )
+        except RenderValidationError as exc:
+            return Response({"detail": str(exc)}, status=400)
+
+        with transaction.atomic():
+            next_number = (
+                design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
+            ) + 1
+            pdf_path = default_storage.save(
+                f"generated-designs/{design.pk}/version-{next_number}.pdf",
+                ContentFile(rendered.pdf),
+            )
+            version = DesignVersion.objects.create(
+                design=design,
+                number=next_number,
+                template_key=rendered.template_key,
+                render_data={**rendered.data, "pdf_path": pdf_path},
+                asset_refs=[*rendered.asset_refs, pdf_path],
+                validation_summary=rendered.validation_summary,
+            )
+            update_fields = ["status", "updated_at"]
+            if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+                if design.test_number is None:
+                    latest_test = (
+                        Design.objects.filter(test_number__isnull=False).aggregate(
+                            max_number=Max("test_number")
+                        )["max_number"]
+                        or 0
+                    )
+                    design.test_number = latest_test + 1
+                    update_fields.append("test_number")
+                design.status = Design.Status.SELF_REVIEW
+            else:
+                design.status = Design.Status.IN_REVIEW
+            design.save(update_fields=update_fields)
+
+        return Response(
+            {
+                "design_id": str(design.pk),
+                "status": design.status,
+                "version": version.number,
+                "test_number": design.test_number,
+                "template_key": rendered.template_key,
+                "template_version": rendered.template_version,
+                "validation": rendered.validation_summary,
+                "test_batch_limit": settings.DESIGN_TEST_LIMIT,
+                "test_batch_complete": bool(
+                    design.test_number and design.test_number >= settings.DESIGN_TEST_LIMIT
+                ),
+                "preview": {"pdf_url": default_storage.url(pdf_path)},
             },
             status=201,
         )
