@@ -42,8 +42,9 @@ def test_brand_logos_endpoint_returns_latam_catalog():
     assert response.status_code == 200
     payload = response.json()
     assert payload["version"] == "2.0.0"
-    assert payload["count"] == 78
-    assert len(payload["logos"]) == 78
+    # Conteo literal del manifest actual; debe actualizarse cuando se incorporen más logos.
+    assert payload["count"] == 90
+    assert len(payload["logos"]) == 90
     assert {entry["scope"] for entry in payload["logos"]} >= {
         "regional",
         "global",
