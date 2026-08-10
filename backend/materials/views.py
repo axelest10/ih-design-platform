@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
@@ -23,6 +26,28 @@ from .serializers import (
 )
 from .services.quick_design import QuickDesignError, create_quick_design
 from .services.school_kit import SchoolKitGenerationError, generate_school_kit
+
+MAX_MARKETING_ASSET_BULK_FILES = 30
+
+
+def _marketing_asset_label(filename):
+    stem = Path(filename).stem
+    words = re.sub(r"[-_]+", " ", stem).split()
+    label = " ".join(
+        word
+        if word.isupper() or any(character.isdigit() for character in word)
+        else word.capitalize()
+        for word in words
+    )
+    return (label or "Material")[:180]
+
+
+def _serializer_error_message(errors):
+    messages = []
+    for value in errors.values():
+        values = value if isinstance(value, list) else [value]
+        messages.extend(str(message) for message in values)
+    return "; ".join(messages)
 
 
 @api_view(["POST"])
@@ -73,6 +98,7 @@ class MarketingAssetViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewS
     parser_classes = (MultiPartParser, FormParser, JSONParser)
     role_rules = {
         "create": (ROLE_PLATFORM_ADMIN,),
+        "bulk": (ROLE_PLATFORM_ADMIN,),
         "update": (ROLE_PLATFORM_ADMIN,),
         "partial_update": (ROLE_PLATFORM_ADMIN,),
         "destroy": (ROLE_PLATFORM_ADMIN,),
@@ -90,6 +116,58 @@ class MarketingAssetViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewS
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
+
+    @action(detail=False, methods=["post"])
+    def bulk(self, request):
+        files = request.FILES.getlist("files")
+        if not files:
+            return Response({"detail": "Selecciona al menos un archivo."}, status=400)
+        if len(files) > MAX_MARKETING_ASSET_BULK_FILES:
+            return Response(
+                {
+                    "detail": (
+                        "La carga múltiple permite un máximo de "
+                        f"{MAX_MARKETING_ASSET_BULK_FILES} archivos por solicitud."
+                    )
+                },
+                status=400,
+            )
+
+        shared_data = {
+            "brand": request.data.get("brand", ""),
+            "country": request.data.get("country", ""),
+            "category": request.data.get("category", ""),
+        }
+        created = []
+        failed = []
+        for uploaded_file in files:
+            serializer = self.get_serializer(
+                data={
+                    **shared_data,
+                    "label": _marketing_asset_label(uploaded_file.name),
+                    "file": uploaded_file,
+                }
+            )
+            if serializer.is_valid():
+                asset = serializer.save(uploaded_by=request.user)
+                created.append(self.get_serializer(asset).data)
+                continue
+            failed.append(
+                {
+                    "filename": uploaded_file.name,
+                    "reason": _serializer_error_message(serializer.errors),
+                }
+            )
+
+        return Response(
+            {
+                "created_count": len(created),
+                "failed_count": len(failed),
+                "created": created,
+                "failed": failed,
+            },
+            status=201 if created else 200,
+        )
 
 
 class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):

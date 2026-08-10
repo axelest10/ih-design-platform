@@ -58,6 +58,8 @@ hasta desactivar el modo.
   `country` y `category`, y solo expone entradas activas a perfiles no administradores.
 - `POST|PATCH|DELETE /marketing-assets/` — administración y carga multipart restringida a
   `platform_admin`; el archivo usa el storage configurado (local o S3-compatible).
+- `POST /materials/marketing-assets/bulk/` — carga hasta 30 archivos con marca, país y categoría
+  compartidos; informa por separado los creados y los fallidos (`platform_admin`).
 - `POST /artwork-references/{id}/approve/` — aprueba una referencia como reviewer/admin.
 - `POST /artwork-references/{id}/reject/` — rechaza una referencia como reviewer/admin.
 - `GET|POST /validations/` — ejecuciones de validación.

@@ -96,9 +96,18 @@
             <label>País (opcional)<input name="country" maxlength="8" placeholder="MX, CO, PE o vacío para global" /></label>
             <label>Categoría<select name="category" required><option value="foto_perfil">Foto de perfil</option><option value="background_computadora">Fondo para computadora</option><option value="background_celular">Fondo para celular</option><option value="zoom_background">Fondo de Zoom</option><option value="firma_electronica">Firma electrónica</option><option value="banner_linkedin">Banner de LinkedIn</option><option value="template_ppt">Template de PowerPoint</option></select></label>
             <label>Nombre visible<input name="label" maxlength="180" required /></label>
-            <label>Archivo<input name="file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.ppt,.pptx" required /></label>
+            <label>Archivo<input name="file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.ppt,.pptx,.docx" required /></label>
             <label class="check-field"><input type="checkbox" name="active" checked /> Disponible públicamente</label>
             <button class="button" type="submit">Subir material</button>
+          </form>
+          <form id="marketing-asset-bulk-form" class="inline-form marketing-upload-form" enctype="multipart/form-data">
+            <h3>Carga múltiple</h3>
+            <label>Marca<select name="brand" required><option value="ih">International House</option><option value="ielts">IELTS</option></select></label>
+            <label>País (opcional)<input name="country" maxlength="8" placeholder="MX, CO, PE o vacío para global" /></label>
+            <label>Categoría<select name="category" required><option value="foto_perfil">Foto de perfil</option><option value="background_computadora">Fondo para computadora</option><option value="background_celular">Fondo para celular</option><option value="zoom_background">Fondo de Zoom</option><option value="firma_electronica">Firma electrónica</option><option value="banner_linkedin">Banner de LinkedIn</option><option value="template_ppt">Template de PowerPoint</option></select></label>
+            <label>Archivos (máximo 30)<input name="files" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.ppt,.pptx,.docx" multiple required /></label>
+            <button class="button" type="submit">Subir archivos</button>
+            <p id="marketing-asset-bulk-status" class="form-status" role="status" aria-live="polite"></p>
           </form>
         </section>
         <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones del brief <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>

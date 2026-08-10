@@ -112,6 +112,103 @@ def test_non_admin_cannot_upload_marketing_asset():
     assert not MarketingAsset.objects.exists()
 
 
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_platform_admin_bulk_uploads_valid_files_and_reports_failures(
+    tmp_path, monkeypatch
+):
+    storage = FileSystemStorage(location=tmp_path, base_url="/media/")
+    monkeypatch.setattr(MarketingAsset._meta.get_field("file"), "storage", storage)
+    client, user = _role_client("platform_admin")
+    oversized = SimpleUploadedFile(
+        "demasiado-grande.pdf",
+        b"x" * (25 * 1024 * 1024 + 1),
+        content_type="application/pdf",
+    )
+
+    response = client.post(
+        "/api/v1/materials/marketing-assets/bulk/",
+        {
+            "brand": "ih",
+            "country": "co",
+            "category": "firma_electronica",
+            "files": [
+                SimpleUploadedFile("COL 1-100.jpg", b"jpg", content_type="image/jpeg"),
+                SimpleUploadedFile(
+                    "firmas_electronicas_accesos.docx",
+                    b"PK\x03\x04fake-docx",
+                    content_type=(
+                        "application/vnd.openxmlformats-officedocument."
+                        "wordprocessingml.document"
+                    ),
+                ),
+                SimpleUploadedFile("archivo-no-permitido.exe", b"exe"),
+                oversized,
+            ],
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 201, response.json()
+    payload = response.json()
+    assert payload["created_count"] == 2
+    assert payload["failed_count"] == 2
+    assert {item["filename"] for item in payload["failed"]} == {
+        "archivo-no-permitido.exe",
+        "demasiado-grande.pdf",
+    }
+    assert all(item["reason"] for item in payload["failed"])
+    assert {item["label"] for item in payload["created"]} == {
+        "COL 1 100",
+        "Firmas Electronicas Accesos",
+    }
+    assets = MarketingAsset.objects.order_by("label")
+    assert assets.count() == 2
+    assert {asset.country for asset in assets} == {"CO"}
+    assert {asset.category for asset in assets} == {"firma_electronica"}
+    assert {asset.uploaded_by for asset in assets} == {user}
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_bulk_marketing_asset_upload_rejects_more_than_thirty_files():
+    client, _ = _role_client("platform_admin")
+    files = [SimpleUploadedFile(f"asset-{index}.png", b"png") for index in range(31)]
+
+    response = client.post(
+        "/api/v1/materials/marketing-assets/bulk/",
+        {
+            "brand": "ih",
+            "category": "foto_perfil",
+            "files": files,
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 400
+    assert "máximo de 30 archivos" in response.json()["detail"]
+    assert not MarketingAsset.objects.exists()
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_non_admin_cannot_bulk_upload_marketing_assets():
+    client, _ = _role_client("marketing")
+
+    response = client.post(
+        "/api/v1/materials/marketing-assets/bulk/",
+        {
+            "brand": "ih",
+            "category": "foto_perfil",
+            "files": [SimpleUploadedFile("profile.png", b"png")],
+        },
+        format="multipart",
+    )
+
+    assert response.status_code == 403
+    assert not MarketingAsset.objects.exists()
+
+
 @pytest.mark.django_db
 def test_marketing_materials_page_is_public():
     response = APIClient().get("/marketing-materials.html")
@@ -128,8 +225,12 @@ def test_admin_contains_real_marketing_asset_upload_form():
     panel = Path("frontend/panel.html").read_text(encoding="utf-8")
 
     assert 'id="marketing-asset-form"' in html
+    assert 'id="marketing-asset-bulk-form"' in html
     assert 'type="file"' in html
+    assert "multiple" in html
+    assert ".docx" in html
     assert "/api/v1/marketing-assets/" in script
+    assert "/api/v1/materials/marketing-assets/bulk/" in script
     assert "new FormData(event.currentTarget)" in script
     assert 'href="marketing-materials.html"' in home
     assert "Descargar materiales" in home

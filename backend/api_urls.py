@@ -47,6 +47,11 @@ router.register("marketing-assets", MarketingAssetViewSet, basename="marketing-a
 
 urlpatterns = [
     path("materials/quick-design/", quick_design, name="materials-quick-design"),
+    path(
+        "materials/marketing-assets/bulk/",
+        MarketingAssetViewSet.as_view({"post": "bulk"}),
+        name="materials-marketing-assets-bulk",
+    ),
     path("stats/summary/", stats_summary, name="stats-summary"),
     path("security/users/", corporate_user_list, name="security-user-list"),
     path(

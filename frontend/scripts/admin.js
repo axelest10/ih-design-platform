@@ -185,6 +185,35 @@
       .catch((error) => notice(error.message));
   });
 
+  $("marketing-asset-bulk-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const selectedFiles = form.getAll("files").filter((file) => file.name);
+    const status = $("marketing-asset-bulk-status");
+    if (selectedFiles.length > 30) {
+      status.textContent = "Selecciona un máximo de 30 archivos por carga.";
+      status.className = "form-status error-text";
+      return;
+    }
+    status.textContent = "Cargando archivos…";
+    status.className = "form-status";
+    request("/api/v1/materials/marketing-assets/bulk/", { method: "POST", body: form })
+      .then((result) => {
+        const failures = result.failed
+          .map((failure) => `${failure.filename}: ${failure.reason}`)
+          .join(" · ");
+        status.textContent = `${result.created_count} creados; ${result.failed_count} fallidos.${failures ? ` ${failures}` : ""}`;
+        status.className = result.failed_count ? "form-status error-text" : "form-status";
+        formElement.reset();
+        return load();
+      })
+      .catch((error) => {
+        status.textContent = error.message;
+        status.className = "form-status error-text";
+      });
+  });
+
   $("marketing-asset-table").addEventListener("click", (event) => {
     const button = event.target.closest("[data-marketing-asset]");
     if (!button) return;

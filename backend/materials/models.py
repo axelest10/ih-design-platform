@@ -115,7 +115,9 @@ class MarketingAsset(models.Model):
     file = models.FileField(
         upload_to="marketing-assets/",
         validators=[
-            FileExtensionValidator(["png", "jpg", "jpeg", "webp", "pdf", "ppt", "pptx"])
+            FileExtensionValidator(
+                ["png", "jpg", "jpeg", "webp", "pdf", "ppt", "pptx", "docx"]
+            )
         ],
     )
     active = models.BooleanField(default=True)
