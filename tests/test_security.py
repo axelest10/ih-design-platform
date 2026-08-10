@@ -107,7 +107,7 @@ def test_only_reviewer_or_admin_can_review_design():
         username="designer",
         email="designer@ihbogota.com",
     )
-    designer.groups.add(Group.objects.create(name="designer"))
+    designer.groups.add(Group.objects.get_or_create(name="designer")[0])
     client = APIClient()
     client.force_authenticate(user=designer)
 
@@ -123,7 +123,7 @@ def test_only_reviewer_or_admin_can_review_design():
         username="reviewer",
         email="reviewer@ihsantiago.cl",
     )
-    reviewer.groups.add(Group.objects.create(name="reviewer"))
+    reviewer.groups.add(Group.objects.get_or_create(name="reviewer")[0])
     client.force_authenticate(user=reviewer)
     approved = client.post(
         f"/api/v1/designs/{design.pk}/review/",

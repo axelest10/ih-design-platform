@@ -34,10 +34,8 @@ hasta desactivar el modo.
 - `GET /artwork-references/knowledge/` — base JSON técnica para selección precisa; admite
   `country`, `media_type`, `format`, `orientation`, `tag` y `limit`.
 - `GET /me/` — perfil, roles, paneles disponibles y acceso regional del usuario actual.
-- `POST /auth/magic-link/request/` — valida el dominio corporativo y envía mediante Resend un
-  enlace firmado de acceso; no consulta si el usuario ya existe.
-- `GET /auth/magic-link/verify/?token=...` — consume una sola vez el enlace, obtiene o crea el
-  usuario y establece la sesión Django.
+- `POST /auth/site-access/` — compara la contraseña interna compartida, abre una sesión Django
+  como el usuario técnico con acceso completo y limita intentos por IP.
 - `GET /material-types/` — tipos de material activos; `school-kit` expone todos los productos
   activos del catálogo, prioriza `qc-2026` y `teacher-training-certifications` y declara tres
   entregables iniciales (`square-v1`, `story-v1`, `portrait-v1`).
@@ -53,6 +51,7 @@ hasta desactivar el modo.
 - `POST /artwork-references/{id}/reject/` — rechaza una referencia como reviewer/admin.
 - `GET|POST /validations/` — ejecuciones de validación.
 
-Cuando `DJANGO_REQUIRE_CORPORATE_AUTH=1`, todos los endpoints salvo `/health/` requieren sesión
-corporativa y dominio autorizado. La configuración de dominios y roles está en
+Cuando `DJANGO_REQUIRE_CORPORATE_AUTH=1`, todos los endpoints salvo `/health/`, el acceso interno
+y el catálogo público de marca requieren sesión corporativa y dominio autorizado. La configuración
+del acceso y de los roles está en
 `docs/security.md`.

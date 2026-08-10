@@ -26,7 +26,7 @@
     $("user-label").textContent = "No has iniciado sesión";
     $("role-label").textContent = "Acceso restringido";
     setBriefFormDisabled(true);
-    notice("Inicia sesión con tu correo corporativo para crear briefs.", "error");
+    notice("Ingresa con la contraseña de acceso para crear briefs.", "error");
     const loginLink = document.createElement("a");
     loginLink.href = "login.html";
     loginLink.textContent = "Iniciar sesión";

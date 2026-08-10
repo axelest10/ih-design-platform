@@ -42,9 +42,8 @@ AWS_ACCESS_KEY_ID=<credencial fuera de Git>
 AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
 OPENAI_API_KEY=<secreto fuera de Git>
 OPENAI_MODEL=gpt-4.1-mini
-RESEND_API_KEY=<secreto fuera de Git>
-RESEND_FROM_EMAIL=International House <login@dominio-verificado-en-resend>
-MAGIC_LINK_MAX_AGE_SECONDS=900
+SITE_ACCESS_PASSWORD=<contraseña compartida larga, aleatoria y fuera de Git>
+SITE_ACCESS_THROTTLE_RATE=10/hour
 DESIGN_TEST_MODE=1
 DESIGN_TEST_LIMIT=50
 CELERY_TASK_ALWAYS_EAGER=0
@@ -53,9 +52,9 @@ CORS_ALLOWED_ORIGINS=
 
 El almacenamiento local de logos y referencias no debe considerarse persistente en un PaaS. Para
 staging se debe configurar S3-compatible mediante `django-storages` antes de cargar activos reales.
-La autenticación corporativa también requiere un proveedor de sesión/SSO; el código actual valida
-el dominio y los roles una vez que existe un usuario autenticado, pero no implementa por sí solo el
-login de Microsoft/Google.
+La autenticación actual no depende de un proveedor externo: una contraseña compartida abre sesión
+como el usuario técnico creado por migración. Debe rotarse desde las variables de Railway cuando
+deje de ser secreta.
 
 ## Comandos del servicio web
 
@@ -154,9 +153,9 @@ OK 200 https://<dominio>/api/v1/health/ {'status': 'ok', 'service': 'ih-design-p
 
 1. Crear el proyecto y los servicios administrados de PostgreSQL/Redis en el proveedor elegido.
 2. Configurar las variables anteriores fuera del repositorio.
-3. Confirmar el proveedor de login corporativo y el dominio de staging.
+3. Configurar `SITE_ACCESS_PASSWORD` y confirmar que el usuario compartido fue creado al migrar.
 4. Configurar almacenamiento S3-compatible para logos, referencias y futuras exportaciones.
 5. Ejecutar migraciones, `check --deploy` y `tests/smoke_deployment.py` contra el dominio real
    antes de iniciar o reanudar el lote de pruebas.
-6. Crear el primer usuario `platform_admin` de forma controlada.
+6. Probar que la sesión compartida puede abrir el panel y las superficies administrativas.
 7. Recién entonces iniciar el lote de 50 pruebas.

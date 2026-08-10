@@ -72,7 +72,7 @@ def test_only_reviewer_can_approve_artwork_reference():
         username="art-reviewer",
         email="reviewer@ihmexico.com",
     )
-    reviewer.groups.add(Group.objects.create(name="reviewer"))
+    reviewer.groups.add(Group.objects.get_or_create(name="reviewer")[0])
     client = APIClient()
     client.force_authenticate(user=reviewer)
 

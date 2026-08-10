@@ -19,18 +19,18 @@
 
     <main class="auth-main">
       <section class="auth-card" aria-labelledby="login-title">
-        <p class="auth-eyebrow">Acceso corporativo</p>
-        <h1 id="login-title">Inicia sesión sin contraseña.</h1>
-        <p class="auth-intro">Te enviaremos un enlace de acceso a tu correo corporativo autorizado.</p>
+        <p class="auth-eyebrow">Acceso interno</p>
+        <h1 id="login-title">Ingresa a la plataforma.</h1>
+        <p class="auth-intro">Escribe la contraseña de acceso para continuar.</p>
 
         <form id="login-form" class="auth-form">
-          <label for="email">Correo corporativo</label>
-          <input id="email" name="email" type="email" autocomplete="email" required placeholder="nombre@empresa.com" />
-          <button id="submit-button" type="submit">Enviar enlace de acceso</button>
+          <label for="password">Contraseña de acceso</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required />
+          <button id="submit-button" type="submit">Entrar</button>
         </form>
 
         <div id="auth-notice" class="auth-notice" role="status" aria-live="polite"></div>
-        <p class="auth-help">El enlace solo puede utilizarse una vez y expira pronto por seguridad.</p>
+        <p class="auth-help">Solicita la contraseña vigente al administrador de la plataforma.</p>
       </section>
     </main>
     <script src="scripts/login.js"></script>

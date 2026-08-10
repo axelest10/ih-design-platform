@@ -11,9 +11,8 @@ En producción deben estar definidos:
 ```env
 DJANGO_REQUIRE_CORPORATE_AUTH=1
 CORPORATE_ALLOWED_EMAIL_DOMAINS=ihmexico.com,ihbogota.com,ihsantiago.cl,ihlima.com
-RESEND_API_KEY=<secreto fuera de Git>
-RESEND_FROM_EMAIL=International House <login@dominio-verificado-en-resend>
-MAGIC_LINK_MAX_AGE_SECONDS=900
+SITE_ACCESS_PASSWORD=<contraseña compartida larga, aleatoria y fuera de Git>
+SITE_ACCESS_THROTTLE_RATE=10/hour
 ```
 
 El dominio se compara exactamente. Por ejemplo, `persona@ihmexico.com` es válido, pero
@@ -21,20 +20,17 @@ El dominio se compara exactamente. Por ejemplo, `persona@ihmexico.com` es válid
 
 ## Autenticación actual
 
-DRF usa `SessionAuthentication`. El acceso sin contraseña se inicia con
-`POST /api/v1/auth/magic-link/request/` y se confirma desde
-`GET /api/v1/auth/magic-link/verify/?token=...`. El correo solo se envía a dominios permitidos y
-el enlace firmado expira por defecto en 15 minutos. Para garantizar uso único entre procesos y
-reinicios, la base guarda únicamente el hash del token y su fecha de consumo; nunca guarda el
-token en texto claro. La verificación obtiene o crea el usuario y establece la sesión Django.
+DRF usa `SessionAuthentication`. `POST /api/v1/auth/site-access/` recibe la contraseña compartida,
+la compara en tiempo constante contra `SITE_ACCESS_PASSWORD` y establece una sesión Django como el
+usuario técnico `shared-access`. Ese usuario tiene contraseña Django inutilizable y pertenece a los
+cinco grupos corporativos, por lo que toda persona que conoce la contraseña compartida obtiene
+acceso completo sin identidad individual.
 
-El envío está aislado en `security.services.ResendEmailClient`. Usa la API HTTP de Resend y puede
-sustituirse por un fake en pruebas sin realizar llamadas de red. El dominio del remitente debe
-estar verificado en Resend.
-
-El endpoint `GET /api/v1/health/` permanece público para monitoreo. Los dos endpoints de magic
-link también son públicos porque crean la sesión; todos los demás endpoints DRF usan
-`CorporateDomainPermission` cuando `DJANGO_REQUIRE_CORPORATE_AUTH=1`.
+El endpoint limita intentos por IP a `10/hour` de forma predeterminada; la tasa se puede cambiar con
+`SITE_ACCESS_THROTTLE_RATE`. Si `SITE_ACCESS_PASSWORD` está vacía, el endpoint responde `503` y no
+abre una sesión. `GET /api/v1/health/` y el endpoint de acceso permanecen públicos; el resto de las
+superficies protegidas conserva `CorporateDomainPermission` cuando
+`DJANGO_REQUIRE_CORPORATE_AUTH=1`.
 
 ## Roles corporativos
 
@@ -52,9 +48,9 @@ python manage.py sync_corporate_roles
 | `reviewer` | Validaciones y aprobación/rechazo de diseños |
 | `viewer` | Consulta de información autorizada |
 
-Los usuarios creados mediante magic link no reciben un grupo automáticamente. Un administrador
-debe asignarles uno de estos grupos de forma controlada. El backend sigue validando el dominio
-aunque el usuario pertenezca a un grupo correcto.
+La migración de seguridad crea o actualiza el usuario compartido y le asigna los cinco grupos. El
+backend sigue validando que su correo técnico use un dominio permitido. Las reglas de rol se
+conservan para compatibilidad, aunque el acceso compartido reúne todas las capacidades.
 
 ## Paneles y acceso regional
 

@@ -108,8 +108,7 @@ Límites por propietario existentes, independientes del rol:
 | Endpoint | Motivo/comportamiento actual |
 | --- | --- |
 | `GET /api/v1/health/` | Liveness probe de Django, fuera de DRF. |
-| `POST /api/v1/auth/magic-link/request/` | Solicitud de acceso; valida dominio y está marcado `AllowAny`. |
-| `GET /api/v1/auth/magic-link/verify/` | Consume el token y crea sesión; está marcado `AllowAny`. |
+| `POST /api/v1/auth/site-access/` | Valida la contraseña compartida, limita por IP y está marcado `AllowAny`. |
 | `GET /api/v1/branding/tokens/` | Catálogo público no sensible de tokens. |
 | `GET /api/v1/branding/logos/` | Catálogo público de logos aprobados. |
 | `GET /api/v1/branding/validate-color/` | Validación pública contra colores autorizados. |
@@ -129,25 +128,23 @@ El resumen de seguridad del mismo documento añade:
 > de seguridad (Helmet o equivalente Django), rate limiting en endpoints sensibles, 2FA para
 > roles administrativos, CORS estricto documentado — ninguno confirmado en el repo actual.”
 
-Evaluación contra el código actual después de incorporar magic link:
+Evaluación contra el código actual después de adoptar el acceso compartido sin identidad:
 
-| Brecha de referencia | ¿Aplica al login passwordless? | Estado observado |
+| Brecha de referencia | ¿Aplica al acceso compartido? | Estado observado |
 | --- | --- | --- |
-| Flujo de invitación explícito | Sí, como decisión de alta y autorización | No existe. Cualquier correo de un dominio permitido puede solicitar un enlace y el usuario se crea al verificarlo. |
-| Reseteo de contraseña | No | Los usuarios creados por magic link reciben contraseña inutilizable; no hay contraseña que restablecer. |
-| Verificación de email | Parcialmente | Consumir el enlace demuestra control del buzón para esa sesión, pero no existe un estado persistente separado de “email verificado” ni una aprobación previa por invitación. |
-| Rate limiting | Sí | No hay throttling de DRF ni límite propio en la solicitud o verificación de magic links. |
-| Bloqueo tras fallos repetidos | Parcialmente | No hay intentos de contraseña, pero tampoco bloqueo o mitigación específica ante solicitudes repetidas o tokens inválidos reiterados. |
-| 2FA para roles administrativos | Sí | No existe segundo factor adicional para `platform_admin`, `is_staff` o `is_superuser`. |
-| Cabeceras de seguridad tipo Helmet/equivalente Django | Sí | Hay `SecurityMiddleware`, CSRF y `XFrameOptionsMiddleware`; HSTS, redirección HTTPS y cookies seguras son configurables. No se encontró una política CSP documentada ni una revisión consolidada de cabeceras. |
+| Flujo de invitación explícito | No, por decisión de Axel | No existe identidad individual: quien conoce la contraseña compartida entra como el mismo usuario técnico. |
+| Reseteo de contraseña | Sí, como rotación operativa | La contraseña se rota cambiando `SITE_ACCESS_PASSWORD` en el entorno; no hay autoservicio. |
+| Verificación de email | No, por decisión de Axel | El acceso ya no depende de correo ni de un proveedor de entrega. |
+| Rate limiting | Sí | `POST /api/v1/auth/site-access/` limita por IP; la tasa predeterminada es `10/hour`. |
+| Bloqueo tras fallos repetidos | Parcialmente | El throttle bloquea temporalmente por IP, pero no existe bloqueo persistente ni por identidad. |
+| 2FA para roles administrativos | Sí | No existe segundo factor; toda sesión compartida reúne los cinco roles. |
+| Cabeceras de seguridad tipo Helmet/equivalente Django | Sí | Se configuraron cabeceras explícitas y una CSP estricta, verificadas mediante pruebas. |
 
 ## Preguntas abiertas para Axel
 
-1. ¿Es aceptable el auto-registro de cualquier persona con correo de un dominio corporativo
-   permitido, o debe exigirse invitación/lista explícita antes de crear el usuario?
-2. ¿Quiénes tendrán `platform_admin`, `is_staff` o `is_superuser` en producción, y quién aprobará
-   altas o bajas de esos accesos?
-3. ¿Debe `viewer` leer todos los catálogos y referencias LATAM o solo datos del país asociado a
+1. ¿Cómo se distribuirá y rotará operativamente `SITE_ACCESS_PASSWORD`?
+2. ¿En qué momento será necesario recuperar identidad individual y roles diferenciados?
+3. Si se recupera identidad, ¿debe `viewer` leer todos los catálogos y referencias LATAM o solo datos del país asociado a
    su cuenta?
 4. ¿Se ratifica que `marketing` y `designer` puedan ejecutar `claude_review`, mientras
    `reviewer` queda reservado para la decisión humana `review`?
@@ -155,18 +152,15 @@ Evaluación contra el código actual después de incorporar magic link:
    `create/destroy`, o basta el filtro actual por propietario?
 6. ¿Las lecturas `list/retrieve` de campañas, productos, sedes, validaciones y activos deben ser
    globales para cualquier usuario corporativo o deben limitarse por rol y país?
-7. ¿Se requiere 2FA antes de habilitar cuentas administrativas en producción?
-8. ¿Qué límite por correo/IP y ventana de tiempo debe aplicarse a la solicitud de magic links?
+7. ¿Se requerirá 2FA cuando vuelva a existir identidad administrativa individual?
 
 ## Seguimiento de endurecimiento (2026-08-10)
 
-Las brechas de rate limiting en el login passwordless y de cabeceras de seguridad se resolvieron
+Las brechas de rate limiting en el acceso y de cabeceras de seguridad se resolvieron
 con controles explícitos y verificables:
 
-- La solicitud de magic link limita por defecto a `5/hour` por IP y `3/hour` por correo
-  normalizado, incluso si cambia la IP. La verificación del token limita a `20/hour` por IP.
-  Los valores se pueden ajustar mediante `MAGIC_LINK_REQUEST_THROTTLE_RATE`,
-  `MAGIC_LINK_EMAIL_THROTTLE_RATE` y `MAGIC_LINK_VERIFY_THROTTLE_RATE`.
+- El endpoint de contraseña compartida limita por defecto a `10/hour` por IP. El valor se puede
+  ajustar mediante `SITE_ACCESS_THROTTLE_RATE`.
 - Las respuestas incluyen `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`,
   `Cross-Origin-Opener-Policy: same-origin` y `X-Frame-Options: DENY`.
 - La CSP permite recursos del mismo origen, imágenes `data:`, bloquea framing y no admite
@@ -175,4 +169,5 @@ con controles explícitos y verificables:
   `frame-ancestors` usa `'none'`.
 
 Estos controles mitigan abuso básico y endurecen el navegador; no resuelven las preguntas
-separadas sobre invitaciones, 2FA, segmentación por país o reglas de rol.
+separadas sobre rotación del secreto, 2FA, segmentación por país o una futura recuperación de
+identidad individual.

@@ -118,23 +118,14 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MAGIC_LINK_REQUEST_THROTTLE_RATE = os.getenv(
-    "MAGIC_LINK_REQUEST_THROTTLE_RATE", "5/hour"
-)
-MAGIC_LINK_EMAIL_THROTTLE_RATE = os.getenv(
-    "MAGIC_LINK_EMAIL_THROTTLE_RATE", "3/hour"
-)
-MAGIC_LINK_VERIFY_THROTTLE_RATE = os.getenv(
-    "MAGIC_LINK_VERIFY_THROTTLE_RATE", "20/hour"
-)
+SITE_ACCESS_PASSWORD = os.getenv("SITE_ACCESS_PASSWORD", "")
+SITE_ACCESS_THROTTLE_RATE = os.getenv("SITE_ACCESS_THROTTLE_RATE", "10/hour")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["security.permissions.CorporateDomainPermission"],
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
     "DEFAULT_THROTTLE_RATES": {
-        "magic_link_request_ip": MAGIC_LINK_REQUEST_THROTTLE_RATE,
-        "magic_link_request_email": MAGIC_LINK_EMAIL_THROTTLE_RATE,
-        "magic_link_verify_ip": MAGIC_LINK_VERIFY_THROTTLE_RATE,
+        "site_access_ip": SITE_ACCESS_THROTTLE_RATE,
     },
 }
 
@@ -183,9 +174,6 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "").strip()
-MAGIC_LINK_MAX_AGE_SECONDS = int(os.getenv("MAGIC_LINK_MAX_AGE_SECONDS", "900"))
 DESIGN_TEST_MODE = os.getenv("DESIGN_TEST_MODE", "1") == "1"
 DESIGN_TEST_LIMIT = int(os.getenv("DESIGN_TEST_LIMIT", "50"))
 

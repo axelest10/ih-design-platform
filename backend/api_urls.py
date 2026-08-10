@@ -9,7 +9,7 @@ from catalog.views import BranchViewSet, ProductViewSet
 from designs.views import DesignViewSet
 from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
 from security.admin_views import corporate_user_detail, corporate_user_list, corporate_user_roles
-from security.views import current_user, request_magic_link, verify_magic_link
+from security.views import current_user, site_access
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -44,8 +44,7 @@ urlpatterns = [
         corporate_user_detail,
         name="security-user-detail",
     ),
-    path("auth/magic-link/request/", request_magic_link, name="magic-link-request"),
-    path("auth/magic-link/verify/", verify_magic_link, name="magic-link-verify"),
+    path("auth/site-access/", site_access, name="site-access"),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.

@@ -1,8 +1,6 @@
-from html import escape
-from urllib.parse import urlencode
-
 from django.conf import settings
-from django.contrib.auth import login
+from django.contrib.auth import get_user_model, login
+from django.utils.crypto import constant_time_compare
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -12,84 +10,36 @@ from .permissions import (
     ROLE_MARKETING,
     ROLE_REVIEWER,
     ROLE_VIEWER,
-    is_allowed_corporate_email,
     is_platform_admin_user,
 )
-from .services import (
-    EmailDeliveryError,
-    EmailMessage,
-    MagicLinkError,
-    consume_magic_link,
-    create_magic_link,
-    get_email_client,
-    invalidate_other_magic_links,
-)
-from .throttles import (
-    MagicLinkEmailThrottle,
-    MagicLinkRequestIPThrottle,
-    MagicLinkVerifyIPThrottle,
-)
+from .throttles import SiteAccessIPThrottle
+
+SHARED_ACCESS_USERNAME = "shared-access"
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-@throttle_classes([MagicLinkRequestIPThrottle, MagicLinkEmailThrottle])
-def request_magic_link(request):
-    email = str(request.data.get("email") or "").strip().casefold()
-    if not is_allowed_corporate_email(email):
-        return Response({"detail": "El dominio del correo no está autorizado."}, status=400)
-    if not settings.RESEND_API_KEY or not settings.RESEND_FROM_EMAIL:
-        return Response({"detail": "El servicio de correo no está configurado."}, status=503)
+@throttle_classes([SiteAccessIPThrottle])
+def site_access(request):
+    configured_password = settings.SITE_ACCESS_PASSWORD
+    if not configured_password:
+        return Response(
+            {"detail": "El acceso interno no está configurado."},
+            status=503,
+        )
 
-    token, record = create_magic_link(email)
-    verification_url = request.build_absolute_uri(
-        f"/verify.html?{urlencode({'token': token})}"
-    )
-    safe_url = escape(verification_url, quote=True)
-    max_age = settings.MAGIC_LINK_MAX_AGE_SECONDS
-    expiration_text = (
-        f"{max_age // 60} minutos" if max_age % 60 == 0 else f"{max_age} segundos"
-    )
-    message = EmailMessage(
-        sender=settings.RESEND_FROM_EMAIL,
-        recipients=(email,),
-        subject="Tu enlace de acceso a IH Design Platform",
-        html=(
-            f"<p>Usa este enlace para iniciar sesión. Expira en {expiration_text} y solo puede "
-            f"utilizarse una vez.</p><p><a href=\"{safe_url}\">Iniciar sesión</a></p>"
-        ),
-        text=(
-            f"Usa este enlace para iniciar sesión. Expira en {expiration_text} y solo puede "
-            f"utilizarse una vez.\n\n{verification_url}"
-        ),
-    )
-    try:
-        get_email_client().send(message)
-    except EmailDeliveryError:
-        record.delete()
-        return Response({"detail": "No fue posible enviar el enlace de acceso."}, status=502)
+    submitted_password = str(request.data.get("password") or "")
+    if not constant_time_compare(submitted_password, configured_password):
+        return Response({"detail": "No fue posible iniciar sesión."}, status=401)
 
-    invalidate_other_magic_links(record)
-    return Response(
-        {"detail": "Si el correo está autorizado, recibirás un enlace de acceso."},
-        status=202,
-    )
-
-
-@api_view(["GET"])
-@permission_classes([AllowAny])
-@throttle_classes([MagicLinkVerifyIPThrottle])
-def verify_magic_link(request):
-    token = str(request.query_params.get("token") or "").strip()
-    if not token:
-        return Response({"detail": "Falta el token del enlace de acceso."}, status=400)
-    try:
-        user = consume_magic_link(token)
-    except MagicLinkError as exc:
-        return Response({"detail": str(exc)}, status=400)
-
+    user = get_user_model().objects.filter(username=SHARED_ACCESS_USERNAME).first()
+    if user is None or not user.is_active:
+        return Response(
+            {"detail": "El acceso interno no está disponible."},
+            status=503,
+        )
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-    return Response({"authenticated": True, "email": user.email})
+    return Response({"authenticated": True})
 
 
 @api_view(["GET"])

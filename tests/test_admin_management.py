@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 
 from security.permissions import ROLE_PLATFORM_ADMIN
+from security.views import SHARED_ACCESS_USERNAME
 
 
 def _user(email, *, roles=(), is_staff=False):
@@ -33,10 +34,11 @@ def test_platform_admin_lists_paginated_corporate_users():
     response = _client(admin).get("/api/v1/security/users/")
 
     assert response.status_code == 200
-    assert response.json()["count"] == 2
+    assert response.json()["count"] == 3
     users = response.json()["results"]
     assert {user["email"] for user in users} == {
         "admin@ihmexico.com",
+        "acceso@ihmexico.com",
         "persona@ihbogota.com",
     }
     assert {"id", "email", "roles", "is_active", "date_joined", "last_login"} == set(
@@ -97,6 +99,7 @@ def test_admin_cannot_remove_own_platform_admin_role():
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
 def test_last_active_admin_role_cannot_be_removed():
+    get_user_model().objects.filter(username=SHARED_ACCESS_USERNAME).update(is_active=False)
     admin = _user("admin@ihmexico.com", roles=(ROLE_PLATFORM_ADMIN,))
 
     response = _client(admin).post(
