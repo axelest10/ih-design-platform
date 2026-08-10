@@ -157,3 +157,22 @@ Evaluación contra el código actual después de incorporar magic link:
    globales para cualquier usuario corporativo o deben limitarse por rol y país?
 7. ¿Se requiere 2FA antes de habilitar cuentas administrativas en producción?
 8. ¿Qué límite por correo/IP y ventana de tiempo debe aplicarse a la solicitud de magic links?
+
+## Seguimiento de endurecimiento (2026-08-10)
+
+Las brechas de rate limiting en el login passwordless y de cabeceras de seguridad se resolvieron
+con controles explícitos y verificables:
+
+- La solicitud de magic link limita por defecto a `5/hour` por IP y `3/hour` por correo
+  normalizado, incluso si cambia la IP. La verificación del token limita a `20/hour` por IP.
+  Los valores se pueden ajustar mediante `MAGIC_LINK_REQUEST_THROTTLE_RATE`,
+  `MAGIC_LINK_EMAIL_THROTTLE_RATE` y `MAGIC_LINK_VERIFY_THROTTLE_RATE`.
+- Las respuestas incluyen `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`,
+  `Cross-Origin-Opener-Policy: same-origin` y `X-Frame-Options: DENY`.
+- La CSP permite recursos del mismo origen, imágenes `data:`, bloquea framing y no admite
+  `unsafe-inline` ni `unsafe-eval`: `default-src`, `script-src`, `style-src`, `font-src`,
+  `connect-src`, `base-uri` y `form-action` usan `'self'`; `img-src` usa `'self' data:` y
+  `frame-ancestors` usa `'none'`.
+
+Estos controles mitigan abuso básico y endurecen el navegador; no resuelven las preguntas
+separadas sobre invitaciones, 2FA, segmentación por país o reglas de rol.

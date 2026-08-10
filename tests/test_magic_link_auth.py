@@ -2,6 +2,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -15,6 +16,13 @@ class FakeEmailClient:
     def send(self, message):
         self.messages.append(message)
         return "email_test_123"
+
+
+@pytest.fixture(autouse=True)
+def clear_throttle_cache():
+    cache.clear()
+    yield
+    cache.clear()
 
 
 @pytest.fixture
@@ -61,6 +69,50 @@ def test_magic_link_request_rejects_publicly_unauthorized_domain(fake_email_clie
     assert response.status_code == 400
     assert fake_email_client.messages == []
     assert MagicLinkToken.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_magic_link_request_is_throttled_by_ip(fake_email_client):
+    client = APIClient()
+    for attempt in range(5):
+        response = client.post(
+            "/api/v1/auth/magic-link/request/",
+            {"email": f"persona{attempt}@ihmexico.com"},
+            format="json",
+            REMOTE_ADDR="198.51.100.10",
+        )
+        assert response.status_code == 202
+
+    throttled = client.post(
+        "/api/v1/auth/magic-link/request/",
+        {"email": "persona5@ihmexico.com"},
+        format="json",
+        REMOTE_ADDR="198.51.100.10",
+    )
+
+    assert throttled.status_code == 429
+
+
+@pytest.mark.django_db
+def test_magic_link_request_is_throttled_by_email_across_ips(fake_email_client):
+    client = APIClient()
+    for attempt in range(3):
+        response = client.post(
+            "/api/v1/auth/magic-link/request/",
+            {"email": "Persona@ihmexico.com"},
+            format="json",
+            REMOTE_ADDR=f"198.51.100.{attempt + 20}",
+        )
+        assert response.status_code == 202
+
+    throttled = client.post(
+        "/api/v1/auth/magic-link/request/",
+        {"email": " persona@IHMEXICO.COM "},
+        format="json",
+        REMOTE_ADDR="198.51.100.23",
+    )
+
+    assert throttled.status_code == 429
 
 
 @pytest.mark.corporate_auth

@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "csp",
     "branding",
     "catalog",
     "campaigns",
@@ -41,11 +42,13 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "csp.middleware.CSPMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -113,9 +116,24 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+MAGIC_LINK_REQUEST_THROTTLE_RATE = os.getenv(
+    "MAGIC_LINK_REQUEST_THROTTLE_RATE", "5/hour"
+)
+MAGIC_LINK_EMAIL_THROTTLE_RATE = os.getenv(
+    "MAGIC_LINK_EMAIL_THROTTLE_RATE", "3/hour"
+)
+MAGIC_LINK_VERIFY_THROTTLE_RATE = os.getenv(
+    "MAGIC_LINK_VERIFY_THROTTLE_RATE", "20/hour"
+)
+
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["security.permissions.CorporateDomainPermission"],
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    "DEFAULT_THROTTLE_RATES": {
+        "magic_link_request_ip": MAGIC_LINK_REQUEST_THROTTLE_RATE,
+        "magic_link_request_email": MAGIC_LINK_EMAIL_THROTTLE_RATE,
+        "magic_link_verify_ip": MAGIC_LINK_VERIFY_THROTTLE_RATE,
+    },
 }
 
 def _env_list(name: str) -> tuple[str, ...]:
@@ -129,6 +147,23 @@ SECURE_SSL_REDIRECT = os.getenv("DJANGO_SECURE_SSL_REDIRECT", "0") == "1"
 SESSION_COOKIE_SECURE = os.getenv("DJANGO_SECURE_COOKIES", "0") == "1"
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SECURE_HSTS_SECONDS = int(os.getenv("DJANGO_HSTS_SECONDS", "0"))
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+SECURE_CROSS_ORIGIN_OPENER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+CONTENT_SECURITY_POLICY = {
+    "DIRECTIVES": {
+        "default-src": ["'self'"],
+        "script-src": ["'self'"],
+        "style-src": ["'self'"],
+        "img-src": ["'self'", "data:"],
+        "font-src": ["'self'"],
+        "connect-src": ["'self'"],
+        "frame-ancestors": ["'none'"],
+        "base-uri": ["'self'"],
+        "form-action": ["'self'"],
+    }
+}
 
 CORPORATE_AUTH_REQUIRED = os.getenv("DJANGO_REQUIRE_CORPORATE_AUTH", "1") == "1"
 CORPORATE_ALLOWED_EMAIL_DOMAINS = tuple(

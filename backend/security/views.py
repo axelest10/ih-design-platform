@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import login
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -24,10 +24,16 @@ from .services import (
     get_email_client,
     invalidate_other_magic_links,
 )
+from .throttles import (
+    MagicLinkEmailThrottle,
+    MagicLinkRequestIPThrottle,
+    MagicLinkVerifyIPThrottle,
+)
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([MagicLinkRequestIPThrottle, MagicLinkEmailThrottle])
 def request_magic_link(request):
     email = str(request.data.get("email") or "").strip().casefold()
     if not is_allowed_corporate_email(email):
@@ -72,6 +78,7 @@ def request_magic_link(request):
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@throttle_classes([MagicLinkVerifyIPThrottle])
 def verify_magic_link(request):
     token = str(request.query_params.get("token") or "").strip()
     if not token:

@@ -58,9 +58,8 @@
       preview.textContent = "Selecciona un producto para ver su color.";
       return;
     }
-    preview.className = "product-preview";
-    preview.style.background = product.authorized_color.background_hex || "#f5f6fb";
-    preview.style.borderLeft = `8px solid ${product.authorized_color.primary_hex}`;
+    const productClass = product.product_slug.replace(/[^a-z0-9-]/g, "");
+    preview.className = `product-preview product-preview--${productClass}`;
     preview.innerHTML = `<strong>${product.canonical_name}</strong><span>${product.authorized_color.primary_hex} · color autorizado</span>`;
   };
 
