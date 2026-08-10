@@ -39,13 +39,14 @@ hasta desactivar el modo.
 - `GET|POST /security/users/` — lista o crea usuarios corporativos (`platform_admin`).
 - `POST /security/users/{id}/password/` — establece una contraseña nueva (`platform_admin`).
 - `GET /material-types/` — tipos de material activos; `school-kit` expone todos los productos
-  activos del catálogo, prioriza `qc-2026` y `teacher-training-certifications` y declara tres
-  entregables iniciales (`square-v1`, `story-v1`, `portrait-v1`).
+  activos del catálogo, prioriza `qc-2026` y `teacher-training-certifications` y declara seis
+  entregables: tres sociales por producto y tres documentos formales por paquete.
 - `GET|POST /material-bundles/` — paquetes de materiales con productos del catálogo y briefs hijos;
   crear requiere `platform_admin`, `marketing` o `designer`.
 - `PATCH /material-bundles/{id}/` — edita un paquete antes de generar sus piezas.
-- `POST /material-bundles/{id}/generate/` — crea un brief, un design y una DesignVersion HTML/SVG
-  por combinación producto/entregable y dispara su revisión visual mediante `ai.services`. Hasta
+- `POST /material-bundles/{id}/generate/` — crea tres piezas HTML/SVG por producto y una carta,
+  un anuncio y un flyer PDF por paquete; cada pieza conserva su propio brief, design, versión y
+  revisión visual mediante `ai.services`. Hasta
   confirmar la integración real con Claude, el stub conserva `pending` y registra
   `integration_status=needs_confirmation` dentro de `claude_review`.
 - `GET /material-templates/` — templates versionados asociados a un tipo de material.

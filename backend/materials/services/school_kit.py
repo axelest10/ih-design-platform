@@ -4,6 +4,8 @@ from __future__ import annotations
 from typing import Any
 
 from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Max
 
@@ -12,8 +14,9 @@ from briefs.models import DesignBrief
 from briefs.services.options import validate_brief_logo_access, validate_uploaded_logo_access
 from designs.models import Design, DesignVersion
 from designs.services.renderer import RenderValidationError, render_preview
+from designs.services.renderer_document import render_document_preview
 
-from ..models import MaterialBundleItem
+from ..models import MaterialBundleItem, MaterialTemplate
 from .catalog import school_kit_products
 
 SCHOOL_KIT_DELIVERABLES: tuple[dict[str, str], ...] = (
@@ -22,18 +25,45 @@ SCHOOL_KIT_DELIVERABLES: tuple[dict[str, str], ...] = (
         "label": "Pieza principal cuadrada",
         "format": "square",
         "template_key": "square-v1",
+        "scope": "per-product",
     },
     {
         "key": "story-call-to-action",
         "label": "Story con llamada a la acción",
         "format": "story",
         "template_key": "story-v1",
+        "scope": "per-product",
     },
     {
         "key": "portrait-information",
         "label": "Pieza vertical informativa",
         "format": "portrait",
         "template_key": "portrait-v1",
+        "scope": "per-product",
+    },
+)
+
+SCHOOL_KIT_FORMAL_DELIVERABLES: tuple[dict[str, str], ...] = (
+    {
+        "key": "formal-letter",
+        "label": "Carta formal con membrete",
+        "format": "html",
+        "template_key": "letter-a4-v1",
+        "scope": "per-bundle",
+    },
+    {
+        "key": "school-announcement",
+        "label": "Anuncio para la comunidad escolar",
+        "format": "html",
+        "template_key": "announcement-a4-v1",
+        "scope": "per-bundle",
+    },
+    {
+        "key": "general-flyer",
+        "label": "Flyer informativo general",
+        "format": "html",
+        "template_key": "flyer-a4-v1",
+        "scope": "per-bundle",
     },
 )
 
@@ -44,7 +74,10 @@ class SchoolKitGenerationError(ValueError):
 
 def school_kit_deliverables() -> list[dict[str, str]]:
     """Devuelve el contenido inicial aprobado para cada producto del paquete."""
-    return [dict(item) for item in SCHOOL_KIT_DELIVERABLES]
+    return [
+        *(dict(item) for item in SCHOOL_KIT_DELIVERABLES),
+        *(dict(item) for item in SCHOOL_KIT_FORMAL_DELIVERABLES),
+    ]
 
 
 def _context_value(context: dict[str, Any], key: str, product_slug: str) -> str:
@@ -115,6 +148,38 @@ def _required_context(context: dict[str, Any], product_slug: str) -> dict[str, s
             "Faltan campos obligatorios en brief_context: " + ", ".join(missing) + "."
         )
     return required
+
+
+def _formal_document_values(
+    template_key: str,
+    context: dict[str, Any],
+    copy: dict[str, str],
+) -> dict[str, str]:
+    sender = str(context.get("sender") or "International House").strip()
+    contact = str(context.get("contact") or copy["cta"]).strip()
+    if template_key == "letter-a4-v1":
+        return {
+            "sender": sender,
+            "recipient": str(context.get("recipient") or copy["audience"]).strip(),
+            "body": copy["body"],
+            "signature": str(context.get("signature") or sender).strip(),
+        }
+    if template_key == "announcement-a4-v1":
+        return {
+            "headline": copy["headline"],
+            "date": str(
+                context.get("date") or context.get("campaign_info") or "Fecha por confirmar"
+            ).strip(),
+            "body": copy["body"],
+            "contact": contact,
+        }
+    return {
+        "headline": copy["headline"],
+        "subtitle": str(context.get("subtitle") or copy["objective"]).strip(),
+        "body": copy["body"],
+        "cta": copy["cta"],
+        "contact": contact,
+    }
 
 
 @transaction.atomic
@@ -237,6 +302,90 @@ def generate_school_kit(
                     sort_order=len(items),
                 )
             )
+
+    # Los documentos institucionales describen el paquete completo; generarlos una sola vez
+    # evita duplicados cuando el colegio selecciona varios productos.
+    primary_product_slug = bundle.product_slugs[0]
+    primary_copy = _required_context(context, primary_product_slug)
+    for deliverable in SCHOOL_KIT_FORMAL_DELIVERABLES:
+        template = MaterialTemplate.objects.select_related("material_type").get(
+            key=deliverable["template_key"],
+            active=True,
+        )
+        values = _formal_document_values(template.key, context, primary_copy)
+        title = f"{bundle.name} · {deliverable['label']}"
+        brief = DesignBrief.objects.create(
+            status=DesignBrief.Status.IN_REVIEW,
+            format=DesignBrief.Format.HTML,
+            title=title[:180],
+            country=bundle.country,
+            product_slug=primary_product_slug,
+            brand_logo_key=brand_logo_key,
+            additional_logo_keys=additional_logo_keys,
+            material_type=template.material_type,
+            branch=bundle.branch,
+            campaign=bundle.campaign,
+            audience=primary_copy["audience"],
+            objective=primary_copy["objective"],
+            requested_message=values.get("headline") or values.get("body", "")[:180],
+            language=str(context.get("language") or "es"),
+            channel="school",
+            brief_data={
+                **context,
+                "school_kit": {
+                    "bundle_id": str(bundle.pk),
+                    "deliverable_key": deliverable["key"],
+                    "template_key": template.key,
+                    "scope": "per-bundle",
+                },
+                "content": values,
+            },
+            constraints={
+                "source": "school-kit",
+                "template_key": template.key,
+                "partner_logos_are_secondary": True,
+            },
+            created_by=user if user and user.is_authenticated else None,
+        )
+        design = Design.objects.create(
+            brief=brief,
+            status=(
+                Design.Status.SELF_REVIEW
+                if settings.DESIGN_TEST_MODE
+                else Design.Status.IN_REVIEW
+            ),
+            test_number=next_test_number if settings.DESIGN_TEST_MODE else None,
+        )
+        if settings.DESIGN_TEST_MODE:
+            next_test_number += 1
+        try:
+            rendered = render_document_preview(
+                {"template_key": template.key, "logo_name": brand_logo_key, **values},
+                material_type=template.material_type,
+            )
+        except RenderValidationError as exc:
+            raise SchoolKitGenerationError(f"{title}: {exc}") from exc
+        pdf_path = default_storage.save(
+            f"generated-designs/{design.pk}/version-1.pdf",
+            ContentFile(rendered.pdf),
+        )
+        version = DesignVersion.objects.create(
+            design=design,
+            number=1,
+            template_key=template.key,
+            render_data={**rendered.data, "pdf_path": pdf_path},
+            asset_refs=[*rendered.asset_refs, pdf_path],
+            validation_summary=rendered.validation_summary,
+        )
+        run_automatic_design_review(version, provider=review_provider)
+        items.append(
+            MaterialBundleItem.objects.create(
+                bundle=bundle,
+                brief=brief,
+                deliverable_key=deliverable["key"],
+                sort_order=len(items),
+            )
+        )
 
     bundle.status = bundle.Status.IN_REVIEW
     bundle.save(update_fields=["status", "updated_at"])

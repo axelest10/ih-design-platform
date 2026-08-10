@@ -99,7 +99,9 @@ def _draw_paragraph(pdf, text: str, style: ParagraphStyle, x: float, y: float, w
     return height
 
 
-def _build_pdf(*, headline: str, body: str, cta: str, logo_path: Path, accent: str) -> bytes:
+def _build_brochure_pdf(
+    *, headline: str, body: str, cta: str, logo_path: Path, accent: str
+) -> bytes:
     font_name = _register_font()
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=A4, pageCompression=1)
@@ -176,6 +178,174 @@ def _build_pdf(*, headline: str, body: str, cta: str, logo_path: Path, accent: s
     return buffer.getvalue()
 
 
+def _build_letter_pdf(*, values: dict[str, str], logo_path: Path, accent: str) -> bytes:
+    font_name = _register_font()
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4, pageCompression=1)
+    width, height = A4
+    margin = 58
+    dark = _color_hex("dark_navy", default="dark_navy")
+    pdf.setTitle("Carta formal International House")
+    pdf.setFillColor(HexColor(accent))
+    pdf.rect(0, height - 12, width, 12, stroke=0, fill=1)
+    pdf.drawImage(
+        ImageReader(str(logo_path)),
+        margin,
+        height - 98,
+        width=142,
+        height=50,
+        preserveAspectRatio=True,
+        mask="auto",
+    )
+    pdf.setFillColor(HexColor(dark))
+    pdf.setFont(font_name, 9)
+    pdf.drawRightString(width - margin, height - 62, values["sender"])
+    pdf.setFillColor(HexColor(accent))
+    pdf.setFont(font_name, 10)
+    pdf.drawString(margin, height - 142, "PARA")
+    pdf.setFillColor(HexColor(dark))
+    pdf.setFont(font_name, 13)
+    pdf.drawString(margin, height - 162, values["recipient"])
+    body_style = ParagraphStyle(
+        "LetterBody",
+        fontName=font_name,
+        fontSize=12,
+        leading=19,
+        textColor=HexColor(dark),
+        alignment=TA_LEFT,
+    )
+    body_height = _draw_paragraph(
+        pdf, values["body"], body_style, margin, height - 210, width - (margin * 2)
+    )
+    if body_height > 430:
+        raise RenderValidationError("'body' no cabe de forma legible en la carta A4.")
+    signature_y = height - 244 - body_height
+    pdf.setFillColor(HexColor(accent))
+    pdf.setFont(font_name, 12)
+    pdf.drawString(margin, signature_y, values["signature"])
+    pdf.setFillColor(HexColor(dark))
+    pdf.setFont(font_name, 8)
+    pdf.drawString(margin, 38, "International House LATAM · Comunicación institucional")
+    pdf.showPage()
+    pdf.save()
+    return buffer.getvalue()
+
+
+def _build_announcement_pdf(*, values: dict[str, str], logo_path: Path, accent: str) -> bytes:
+    font_name = _register_font()
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4, pageCompression=1)
+    width, height = A4
+    margin = 54
+    dark = _color_hex("dark_navy", default="dark_navy")
+    white = _color_hex("white", default="white")
+    pdf.setTitle(values["headline"])
+    pdf.setFillColor(HexColor(accent))
+    pdf.rect(0, height - 250, width, 250, stroke=0, fill=1)
+    pdf.drawImage(
+        ImageReader(str(logo_path)),
+        margin,
+        height - 88,
+        width=138,
+        height=46,
+        preserveAspectRatio=True,
+        mask="auto",
+    )
+    headline_style = ParagraphStyle(
+        "AnnouncementHeadline",
+        fontName=font_name,
+        fontSize=30,
+        leading=35,
+        textColor=HexColor(white),
+    )
+    _draw_paragraph(pdf, values["headline"], headline_style, margin, height - 122, width - 108)
+    pdf.setFillColor(HexColor(accent))
+    pdf.roundRect(margin, height - 300, 180, 30, 8, stroke=0, fill=1)
+    pdf.setFillColor(HexColor(white))
+    pdf.setFont(font_name, 10)
+    pdf.drawString(margin + 14, height - 289, values["date"])
+    body_style = ParagraphStyle(
+        "AnnouncementBody",
+        fontName=font_name,
+        fontSize=13,
+        leading=21,
+        textColor=HexColor(dark),
+    )
+    body_height = _draw_paragraph(
+        pdf, values["body"], body_style, margin, height - 340, width - 108
+    )
+    if body_height > 350:
+        raise RenderValidationError("'body' no cabe de forma legible en el anuncio A4.")
+    pdf.setFillColor(HexColor(dark))
+    pdf.setFont(font_name, 10)
+    pdf.drawString(margin, 55, f"Contacto: {values['contact']}")
+    pdf.showPage()
+    pdf.save()
+    return buffer.getvalue()
+
+
+def _build_flyer_pdf(*, values: dict[str, str], logo_path: Path, accent: str) -> bytes:
+    font_name = _register_font()
+    buffer = BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4, pageCompression=1)
+    width, height = A4
+    margin = 48
+    dark = _color_hex("dark_navy", default="dark_navy")
+    white = _color_hex("white", default="white")
+    pdf.setTitle(values["headline"])
+    pdf.setFillColor(HexColor(accent))
+    pdf.rect(0, 0, width, height, stroke=0, fill=1)
+    pdf.setFillColor(HexColor(white))
+    pdf.roundRect(margin, 54, width - (margin * 2), height - 108, 18, stroke=0, fill=1)
+    pdf.drawImage(
+        ImageReader(str(logo_path)),
+        margin + 28,
+        height - 126,
+        width=146,
+        height=50,
+        preserveAspectRatio=True,
+        mask="auto",
+    )
+    headline_style = ParagraphStyle(
+        "FlyerHeadline",
+        fontName=font_name,
+        fontSize=32,
+        leading=37,
+        textColor=HexColor(accent),
+    )
+    headline_height = _draw_paragraph(
+        pdf, values["headline"], headline_style, margin + 28, height - 164, width - 152
+    )
+    pdf.setFillColor(HexColor(dark))
+    pdf.setFont(font_name, 15)
+    subtitle_y = height - 194 - headline_height
+    pdf.drawString(margin + 28, subtitle_y, values["subtitle"])
+    body_style = ParagraphStyle(
+        "FlyerBody",
+        fontName=font_name,
+        fontSize=12,
+        leading=19,
+        textColor=HexColor(dark),
+    )
+    body_height = _draw_paragraph(
+        pdf, values["body"], body_style, margin + 28, subtitle_y - 42, width - 152
+    )
+    button_y = subtitle_y - 80 - body_height
+    if button_y < 140:
+        raise RenderValidationError("El contenido no cabe de forma legible en el flyer A4.")
+    pdf.setFillColor(HexColor(accent))
+    pdf.roundRect(margin + 28, button_y, 220, 40, 10, stroke=0, fill=1)
+    pdf.setFillColor(HexColor(white))
+    pdf.setFont(font_name, 11)
+    pdf.drawString(margin + 44, button_y + 14, values["cta"])
+    pdf.setFillColor(HexColor(dark))
+    pdf.setFont(font_name, 9)
+    pdf.drawString(margin + 28, 92, values["contact"])
+    pdf.showPage()
+    pdf.save()
+    return buffer.getvalue()
+
+
 def render_document_preview(
     payload: dict[str, Any], *, material_type: MaterialType
 ) -> RenderedDocument:
@@ -202,26 +372,34 @@ def render_document_preview(
         field: _required_text(payload, field, constraints)
         for field in template.required_fields
     }
-    headline = values.get("headline", str(payload.get("headline") or "").strip())
-    body = values.get("body", str(payload.get("body") or "").strip())
-    cta = values.get("cta", str(payload.get("cta") or "").strip())
     logo_name = str(payload.get("logo_name") or DEFAULT_LOGO_NAME)
     logo_path = _approved_logo_path(logo_name)
     accent_token = str(payload.get("accent_token") or "knowledge")
     accent_hex = _color_hex(accent_token, default="knowledge")
-    pdf_bytes = _build_pdf(
-        headline=headline,
-        body=body,
-        cta=cta,
-        logo_path=logo_path,
-        accent=accent_hex,
-    )
+    layout = str(constraints.get("layout") or "brochure")
+    if layout == "brochure":
+        pdf_bytes = _build_brochure_pdf(
+            headline=values.get("headline", ""),
+            body=values.get("body", ""),
+            cta=values.get("cta", ""),
+            logo_path=logo_path,
+            accent=accent_hex,
+        )
+    elif layout == "formal-letter":
+        pdf_bytes = _build_letter_pdf(values=values, logo_path=logo_path, accent=accent_hex)
+    elif layout == "announcement":
+        pdf_bytes = _build_announcement_pdf(
+            values=values, logo_path=logo_path, accent=accent_hex
+        )
+    elif layout == "flyer":
+        pdf_bytes = _build_flyer_pdf(values=values, logo_path=logo_path, accent=accent_hex)
+    else:
+        raise RenderValidationError(f"Layout de documento '{layout}' no implementado.")
     render_data = {
         "template_key": template.key,
         "template_version": template.version,
-        "headline": headline,
-        "body": body,
-        "cta": cta,
+        "layout": layout,
+        **values,
         "logo_name": logo_name,
         "accent_token": accent_token,
     }

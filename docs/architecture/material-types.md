@@ -66,13 +66,18 @@ Campos propuestos:
 Cada pieza del paquete conserva su propia versión, revisión y resultado de validación. Esto evita
 que aprobar una pieza apruebe automáticamente todas las demás.
 
-### Primer `school-kit` implementado
+### `school-kit` implementado
 
 Cada producto seleccionado genera tres briefs hijos y tres diseños independientes:
 
 - `hero-square` → `square-v1`;
 - `story-call-to-action` → `story-v1`;
 - `portrait-information` → `portrait-v1`.
+
+Además, cada paquete genera una sola carta formal (`letter-a4-v1`), un anuncio escolar
+(`announcement-a4-v1`) y un flyer general (`flyer-a4-v1`). Estos documentos no se repiten por
+producto porque comunican el paquete institucional completo. Pertenecen a `school-documents`,
+usan el renderer PDF y también están disponibles individualmente en el editor rápido.
 
 El endpoint `POST /api/v1/material-bundles/{id}/generate/` persiste el HTML y el SVG en la
 `DesignVersion` y dispara `ai.services.run_automatic_design_review` para cada pieza. La revisión

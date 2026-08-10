@@ -239,7 +239,7 @@ def test_school_kit_bundle_rejects_deprecated_product_slug():
 
 
 @pytest.mark.django_db
-def test_school_kit_type_exposes_three_default_deliverables():
+def test_school_kit_type_exposes_social_and_formal_default_deliverables():
     response = APIClient().get("/api/v1/material-types/", {"country": "MX"})
 
     school_kit = next(item for item in response.json() if item["slug"] == "school-kit")
@@ -247,11 +247,14 @@ def test_school_kit_type_exposes_three_default_deliverables():
         "square-v1",
         "story-v1",
         "portrait-v1",
+        "letter-a4-v1",
+        "announcement-a4-v1",
+        "flyer-a4-v1",
     ]
 
 
 @pytest.mark.django_db
-def test_school_kit_generation_creates_three_rendered_pieces_per_product():
+def test_school_kit_generation_creates_social_and_formal_pieces():
     client = APIClient()
     material_type = next(
         item
@@ -283,7 +286,7 @@ def test_school_kit_generation_creates_three_rendered_pieces_per_product():
     assert response.status_code == 201, response.json()
     generated = response.json()
     assert generated["status"] == "in_review"
-    assert len(generated["items"]) == 3
+    assert len(generated["items"]) == 6
     assert {item["design"]["status"] for item in generated["items"]} == {"self_review"}
     assert {item["design"]["claude_review_status"] for item in generated["items"]} == {"pending"}
     assert {
@@ -299,6 +302,78 @@ def test_school_kit_generation_creates_three_rendered_pieces_per_product():
     assert version.render_data["html"].startswith("<!doctype html>")
     assert version.render_data["svg"].startswith("<svg")
     assert version.validation_summary["status"] == "needs_changes"
+    formal_items = [
+        item
+        for item in generated["items"]
+        if item["deliverable_key"] in {"formal-letter", "school-announcement", "general-flyer"}
+    ]
+    assert len(formal_items) == 3
+    assert {
+        DesignVersion.objects.get(design_id=item["design"]["id"]).template_key
+        for item in formal_items
+    } == {"letter-a4-v1", "announcement-a4-v1", "flyer-a4-v1"}
+    assert all(
+        DesignVersion.objects.get(design_id=item["design"]["id"])
+        .render_data["pdf_path"]
+        .endswith(".pdf")
+        for item in formal_items
+    )
+
+
+@pytest.mark.django_db
+def test_school_formal_templates_are_available_to_quick_editor():
+    templates = APIClient().get("/api/v1/material-templates/").json()
+    formal = {
+        item["key"]: item
+        for item in templates
+        if item["key"] in {"letter-a4-v1", "announcement-a4-v1", "flyer-a4-v1"}
+    }
+
+    assert set(formal) == {"letter-a4-v1", "announcement-a4-v1", "flyer-a4-v1"}
+    assert all(item["active"] for item in formal.values())
+    assert formal["letter-a4-v1"]["field_labels"]["recipient"] == "Destinatario"
+
+
+@pytest.mark.django_db
+def test_school_kit_generates_formal_documents_once_for_multiple_products():
+    client = APIClient()
+    school_kit = next(
+        item
+        for item in client.get("/api/v1/material-types/").json()
+        if item["slug"] == "school-kit"
+    )
+    bundle = client.post(
+        "/api/v1/material-bundles/",
+        {
+            "material_type": school_kit["id"],
+            "name": "Paquete multiproducto",
+            "country": "MX",
+            "product_slugs": ["general-english", "business-english"],
+            "brief_context": {
+                "brand_logo_key": "ih-mexico-classic-png",
+                "headline": "Programas IH",
+                "body": "Opciones para tu comunidad.",
+                "cta": "Conoce más",
+                "audience": "Comunidad escolar",
+                "objective": "Presentar la oferta educativa",
+            },
+        },
+        format="json",
+    )
+
+    response = client.post(
+        f"/api/v1/material-bundles/{bundle.json()['id']}/generate/",
+        format="json",
+    )
+
+    assert response.status_code == 201, response.json()
+    items = response.json()["items"]
+    assert len(items) == 9
+    assert sum(
+        item["deliverable_key"]
+        in {"formal-letter", "school-announcement", "general-flyer"}
+        for item in items
+    ) == 3
 
 
 @pytest.mark.django_db

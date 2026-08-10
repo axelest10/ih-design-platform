@@ -19,6 +19,28 @@ DOCUMENT_PAYLOAD = {
     "logo_name": "ih-mexico-classic-png",
 }
 
+FORMAL_DOCUMENT_PAYLOADS = {
+    "letter-a4-v1": {
+        "sender": "International House México",
+        "recipient": "Dirección académica",
+        "body": "Compartimos la propuesta educativa preparada para su comunidad escolar.",
+        "signature": "Equipo International House",
+    },
+    "announcement-a4-v1": {
+        "headline": "Nueva fecha informativa",
+        "date": "15 de septiembre",
+        "body": "Conoce los programas disponibles para estudiantes y docentes.",
+        "contact": "admisiones@ihmexico.com",
+    },
+    "flyer-a4-v1": {
+        "headline": "Inglés para tu comunidad",
+        "subtitle": "Programas internacionales para cada etapa",
+        "body": "Acompañamos a estudiantes y docentes con objetivos claros.",
+        "cta": "Solicita información",
+        "contact": "admisiones@ihmexico.com",
+    },
+}
+
 
 @pytest.mark.django_db
 def test_document_renderer_generates_valid_pdf_from_registered_template():
@@ -40,6 +62,24 @@ def test_document_renderer_rejects_payload_missing_required_field():
 
     with pytest.raises(RenderValidationError, match="'body' es obligatorio"):
         render_document_preview(incomplete, material_type=material_type)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("template_key", FORMAL_DOCUMENT_PAYLOADS)
+def test_document_renderer_supports_school_formal_layouts(template_key):
+    material_type = MaterialType.objects.get(slug="school-documents")
+    payload = {
+        "template_key": template_key,
+        "logo_name": "ih-mexico-classic-png",
+        **FORMAL_DOCUMENT_PAYLOADS[template_key],
+    }
+
+    rendered = render_document_preview(payload, material_type=material_type)
+
+    assert rendered.pdf.startswith(b"%PDF-")
+    assert rendered.template_key == template_key
+    assert rendered.data["layout"] in {"formal-letter", "announcement", "flyer"}
+    assert rendered.validation_summary["status"] == "passed"
 
 
 @pytest.mark.django_db

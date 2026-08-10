@@ -26,6 +26,18 @@
       name: "Presentación panorámica",
       description: "Diapositiva editable 16:9 en PowerPoint con identidad IH.",
     },
+    "letter-a4-v1": {
+      name: "Carta formal con membrete",
+      description: "Carta A4 institucional con remitente, destinatario, cuerpo y firma.",
+    },
+    "announcement-a4-v1": {
+      name: "Anuncio escolar",
+      description: "Anuncio A4 para fechas, avisos y comunicación con la comunidad escolar.",
+    },
+    "flyer-a4-v1": {
+      name: "Flyer informativo",
+      description: "Flyer A4 con título, información principal, acción y contacto.",
+    },
   };
   const materialTypeNames = {
     "social-post": "Publicación para redes sociales",
