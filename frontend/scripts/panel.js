@@ -6,7 +6,38 @@
     element.textContent = message;
     element.className = `notice notice--${type}`;
   };
-  const json = (response) => response.ok ? response.json() : response.json().then((body) => Promise.reject(body));
+  const json = async (response) => {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw Object.assign(new Error(body.detail || "La solicitud no pudo completarse."), body, {
+        status: response.status,
+      });
+    }
+    return body;
+  };
+  const isAuthError = (error) => error?.status === 401 || error?.status === 403;
+  const setBriefFormDisabled = (disabled) => {
+    $("brief-form").querySelectorAll("input, select, textarea, button").forEach((control) => {
+      control.disabled = disabled;
+    });
+  };
+  const showUnauthenticatedState = () => {
+    state.user = null;
+    $("user-label").textContent = "No has iniciado sesión";
+    $("role-label").textContent = "Acceso restringido";
+    setBriefFormDisabled(true);
+    notice(
+      "Inicia sesión con tu correo corporativo para crear briefs. La página de login todavía no está lista en la interfaz; contacta a la plataforma si la necesitas ya.",
+      "error",
+    );
+  };
+  const handleOptionsError = (error) => {
+    if (isAuthError(error)) {
+      showUnauthenticatedState();
+      return;
+    }
+    notice("No pudimos cargar las opciones del brief. Verifica que la API esté disponible.", "error");
+  };
 
   const fillSelect = (select, items, valueKey, labelKey, placeholder) => {
     select.innerHTML = `<option value="">${placeholder}</option>`;
@@ -47,7 +78,14 @@
     });
     if (!logoContainer.children.length) logoContainer.innerHTML = "<small>No hay logos adicionales disponibles para esta selección.</small>";
     renderProductPreview();
-  }).catch(() => notice("No pudimos cargar las opciones del brief. Verifica que la API esté disponible.", "error"));
+  }).catch(handleOptionsError);
+
+  const loadInitialOptions = () => fetch("/api/v1/briefs/options/").then(json).then((options) => {
+    state.options = options;
+    fillSelect($("country"), options.countries, "code", "label", "Selecciona un país");
+    $("country").value = "MX";
+    return loadOptions();
+  }).catch(handleOptionsError);
 
   const uploadLogo = () => {
     const file = $("logo-file").files[0];
@@ -112,11 +150,23 @@
 
   const loadUser = () => fetch("/api/v1/me/").then(json).then((user) => {
     state.user = user;
+    setBriefFormDisabled(false);
     $("user-label").textContent = user.email || "Sesión local";
     $("role-label").textContent = user.is_admin ? "Administrador" : (user.roles[0] || "Usuario");
     if (user.is_admin) $("admin-panel").hidden = false;
     return fetch("/api/v1/briefs/").then(json);
-  }).then((briefs) => { $("brief-count").textContent = briefs.count ?? briefs.length ?? "—"; }).catch(() => {});
+  }).then((briefs) => {
+    $("brief-count").textContent = briefs.count ?? briefs.length ?? "—";
+    return true;
+  }).catch((error) => {
+    if (isAuthError(error)) {
+      showUnauthenticatedState();
+    } else {
+      $("user-label").textContent = "Perfil no disponible";
+      notice("No pudimos verificar tu perfil. Intenta de nuevo cuando la API esté disponible.", "error");
+    }
+    return false;
+  });
 
   const loadAdminStats = () => fetch("/api/v1/uploaded-logos/").then(json).then((logos) => { $("logo-count").textContent = logos.count ?? logos.length ?? "—"; }).catch(() => {});
 
@@ -124,13 +174,16 @@
   $("product_slug").addEventListener("change", renderProductPreview);
   $("upload-logo-toggle").addEventListener("change", (event) => { $("upload-logo-fields").hidden = !event.target.checked; });
   $("brief-form").addEventListener("submit", createBrief);
-  $("refresh-admin").addEventListener("click", () => { loadUser(); loadAdminStats(); });
-  fetch("/api/v1/briefs/options/").then(json).then((options) => {
-    state.options = options;
-    fillSelect($("country"), options.countries, "code", "label", "Selecciona un país");
-    $("country").value = "MX";
-    loadOptions();
+  $("refresh-admin").addEventListener("click", () => {
+    loadUser().then((authenticated) => {
+      if (!authenticated) return;
+      loadInitialOptions();
+      loadAdminStats();
+    });
   });
-  loadUser();
-  loadAdminStats();
+  loadUser().then((authenticated) => {
+    if (!authenticated) return;
+    loadInitialOptions();
+    loadAdminStats();
+  });
 })();

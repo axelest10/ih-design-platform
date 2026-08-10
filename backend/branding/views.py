@@ -1,4 +1,5 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -24,7 +25,10 @@ class BrandGuidelineViewSet(RoleAwareViewSet, ModelViewSet):
     }
 
 
+# Catálogo público no sensible para el home: tokens, logos aprobados y validación de color.
+# Briefs, uploads, /me y el resto del backend conservan el permiso corporativo global.
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def brand_tokens(request):
     """Expone la fuente única de tokens de marca (brand/*.yaml) como JSON de solo lectura.
 
@@ -36,6 +40,7 @@ def brand_tokens(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def brand_logos(request):
     """Expone el catálogo de logos aprobado desde ``brand/assets/logos/manifest.yaml``.
 
@@ -73,6 +78,7 @@ def brand_logos(request):
 
 
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def validate_color(request):
     """Valida un color HEX contra la paleta institucional y, opcionalmente, contra un pilar.
 

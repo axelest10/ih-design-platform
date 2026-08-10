@@ -52,6 +52,8 @@
       });
     })
     .catch(() => {
-      // La Home también funciona como prototipo estático cuando no está levantado Django.
+      document.querySelectorAll("[data-logo-count]").forEach((element) => {
+        element.textContent = "—";
+      });
     });
 })();

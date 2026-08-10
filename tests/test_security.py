@@ -19,10 +19,18 @@ def test_corporate_email_requires_exact_domain():
 
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
-def test_unauthenticated_user_cannot_access_brand_tokens():
-    response = APIClient().get("/api/v1/branding/tokens/")
+@pytest.mark.parametrize(
+    "url",
+    [
+        "/api/v1/branding/tokens/",
+        "/api/v1/branding/logos/",
+        "/api/v1/branding/validate-color/?hex=%233B44B5",
+    ],
+)
+def test_unauthenticated_user_can_access_public_brand_catalog(url):
+    response = APIClient().get(url)
 
-    assert response.status_code == 403
+    assert response.status_code == 200
 
 
 @pytest.mark.corporate_auth
@@ -43,7 +51,7 @@ def test_authorized_corporate_user_can_access_brand_tokens():
 
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
-def test_non_corporate_user_is_rejected():
+def test_non_corporate_user_is_rejected_from_protected_endpoint():
     user = get_user_model().objects.create_user(
         username="external",
         email="external@gmail.com",
@@ -52,7 +60,7 @@ def test_non_corporate_user_is_rejected():
     client = APIClient()
     client.force_authenticate(user=user)
 
-    response = client.get("/api/v1/branding/tokens/")
+    response = client.get("/api/v1/me/")
 
     assert response.status_code == 403
 
