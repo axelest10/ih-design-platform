@@ -1,4 +1,5 @@
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -18,7 +19,16 @@ from .serializers import (
 from .services.school_kit import SchoolKitGenerationError, generate_school_kit
 
 
-class MaterialTypeViewSet(RoleAwareViewSet, ModelViewSet):
+class PublicCatalogReadMixin:
+    """Hace público solo el catálogo no sensible usado por la galería de plantillas."""
+
+    def get_permissions(self):
+        if self.action in {"list", "retrieve"}:
+            return [AllowAny()]
+        return super().get_permissions()
+
+
+class MaterialTypeViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewSet):
     queryset = MaterialType.objects.prefetch_related("templates").all()
     serializer_class = MaterialTypeSerializer
     role_rules = {
@@ -29,7 +39,7 @@ class MaterialTypeViewSet(RoleAwareViewSet, ModelViewSet):
     }
 
 
-class MaterialTemplateViewSet(RoleAwareViewSet, ModelViewSet):
+class MaterialTemplateViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewSet):
     queryset = MaterialTemplate.objects.select_related("material_type").all()
     serializer_class = MaterialTemplateSerializer
     role_rules = {

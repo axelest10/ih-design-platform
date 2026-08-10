@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3B44B5" />
+    <meta name="description" content="Galería pública de tipos de material y plantillas disponibles." />
+    <title>Plantillas · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
+    <link rel="stylesheet" href="styles/home.css" />
+    <link rel="stylesheet" href="styles/templates-gallery.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+        <div class="sidebar__brand">
+          <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+          <span>Design Platform</span>
+        </div>
+        <div class="sidebar__section-label">Workspace</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item" href="index.html"><span class="nav-item__icon" aria-hidden="true">⌂</span><span>Inicio</span></a>
+          <a class="nav-item" href="panel.html"><span class="nav-item__icon" aria-hidden="true">＋</span><span>Briefs</span></a>
+          <a class="nav-item" href="catalog.html"><span class="nav-item__icon" aria-hidden="true">▦</span><span>Catálogo de marca</span></a>
+          <a class="nav-item nav-item--active" href="templates-gallery.html" aria-current="page"><span class="nav-item__icon" aria-hidden="true">◈</span><span>Plantillas</span></a>
+          <a class="nav-item" href="review.html"><span class="nav-item__icon" aria-hidden="true">✓</span><span>Revisiones</span></a>
+        </nav>
+        <div class="sidebar__section-label sidebar__section-label--secondary">Sistema</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item" href="brand-rules.html"><span class="nav-item__icon" aria-hidden="true">◌</span><span>Reglas de marca</span></a>
+          <a class="nav-item" href="admin.html"><span class="nav-item__icon" aria-hidden="true">⚙</span><span>Configuración</span></a>
+        </nav>
+        <div class="sidebar__footer"><div class="sidebar__status-dot"></div><div><strong>Templates versionados</strong><span id="template-total">Consultando…</span></div></div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-button topbar__menu" id="menu-toggle" type="button" aria-label="Abrir navegación">☰</button>
+          <div class="breadcrumbs"><span>Workspace</span><strong>/</strong><span>Plantillas</span></div>
+          <div class="topbar__actions">
+            <a class="text-link" href="index.html">← Volver al inicio</a>
+            <a class="profile-chip" href="login.html" aria-label="Iniciar sesión"><span class="profile-chip__avatar" aria-hidden="true">→</span><span class="profile-chip__name">Iniciar sesión</span></a>
+          </div>
+        </header>
+
+        <div class="content-wrap templates-page">
+          <section class="templates-heading" aria-labelledby="templates-title">
+            <div class="eyebrow">Sistema de producción</div>
+            <h1 id="templates-title">Tipos de material y plantillas</h1>
+            <p>Consulta qué salidas están disponibles, sus dimensiones reales y el renderizador que produce cada pieza.</p>
+          </section>
+          <div id="templates-notice" class="templates-notice" role="status" aria-live="polite">Cargando plantillas…</div>
+          <div id="template-groups" class="template-groups"></div>
+        </div>
+      </main>
+    </div>
+    <script src="scripts/templates-gallery.js"></script>
+  </body>
+</html>

@@ -8,6 +8,29 @@ from designs.models import Design, DesignVersion
 from materials.models import MaterialType
 
 
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_material_catalog_list_and_retrieve_are_public_but_mutation_is_not():
+    client = APIClient()
+    material_type = MaterialType.objects.get(slug="social-post")
+    template = material_type.templates.get(key="square-v1")
+
+    assert client.get("/api/v1/material-types/").status_code == 200
+    assert client.get(f"/api/v1/material-types/{material_type.pk}/").status_code == 200
+    assert client.get("/api/v1/material-templates/").status_code == 200
+    assert client.get(f"/api/v1/material-templates/{template.pk}/").status_code == 200
+    assert client.post(
+        "/api/v1/material-types/",
+        {
+            "slug": "public-write-forbidden",
+            "name": "No permitido",
+            "renderer_family": "html-svg",
+            "channel": "test",
+        },
+        format="json",
+    ).status_code == 403
+
+
 @pytest.mark.django_db
 def test_social_post_type_reuses_registered_render_templates():
     client = APIClient()

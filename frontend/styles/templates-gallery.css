@@ -1,0 +1,26 @@
+.templates-page { padding-bottom: 64px; }
+.templates-heading { max-width: 840px; margin-bottom: 30px; }
+.templates-heading h1 { margin: 6px 0 12px; font: 700 clamp(36px, 5vw, 62px)/1 var(--ih-font-heading); letter-spacing: -.04em; }
+.templates-heading p { max-width: 740px; margin: 0; color: var(--home-muted); font-size: 17px; }
+.templates-notice { margin: 60px 0; color: var(--home-muted); text-align: center; }
+.templates-notice[hidden] { display: none; }
+.template-groups { display: grid; gap: 30px; }
+.template-family__header { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+.template-family__icon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 12px; background: #eef0ff; color: var(--ih-knowledge); font-size: 20px; }
+.template-family__header h2, .template-family__header p { margin: 0; }
+.template-family__header h2 { font: 700 25px/1.1 var(--ih-font-heading); }
+.template-family__header p { margin-top: 4px; color: var(--home-muted); font-size: 12px; }
+.material-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.material-card { padding: 22px; border: 1px solid var(--home-line); border-radius: var(--ih-radius-card); background: var(--home-surface); box-shadow: 0 4px 16px rgba(26,37,102,.04); }
+.material-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
+.material-card h3 { margin: 0; font: 700 22px/1.15 var(--ih-font-heading); }
+.material-card__channel { padding: 5px 8px; border-radius: 999px; background: #f2f3f8; color: var(--home-muted); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.material-card__formats { margin: 8px 0 18px; color: var(--home-muted); font-size: 12px; }
+.template-list { display: grid; gap: 9px; }
+.template-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 14px; border: 1px solid var(--home-line); border-radius: 10px; background: #fafbfe; }
+.template-row strong, .template-row span { display: block; }
+.template-row strong { overflow-wrap: anywhere; font-size: 13px; }
+.template-row span { margin-top: 4px; color: var(--home-muted); font-size: 10px; }
+.template-row__outputs { align-self: center; color: var(--ih-knowledge); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-align: right; text-transform: uppercase; }
+.template-empty { margin: 0; padding: 14px; border-radius: 10px; background: #fafbfe; color: var(--home-muted); font-size: 12px; }
+@media (max-width: 900px) { .material-grid { grid-template-columns: 1fr; } }
