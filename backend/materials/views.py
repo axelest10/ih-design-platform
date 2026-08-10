@@ -21,13 +21,23 @@ from .services.school_kit import SchoolKitGenerationError, generate_school_kit
 class MaterialTypeViewSet(RoleAwareViewSet, ModelViewSet):
     queryset = MaterialType.objects.prefetch_related("templates").all()
     serializer_class = MaterialTypeSerializer
-    http_method_names = ["get", "head", "options"]
+    role_rules = {
+        "create": (ROLE_PLATFORM_ADMIN,),
+        "update": (ROLE_PLATFORM_ADMIN,),
+        "partial_update": (ROLE_PLATFORM_ADMIN,),
+        "destroy": (ROLE_PLATFORM_ADMIN,),
+    }
 
 
 class MaterialTemplateViewSet(RoleAwareViewSet, ModelViewSet):
     queryset = MaterialTemplate.objects.select_related("material_type").all()
     serializer_class = MaterialTemplateSerializer
-    http_method_names = ["get", "head", "options"]
+    role_rules = {
+        "create": (ROLE_PLATFORM_ADMIN,),
+        "update": (ROLE_PLATFORM_ADMIN,),
+        "partial_update": (ROLE_PLATFORM_ADMIN,),
+        "destroy": (ROLE_PLATFORM_ADMIN,),
+    }
 
 
 class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):

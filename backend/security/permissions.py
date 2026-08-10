@@ -11,6 +11,13 @@ ROLE_MARKETING = "marketing"
 ROLE_DESIGNER = "designer"
 ROLE_REVIEWER = "reviewer"
 ROLE_VIEWER = "viewer"
+CORPORATE_ROLES = (
+    ROLE_PLATFORM_ADMIN,
+    ROLE_MARKETING,
+    ROLE_DESIGNER,
+    ROLE_REVIEWER,
+    ROLE_VIEWER,
+)
 
 
 def normalize_email_domain(value: str) -> str:
@@ -32,6 +39,19 @@ def is_allowed_corporate_email(email: str, allowed_domains: Iterable[str] | None
     return domain == normalize_email_domain(domain) and domain in allowed
 
 
+def is_platform_admin_user(user) -> bool:
+    """Aplica el mismo criterio administrativo en API y capacidades del frontend."""
+    return bool(
+        user
+        and user.is_authenticated
+        and (
+            user.is_staff
+            or user.is_superuser
+            or user.groups.filter(name=ROLE_PLATFORM_ADMIN).exists()
+        )
+    )
+
+
 class CorporateDomainPermission(BasePermission):
     """Permite acceso solo a usuarios autenticados con dominio corporativo autorizado."""
 
@@ -49,6 +69,15 @@ class CorporateDomainPermission(BasePermission):
             self.message = "El dominio de tu cuenta no está autorizado para esta plataforma."
             return False
         return True
+
+
+class PlatformAdminPermission(BasePermission):
+    """Restringe una superficie al criterio administrativo compartido."""
+
+    message = "Se requiere el rol platform_admin para administrar esta configuración."
+
+    def has_permission(self, request, view) -> bool:
+        return is_platform_admin_user(getattr(request, "user", None))
 
 
 class RolePermission(BasePermission):

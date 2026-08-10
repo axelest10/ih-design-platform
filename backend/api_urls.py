@@ -8,6 +8,7 @@ from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
 from designs.views import DesignViewSet
 from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
+from security.admin_views import corporate_user_detail, corporate_user_list, corporate_user_roles
 from security.views import current_user, request_magic_link, verify_magic_link
 from validations.views import ValidationRunViewSet
 
@@ -32,6 +33,17 @@ router.register("material-templates", MaterialTemplateViewSet, basename="materia
 router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
 
 urlpatterns = [
+    path("security/users/", corporate_user_list, name="security-user-list"),
+    path(
+        "security/users/<int:user_id>/roles/",
+        corporate_user_roles,
+        name="security-user-roles",
+    ),
+    path(
+        "security/users/<int:user_id>/",
+        corporate_user_detail,
+        name="security-user-detail",
+    ),
     path("auth/magic-link/request/", request_magic_link, name="magic-link-request"),
     path("auth/magic-link/verify/", verify_magic_link, name="magic-link-verify"),
     path("me/", current_user),

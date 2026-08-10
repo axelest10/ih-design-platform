@@ -1,8 +1,11 @@
 import pytest
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 
 from ai.services import VisualReviewResult, run_automatic_design_review
 from designs.models import Design, DesignVersion
+from materials.models import MaterialType
 
 
 @pytest.mark.django_db
@@ -36,6 +39,104 @@ def test_social_post_type_reuses_registered_render_templates():
         template["output_formats"] == ["html", "svg"]
         for template in social_templates.values()
     )
+
+
+def _role_client(role):
+    user = get_user_model().objects.create_user(
+        username=f"{role}@ihmexico.com",
+        email=f"{role}@ihmexico.com",
+    )
+    user.groups.add(Group.objects.get_or_create(name=role)[0])
+    client = APIClient()
+    client.force_authenticate(user=user)
+    return client
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_designer_can_read_but_cannot_mutate_material_catalog():
+    client = _role_client("designer")
+    material_type = MaterialType.objects.get(slug="social-post")
+
+    assert client.get("/api/v1/material-types/").status_code == 200
+    assert client.get("/api/v1/material-templates/").status_code == 200
+    assert client.post(
+        "/api/v1/material-types/",
+        {
+            "slug": "forbidden-type",
+            "name": "No permitido",
+            "renderer_family": "html-svg",
+            "channel": "test",
+        },
+        format="json",
+    ).status_code == 403
+    assert client.patch(
+        f"/api/v1/material-types/{material_type.pk}/",
+        {"name": "No permitido"},
+        format="json",
+    ).status_code == 403
+    assert client.delete(f"/api/v1/material-types/{material_type.pk}/").status_code == 403
+    template = material_type.templates.first()
+    assert client.post(
+        "/api/v1/material-templates/",
+        {"material_type": material_type.pk, "key": "forbidden-v1"},
+        format="json",
+    ).status_code == 403
+    assert client.patch(
+        f"/api/v1/material-templates/{template.pk}/",
+        {"active": False},
+        format="json",
+    ).status_code == 403
+    assert client.delete(f"/api/v1/material-templates/{template.pk}/").status_code == 403
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_platform_admin_can_create_edit_and_delete_material_catalog():
+    client = _role_client("platform_admin")
+    created_type = client.post(
+        "/api/v1/material-types/",
+        {
+            "slug": "admin-test-type",
+            "name": "Tipo administrativo",
+            "renderer_family": "html-svg",
+            "channel": "internal",
+            "supported_formats": ["square"],
+        },
+        format="json",
+    )
+    assert created_type.status_code == 201, created_type.json()
+    type_id = created_type.json()["id"]
+    updated_type = client.patch(
+        f"/api/v1/material-types/{type_id}/",
+        {"name": "Tipo actualizado"},
+        format="json",
+    )
+    assert updated_type.status_code == 200
+    assert updated_type.json()["name"] == "Tipo actualizado"
+
+    created_template = client.post(
+        "/api/v1/material-templates/",
+        {
+            "material_type": type_id,
+            "key": "admin-test-v1",
+            "dimensions": [1080, 1080],
+            "output_formats": ["html", "svg"],
+            "required_fields": ["headline"],
+        },
+        format="json",
+    )
+    assert created_template.status_code == 201, created_template.json()
+    template_id = created_template.json()["id"]
+    updated_template = client.patch(
+        f"/api/v1/material-templates/{template_id}/",
+        {"active": False},
+        format="json",
+    )
+    assert updated_template.status_code == 200
+    assert updated_template.json()["active"] is False
+    assert client.delete(f"/api/v1/material-templates/{template_id}/").status_code == 204
+    assert client.delete(f"/api/v1/material-types/{type_id}/").status_code == 204
 
 
 @pytest.mark.django_db

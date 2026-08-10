@@ -10,10 +10,10 @@ from rest_framework.response import Response
 from .permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
-    ROLE_PLATFORM_ADMIN,
     ROLE_REVIEWER,
     ROLE_VIEWER,
     is_allowed_corporate_email,
+    is_platform_admin_user,
 )
 from .services import (
     EmailDeliveryError,
@@ -97,10 +97,7 @@ def current_user(request):
     user = request.user
     roles = list(user.groups.values_list("name", flat=True)) if user.is_authenticated else []
     role_set = set(roles)
-    is_admin = bool(
-        user.is_authenticated
-        and (user.is_staff or user.is_superuser or ROLE_PLATFORM_ADMIN in role_set)
-    )
+    is_admin = is_platform_admin_user(user)
     return Response(
         {
             "authenticated": user.is_authenticated,

@@ -28,6 +28,43 @@
           <article class="table-card"><div class="table-heading"><div><p class="eyebrow">Producción</p><h2>Briefs recientes</h2></div><button id="refresh" class="button">Actualizar</button></div><div class="table-wrap"><table><thead><tr><th>Brief</th><th>Producto</th><th>Estado</th><th>Prueba</th></tr></thead><tbody id="brief-table"></tbody></table></div></article>
           <article class="table-card"><div class="table-heading"><div><p class="eyebrow">Catálogo incremental</p><h2>Logos aportados</h2></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>País</th><th>Estado</th></tr></thead><tbody id="logo-table"></tbody></table></div></article>
         </section>
+        <section class="management-stack" aria-label="Gestión de plataforma">
+          <article class="table-card">
+            <div class="table-heading"><div><p class="eyebrow">Acceso corporativo</p><h2>Usuarios y roles</h2></div></div>
+            <div class="table-wrap"><table><thead><tr><th>Email</th><th>Roles</th><th>Estado</th><th>Administrar</th></tr></thead><tbody id="user-table"></tbody></table></div>
+          </article>
+          <section class="material-grid" aria-label="Catálogo de materiales">
+            <article class="table-card">
+              <div class="table-heading"><div><p class="eyebrow">Configuración</p><h2>Tipos de material</h2></div></div>
+              <div class="table-wrap"><table><thead><tr><th>Slug</th><th>Nombre</th><th>Renderer</th><th>Activo</th></tr></thead><tbody id="material-type-table"></tbody></table></div>
+              <form id="material-type-form" class="inline-form">
+                <h3>Crear tipo</h3>
+                <label>Slug<input name="slug" required /></label>
+                <label>Nombre<input name="name" required /></label>
+                <label>Renderer<select name="renderer_family" required><option value="html-svg">HTML/SVG</option><option value="email-html">Email HTML</option><option value="document">Documento</option></select></label>
+                <label>Canal<input name="channel" required /></label>
+                <label>Formatos compatibles<input name="supported_formats" placeholder="square, story" /></label>
+                <label class="check-field"><input type="checkbox" name="active" checked /> Activo</label>
+                <button class="button" type="submit">Crear tipo</button>
+              </form>
+            </article>
+            <article class="table-card">
+              <div class="table-heading"><div><p class="eyebrow">Configuración</p><h2>Templates</h2></div></div>
+              <div class="table-wrap"><table><thead><tr><th>Key</th><th>Tipo</th><th>Salidas</th><th>Activo</th></tr></thead><tbody id="material-template-table"></tbody></table></div>
+              <form id="material-template-form" class="inline-form">
+                <h3>Crear template</h3>
+                <label>Tipo<select id="template-material-type" name="material_type" required></select></label>
+                <label>Key<input name="key" required /></label>
+                <label>Versión<input name="version" value="1.0.0" required /></label>
+                <label>Dimensiones JSON<input name="dimensions" value="{}" required /></label>
+                <label>Formatos de salida<input name="output_formats" placeholder="html, svg" /></label>
+                <label>Campos requeridos<input name="required_fields" placeholder="headline, body" /></label>
+                <label class="check-field"><input type="checkbox" name="active" checked /> Activo</label>
+                <button class="button" type="submit">Crear template</button>
+              </form>
+            </article>
+          </section>
+        </section>
         <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones del brief <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>
       </div>
     </main>
