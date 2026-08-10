@@ -1,0 +1,32 @@
+.catalog-page { padding-bottom: 56px; }
+.catalog-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 24px; }
+.catalog-heading h1 { max-width: 760px; margin: 6px 0 10px; font: 700 clamp(34px, 5vw, 58px)/1.02 var(--ih-font-heading); letter-spacing: -.035em; }
+.catalog-heading p { max-width: 760px; margin: 0; color: var(--home-muted); font-size: 16px; }
+.catalog-heading__count { min-width: 110px; padding: 17px; border: 1px solid var(--home-line); border-radius: var(--ih-radius-card); background: var(--home-surface); text-align: center; }
+.catalog-heading__count strong, .catalog-heading__count span { display: block; }
+.catalog-heading__count strong { font: 700 30px/1 var(--ih-font-heading); }
+.catalog-heading__count span { margin-top: 5px; color: var(--home-muted); font-size: 11px; }
+.catalog-filters { display: flex; align-items: end; gap: 14px; margin-bottom: 24px; padding: 18px; border: 1px solid var(--home-line); border-radius: var(--ih-radius-card); background: var(--home-surface); }
+.catalog-filters label { display: grid; min-width: 220px; gap: 7px; color: var(--home-muted); font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.catalog-filters select { min-height: 43px; padding: 0 38px 0 12px; border: 1px solid var(--home-line); border-radius: var(--ih-radius-button); background: #fbfbfe; color: var(--home-ink); }
+.catalog-filters button { min-height: 43px; padding: 0 18px; border: 0; border-radius: var(--ih-radius-button); background: #eef0ff; color: var(--ih-knowledge); cursor: pointer; font-weight: 800; }
+.catalog-notice { margin: 50px 0; color: var(--home-muted); text-align: center; }
+.catalog-notice[hidden] { display: none; }
+.logo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.logo-card { overflow: hidden; border: 1px solid var(--home-line); border-radius: var(--ih-radius-card); background: var(--home-surface); box-shadow: 0 3px 14px rgba(26,37,102,.04); }
+.logo-card__media { display: grid; min-height: 180px; place-items: center; padding: 26px; border-bottom: 1px solid var(--home-line); background-color: #f8f9fc; background-image: linear-gradient(45deg, #eef0f5 25%, transparent 25%), linear-gradient(-45deg, #eef0f5 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eef0f5 75%), linear-gradient(-45deg, transparent 75%, #eef0f5 75%); background-position: 0 0, 0 8px, 8px -8px, -8px 0; background-size: 16px 16px; }
+.logo-card__media--dark { background: var(--ih-neutral-dark-navy); }
+.logo-card__media img { width: 100%; max-width: 220px; max-height: 125px; object-fit: contain; }
+.logo-card__fallback { color: var(--home-muted); font-size: 12px; text-align: center; }
+.logo-card__body { padding: 17px; }
+.logo-card__meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.logo-card__tag { padding: 4px 7px; border-radius: 999px; background: #eef0ff; color: var(--ih-knowledge); font-size: 9px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.logo-card__tag--neutral { background: #f0f1f5; color: #687086; }
+.logo-card h2 { margin: 0; overflow-wrap: anywhere; font: 700 17px/1.18 var(--ih-font-heading); }
+.logo-card p { min-height: 36px; margin: 8px 0 14px; color: var(--home-muted); font-size: 12px; }
+.logo-card__footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 12px; border-top: 1px solid var(--home-line); font-size: 11px; }
+.logo-card__footer a { color: var(--ih-knowledge); font-weight: 800; }
+.logo-card__preview-note { color: var(--home-muted); }
+@media (max-width: 1180px) { .logo-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 860px) { .logo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .catalog-heading { align-items: flex-start; } }
+@media (max-width: 620px) { .catalog-heading { display: grid; } .catalog-heading__count { width: 100%; } .catalog-filters { display: grid; } .catalog-filters label { min-width: 0; } .logo-grid { grid-template-columns: 1fr; } }

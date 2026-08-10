@@ -17,6 +17,11 @@ urlpatterns = [
 urlpatterns += [
     path("", TemplateView.as_view(template_name="index.html"), name="frontend-home"),
     path("login.html", TemplateView.as_view(template_name="login.html"), name="frontend-login"),
+    path(
+        "catalog.html",
+        TemplateView.as_view(template_name="catalog.html"),
+        name="frontend-catalog",
+    ),
     path("panel.html", TemplateView.as_view(template_name="panel.html"), name="frontend-panel"),
     path("review.html", TemplateView.as_view(template_name="review.html"), name="frontend-review"),
     path(
