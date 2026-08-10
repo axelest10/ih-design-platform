@@ -34,8 +34,10 @@ hasta desactivar el modo.
 - `GET /artwork-references/knowledge/` — base JSON técnica para selección precisa; admite
   `country`, `media_type`, `format`, `orientation`, `tag` y `limit`.
 - `GET /me/` — perfil, roles, paneles disponibles y acceso regional del usuario actual.
-- `POST /auth/site-access/` — compara la contraseña interna compartida, abre una sesión Django
-  como el usuario técnico con acceso completo y limita intentos por IP.
+- `POST /auth/login/` — autentica un usuario individual con contraseña Django y limita intentos
+  por IP; el error no distingue entre usuario y contraseña incorrectos.
+- `GET|POST /security/users/` — lista o crea usuarios corporativos (`platform_admin`).
+- `POST /security/users/{id}/password/` — establece una contraseña nueva (`platform_admin`).
 - `GET /material-types/` — tipos de material activos; `school-kit` expone todos los productos
   activos del catálogo, prioriza `qc-2026` y `teacher-training-certifications` y declara tres
   entregables iniciales (`square-v1`, `story-v1`, `portrait-v1`).

@@ -11,7 +11,9 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from .admin_serializers import (
+    CorporateUserCreateSerializer,
     CorporateUserSerializer,
+    UserPasswordSerializer,
     UserRoleMutationSerializer,
     UserStatusSerializer,
 )
@@ -58,9 +60,14 @@ def _active_admin_count() -> int:
 ADMIN_PERMISSIONS = (CorporateDomainPermission, PlatformAdminPermission)
 
 
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 @permission_classes(ADMIN_PERMISSIONS)
 def corporate_user_list(request):
+    if request.method == "POST":
+        serializer = CorporateUserCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(CorporateUserSerializer(user).data, status=201)
     paginator = CorporateUserPagination()
     page = paginator.paginate_queryset(_corporate_users(), request)
     serializer = CorporateUserSerializer(page, many=True)
@@ -118,3 +125,14 @@ def corporate_user_detail(request, user_id):
     target.is_active = is_active
     target.save(update_fields=["is_active"])
     return Response(CorporateUserSerializer(target).data)
+
+
+@api_view(["POST"])
+@permission_classes(ADMIN_PERMISSIONS)
+def corporate_user_password(request, user_id):
+    serializer = UserPasswordSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    target = get_object_or_404(get_user_model(), pk=user_id)
+    target.set_password(serializer.validated_data["password"])
+    target.save(update_fields=["password"])
+    return Response({"detail": "Contraseña actualizada."})

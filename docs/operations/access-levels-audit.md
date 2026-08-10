@@ -108,7 +108,7 @@ Límites por propietario existentes, independientes del rol:
 | Endpoint | Motivo/comportamiento actual |
 | --- | --- |
 | `GET /api/v1/health/` | Liveness probe de Django, fuera de DRF. |
-| `POST /api/v1/auth/site-access/` | Valida la contraseña compartida, limita por IP y está marcado `AllowAny`. |
+| `POST /api/v1/auth/login/` | Autentica una cuenta individual, limita por IP y está marcado `AllowAny`. |
 | `GET /api/v1/branding/tokens/` | Catálogo público no sensible de tokens. |
 | `GET /api/v1/branding/logos/` | Catálogo público de logos aprobados. |
 | `GET /api/v1/branding/validate-color/` | Validación pública contra colores autorizados. |
@@ -128,22 +128,22 @@ El resumen de seguridad del mismo documento añade:
 > de seguridad (Helmet o equivalente Django), rate limiting en endpoints sensibles, 2FA para
 > roles administrativos, CORS estricto documentado — ninguno confirmado en el repo actual.”
 
-Evaluación contra el código actual después de adoptar el acceso compartido sin identidad:
+Evaluación contra el código actual después de recuperar cuentas individuales:
 
-| Brecha de referencia | ¿Aplica al acceso compartido? | Estado observado |
+| Brecha de referencia | ¿Aplica al login individual? | Estado observado |
 | --- | --- | --- |
-| Flujo de invitación explícito | No, por decisión de Axel | No existe identidad individual: quien conoce la contraseña compartida entra como el mismo usuario técnico. |
-| Reseteo de contraseña | Sí, como rotación operativa | La contraseña se rota cambiando `SITE_ACCESS_PASSWORD` en el entorno; no hay autoservicio. |
-| Verificación de email | No, por decisión de Axel | El acceso ya no depende de correo ni de un proveedor de entrega. |
-| Rate limiting | Sí | `POST /api/v1/auth/site-access/` limita por IP; la tasa predeterminada es `10/hour`. |
-| Bloqueo tras fallos repetidos | Parcialmente | El throttle bloquea temporalmente por IP, pero no existe bloqueo persistente ni por identidad. |
-| 2FA para roles administrativos | Sí | No existe segundo factor; toda sesión compartida reúne los cinco roles. |
+| Flujo de invitación explícito | Parcialmente | `platform_admin` crea cada cuenta desde el panel; no existe invitación por correo. |
+| Reseteo de contraseña | Sí | `platform_admin` puede establecer una contraseña nueva desde el panel; no hay autoservicio. |
+| Verificación de email | Parcialmente | Se valida el dominio permitido al crear y al iniciar sesión, sin enviar correo de verificación. |
+| Rate limiting | Sí | `POST /api/v1/auth/login/` limita por IP; la tasa predeterminada es `10/hour`. |
+| Bloqueo tras fallos repetidos | Parcialmente | El throttle bloquea temporalmente por IP, pero no existe bloqueo persistente por cuenta. |
+| 2FA para roles administrativos | Sí | No existe segundo factor para `platform_admin`. |
 | Cabeceras de seguridad tipo Helmet/equivalente Django | Sí | Se configuraron cabeceras explícitas y una CSP estricta, verificadas mediante pruebas. |
 
 ## Preguntas abiertas para Axel
 
-1. ¿Cómo se distribuirá y rotará operativamente `SITE_ACCESS_PASSWORD`?
-2. ¿En qué momento será necesario recuperar identidad individual y roles diferenciados?
+1. ¿Se requiere autoservicio de recuperación de contraseña en una fase posterior?
+2. ¿Qué política de rotación de contraseñas debe aplicarse al equipo?
 3. Si se recupera identidad, ¿debe `viewer` leer todos los catálogos y referencias LATAM o solo datos del país asociado a
    su cuenta?
 4. ¿Se ratifica que `marketing` y `designer` puedan ejecutar `claude_review`, mientras
@@ -159,8 +159,8 @@ Evaluación contra el código actual después de adoptar el acceso compartido si
 Las brechas de rate limiting en el acceso y de cabeceras de seguridad se resolvieron
 con controles explícitos y verificables:
 
-- El endpoint de contraseña compartida limita por defecto a `10/hour` por IP. El valor se puede
-  ajustar mediante `SITE_ACCESS_THROTTLE_RATE`.
+- El endpoint de login individual limita por defecto a `10/hour` por IP. El valor se puede
+  ajustar mediante `LOGIN_THROTTLE_RATE`.
 - Las respuestas incluyen `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`,
   `Cross-Origin-Opener-Policy: same-origin` y `X-Frame-Options: DENY`.
 - La CSP permite recursos del mismo origen, imágenes `data:` y el origen específico
@@ -168,5 +168,4 @@ con controles explícitos y verificables:
   framing y no admite `unsafe-inline` ni `unsafe-eval`; `frame-ancestors` usa `'none'`.
 
 Estos controles mitigan abuso básico y endurecen el navegador; no resuelven las preguntas
-separadas sobre rotación del secreto, 2FA, segmentación por país o una futura recuperación de
-identidad individual.
+separadas sobre recuperación de contraseña, 2FA y segmentación por país.

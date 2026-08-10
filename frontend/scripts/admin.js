@@ -32,10 +32,14 @@
     const options = ROLES.map((role) => `<option value="${role}">${role}</option>`).join("");
     return `<div class="row-actions"><select data-role-user="${user.id}">${options}</select><button class="button button--small" data-role-action="add" data-user="${user.id}">Agregar</button><button class="button button--small" data-role-action="remove" data-user="${user.id}">Quitar</button><button class="button button--small" data-user-active="${user.id}" data-active="${!user.is_active}">${user.is_active ? "Desactivar" : "Reactivar"}</button></div>`;
   };
-  const renderUsers = (payload) => renderRows("user-table", items(payload), "No hay usuarios corporativos.", 4, (user) => {
-    const roles = user.roles.length ? user.roles.map((role) => `<span class="role-badge">${escapeHtml(role)}</span>`).join(" ") : "—";
-    return `<tr><td>${escapeHtml(user.email)}</td><td>${roles}</td><td class="${user.is_active ? "status" : "status status--inactive"}">${user.is_active ? "Activo" : "Inactivo"}</td><td>${roleControls(user)}</td></tr>`;
-  });
+  const renderUsers = (payload) => {
+    const users = items(payload);
+    renderRows("user-table", users, "No hay usuarios corporativos.", 5, (user) => {
+      const roles = user.roles.length ? user.roles.map((role) => `<span class="role-badge">${escapeHtml(role)}</span>`).join(" ") : "—";
+      return `<tr><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.email)}</td><td>${roles}</td><td class="${user.is_active ? "status" : "status status--inactive"}">${user.is_active ? "Activo" : "Inactivo"}</td><td>${roleControls(user)}</td></tr>`;
+    });
+    $("password-user").innerHTML = users.map((user) => `<option value="${user.id}">${escapeHtml(user.username)} · ${escapeHtml(user.email)}</option>`).join("");
+  };
   const renderMaterialTypes = (payload) => {
     const materialTypes = items(payload);
     renderRows("material-type-table", materialTypes, "No hay tipos de material.", 4, (type) => `<tr><td>${escapeHtml(type.slug)}</td><td>${escapeHtml(type.name)}</td><td>${escapeHtml(type.renderer_family)}</td><td class="status">${type.active ? "Sí" : "No"}</td></tr>`);
@@ -92,6 +96,39 @@
       });
     }
     operation.then(() => { notice("Usuario actualizado.", "success"); return load(); }).catch((error) => notice(error.message));
+  });
+
+  $("user-create-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    request("/api/v1/security/users/", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: form.get("username"),
+        email: form.get("email"),
+        password: form.get("password"),
+        roles: form.getAll("roles"),
+      }),
+    }).then(() => {
+      event.currentTarget.reset();
+      notice("Usuario creado.", "success");
+      return load();
+    }).catch((error) => notice(error.message));
+  });
+
+  $("password-reset-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    request(`/api/v1/security/users/${form.get("user_id")}/password/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: form.get("password") }),
+    }).then(() => {
+      event.currentTarget.reset();
+      notice("Contraseña actualizada.", "success");
+      return load();
+    }).catch((error) => notice(error.message));
   });
 
   $("material-type-form").addEventListener("submit", (event) => {

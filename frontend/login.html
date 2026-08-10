@@ -21,16 +21,18 @@
       <section class="auth-card" aria-labelledby="login-title">
         <p class="auth-eyebrow">Acceso interno</p>
         <h1 id="login-title">Ingresa a la plataforma.</h1>
-        <p class="auth-intro">Escribe la contraseña de acceso para continuar.</p>
+        <p class="auth-intro">Ingresa con tu usuario y contraseña personal.</p>
 
         <form id="login-form" class="auth-form">
-          <label for="password">Contraseña de acceso</label>
+          <label for="username">Usuario</label>
+          <input id="username" name="username" type="text" autocomplete="username" required />
+          <label for="password">Contraseña</label>
           <input id="password" name="password" type="password" autocomplete="current-password" required />
           <button id="submit-button" type="submit">Entrar</button>
         </form>
 
         <div id="auth-notice" class="auth-notice" role="status" aria-live="polite"></div>
-        <p class="auth-help">Solicita la contraseña vigente al administrador de la plataforma.</p>
+        <p class="auth-help">Si aún no tienes una cuenta, solicítala al administrador de la plataforma.</p>
       </section>
     </main>
     <script src="scripts/login.js"></script>

@@ -1,0 +1,27 @@
+.account-management-grid {
+  display: grid;
+  grid-template-columns: 1.3fr .7fr;
+  gap: 14px;
+  padding: 18px;
+  border-top: 1px solid var(--line);
+}
+.account-form {
+  margin: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fbfbfe;
+}
+.role-fields {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.role-fields legend { padding: 0 6px; font-weight: 800; }
+.role-fields label { display: flex; align-items: center; gap: 5px; }
+.role-fields input { width: auto; }
+@media (max-width: 1100px) { .account-management-grid { grid-template-columns: 1fr; } }

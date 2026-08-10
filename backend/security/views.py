@@ -1,6 +1,5 @@
 from django.conf import settings
-from django.contrib.auth import get_user_model, login
-from django.utils.crypto import constant_time_compare
+from django.contrib.auth import authenticate, login
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -10,36 +9,26 @@ from .permissions import (
     ROLE_MARKETING,
     ROLE_REVIEWER,
     ROLE_VIEWER,
+    is_allowed_corporate_email,
     is_platform_admin_user,
 )
-from .throttles import SiteAccessIPThrottle
-
-SHARED_ACCESS_USERNAME = "shared-access"
+from .throttles import LoginIPThrottle
 
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
-@throttle_classes([SiteAccessIPThrottle])
-def site_access(request):
-    configured_password = settings.SITE_ACCESS_PASSWORD
-    if not configured_password:
+@throttle_classes([LoginIPThrottle])
+def password_login(request):
+    username = str(request.data.get("username") or "").strip()
+    password = str(request.data.get("password") or "")
+    user = authenticate(request=request, username=username, password=password)
+    if user is None or not is_allowed_corporate_email(user.email):
         return Response(
-            {"detail": "El acceso interno no está configurado."},
-            status=503,
-        )
-
-    submitted_password = str(request.data.get("password") or "")
-    if not constant_time_compare(submitted_password, configured_password):
-        return Response({"detail": "No fue posible iniciar sesión."}, status=401)
-
-    user = get_user_model().objects.filter(username=SHARED_ACCESS_USERNAME).first()
-    if user is None or not user.is_active:
-        return Response(
-            {"detail": "El acceso interno no está disponible."},
-            status=503,
+            {"detail": "Usuario o contraseña incorrectos."},
+            status=401,
         )
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
-    return Response({"authenticated": True})
+    return Response({"authenticated": True, "username": user.get_username()})
 
 
 @api_view(["GET"])

@@ -1,5 +1,6 @@
 (() => {
   const form = document.getElementById("login-form");
+  const username = document.getElementById("username");
   const password = document.getElementById("password");
   const button = document.getElementById("submit-button");
   const notice = document.getElementById("auth-notice");
@@ -16,16 +17,13 @@
     showNotice("Verificando el acceso…", "pending");
 
     try {
-      const response = await fetch("/api/v1/auth/site-access/", {
+      const response = await fetch("/api/v1/auth/login/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: password.value }),
+        body: JSON.stringify({ username: username.value.trim(), password: password.value }),
       });
       const body = await response.json().catch(() => ({}));
-      if (response.status === 401) throw new Error("Contraseña incorrecta.");
-      if (response.status === 503) {
-        throw new Error("El acceso no está configurado — contacta al administrador.");
-      }
+      if (response.status === 401) throw new Error("Usuario o contraseña incorrectos.");
       if (response.status === 429) throw new Error("Demasiados intentos, espera un momento.");
       if (!response.ok) throw new Error(body.detail || "No fue posible iniciar sesión.");
 

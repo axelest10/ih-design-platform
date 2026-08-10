@@ -118,14 +118,13 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-SITE_ACCESS_PASSWORD = os.getenv("SITE_ACCESS_PASSWORD", "")
-SITE_ACCESS_THROTTLE_RATE = os.getenv("SITE_ACCESS_THROTTLE_RATE", "10/hour")
+LOGIN_THROTTLE_RATE = os.getenv("LOGIN_THROTTLE_RATE", "10/hour")
 
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["security.permissions.CorporateDomainPermission"],
     "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
     "DEFAULT_THROTTLE_RATES": {
-        "site_access_ip": SITE_ACCESS_THROTTLE_RATE,
+        "login_ip": LOGIN_THROTTLE_RATE,
     },
 }
 

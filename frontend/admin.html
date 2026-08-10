@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles/fonts.css" />
     <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
     <link rel="stylesheet" href="styles/admin.css" />
+    <link rel="stylesheet" href="styles/admin-accounts.css" />
   </head>
   <body>
     <header class="admin-header">
@@ -31,7 +32,23 @@
         <section class="management-stack" aria-label="Gestión de plataforma">
           <article class="table-card">
             <div class="table-heading"><div><p class="eyebrow">Acceso corporativo</p><h2>Usuarios y roles</h2></div></div>
-            <div class="table-wrap"><table><thead><tr><th>Email</th><th>Roles</th><th>Estado</th><th>Administrar</th></tr></thead><tbody id="user-table"></tbody></table></div>
+            <div class="table-wrap"><table><thead><tr><th>Usuario</th><th>Email</th><th>Roles</th><th>Estado</th><th>Administrar</th></tr></thead><tbody id="user-table"></tbody></table></div>
+            <div class="account-management-grid">
+              <form id="user-create-form" class="inline-form account-form">
+                <h3>Crear usuario</h3>
+                <label>Usuario<input name="username" autocomplete="off" required /></label>
+                <label>Email corporativo<input name="email" type="email" autocomplete="off" required /></label>
+                <label>Contraseña inicial<input name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <fieldset class="role-fields"><legend>Roles</legend><label><input type="checkbox" name="roles" value="platform_admin" /> Administrador</label><label><input type="checkbox" name="roles" value="marketing" /> Marketing</label><label><input type="checkbox" name="roles" value="designer" /> Diseñador</label><label><input type="checkbox" name="roles" value="reviewer" /> Revisor</label><label><input type="checkbox" name="roles" value="viewer" /> Consulta</label></fieldset>
+                <button class="button" type="submit">Crear cuenta</button>
+              </form>
+              <form id="password-reset-form" class="inline-form account-form">
+                <h3>Establecer contraseña</h3>
+                <label>Usuario<select id="password-user" name="user_id" required></select></label>
+                <label>Nueva contraseña<input name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <button class="button" type="submit">Actualizar contraseña</button>
+              </form>
+            </div>
           </article>
           <section class="material-grid" aria-label="Catálogo de materiales">
             <article class="table-card">

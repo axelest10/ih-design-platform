@@ -9,8 +9,13 @@ from catalog.views import BranchViewSet, ProductViewSet
 from common.views import stats_summary
 from designs.views import DesignViewSet
 from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
-from security.admin_views import corporate_user_detail, corporate_user_list, corporate_user_roles
-from security.views import current_user, site_access
+from security.admin_views import (
+    corporate_user_detail,
+    corporate_user_list,
+    corporate_user_password,
+    corporate_user_roles,
+)
+from security.views import current_user, password_login
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -46,7 +51,12 @@ urlpatterns = [
         corporate_user_detail,
         name="security-user-detail",
     ),
-    path("auth/site-access/", site_access, name="site-access"),
+    path(
+        "security/users/<int:user_id>/password/",
+        corporate_user_password,
+        name="security-user-password",
+    ),
+    path("auth/login/", password_login, name="password-login"),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.

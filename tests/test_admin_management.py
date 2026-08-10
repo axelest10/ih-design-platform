@@ -4,7 +4,6 @@ from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 
 from security.permissions import ROLE_PLATFORM_ADMIN
-from security.views import SHARED_ACCESS_USERNAME
 
 
 def _user(email, *, roles=(), is_staff=False):
@@ -34,16 +33,82 @@ def test_platform_admin_lists_paginated_corporate_users():
     response = _client(admin).get("/api/v1/security/users/")
 
     assert response.status_code == 200
-    assert response.json()["count"] == 3
+    assert response.json()["count"] == 4
     users = response.json()["results"]
     assert {user["email"] for user in users} == {
         "admin@ihmexico.com",
         "acceso@ihmexico.com",
+        "axel.estrada@ihmexico.com",
         "persona@ihbogota.com",
     }
-    assert {"id", "email", "roles", "is_active", "date_joined", "last_login"} == set(
-        users[0]
+    assert {
+        "id",
+        "username",
+        "email",
+        "roles",
+        "is_active",
+        "date_joined",
+        "last_login",
+    } == set(users[0])
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_platform_admin_creates_user_with_roles_and_hashed_password():
+    admin = _user("admin@ihmexico.com", roles=(ROLE_PLATFORM_ADMIN,))
+
+    response = _client(admin).post(
+        "/api/v1/security/users/",
+        {
+            "username": "new-person",
+            "email": "new-person@ihbogota.com",
+            "password": "initial-password-123",
+            "roles": ["marketing", "viewer"],
+        },
+        format="json",
     )
+
+    assert response.status_code == 201, response.json()
+    user = get_user_model().objects.get(username="new-person")
+    assert user.check_password("initial-password-123")
+    assert set(user.groups.values_list("name", flat=True)) == {"marketing", "viewer"}
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_platform_admin_rejects_new_user_outside_corporate_domains():
+    admin = _user("admin@ihmexico.com", roles=(ROLE_PLATFORM_ADMIN,))
+
+    response = _client(admin).post(
+        "/api/v1/security/users/",
+        {
+            "username": "external",
+            "email": "external@example.com",
+            "password": "initial-password-123",
+            "roles": ["viewer"],
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "email" in response.json()
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_platform_admin_resets_existing_user_password():
+    admin = _user("admin@ihmexico.com", roles=(ROLE_PLATFORM_ADMIN,))
+    target = _user("target@ihbogota.com")
+
+    response = _client(admin).post(
+        f"/api/v1/security/users/{target.pk}/password/",
+        {"password": "replacement-password-123"},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    target.refresh_from_db()
+    assert target.check_password("replacement-password-123")
 
 
 @pytest.mark.corporate_auth
@@ -99,8 +164,8 @@ def test_admin_cannot_remove_own_platform_admin_role():
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
 def test_last_active_admin_role_cannot_be_removed():
-    get_user_model().objects.filter(username=SHARED_ACCESS_USERNAME).update(is_active=False)
     admin = _user("admin@ihmexico.com", roles=(ROLE_PLATFORM_ADMIN,))
+    get_user_model().objects.exclude(pk=admin.pk).update(is_active=False)
 
     response = _client(admin).post(
         f"/api/v1/security/users/{admin.pk}/roles/",
@@ -142,6 +207,11 @@ def test_admin_cannot_deactivate_own_account():
             {"role": "viewer", "action": "add"},
         ),
         ("patch", "/api/v1/security/users/{target}/", {"is_active": False}),
+        (
+            "post",
+            "/api/v1/security/users/{target}/password/",
+            {"password": "replacement-password-123"},
+        ),
     ],
 )
 def test_non_admin_cannot_use_user_management_endpoints(method, url, payload):
