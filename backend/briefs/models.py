@@ -33,6 +33,13 @@ class DesignBrief(models.Model):
     brand_logo_key = models.CharField(max_length=160, blank=True)
     additional_logo_keys = models.JSONField(default=list)
     product = models.ForeignKey(Product, null=True, blank=True, on_delete=models.PROTECT)
+    material_type = models.ForeignKey(
+        "materials.MaterialType",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="briefs",
+    )
     branch = models.ForeignKey(Branch, null=True, blank=True, on_delete=models.PROTECT)
     campaign = models.ForeignKey(Campaign, null=True, blank=True, on_delete=models.PROTECT)
     audience = models.TextField()

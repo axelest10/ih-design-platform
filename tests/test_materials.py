@@ -6,6 +6,39 @@ from designs.models import Design, DesignVersion
 
 
 @pytest.mark.django_db
+def test_social_post_type_reuses_registered_render_templates():
+    client = APIClient()
+    material_types = client.get("/api/v1/material-types/")
+
+    assert material_types.status_code == 200
+    social_post = next(
+        item for item in material_types.json() if item["slug"] == "social-post"
+    )
+    assert social_post["renderer_family"] == "html-svg"
+    assert social_post["channel"] == "instagram"
+    assert social_post["supported_formats"] == ["square", "story", "portrait"]
+
+    templates = client.get("/api/v1/material-templates/")
+    assert templates.status_code == 200
+    social_templates = {
+        item["key"]: item
+        for item in templates.json()
+        if item["material_type"] == social_post["id"]
+    }
+    assert {
+        key: template["dimensions"] for key, template in social_templates.items()
+    } == {
+        "square-v1": [1080, 1080],
+        "story-v1": [1080, 1920],
+        "portrait-v1": [1080, 1350],
+    }
+    assert all(
+        template["output_formats"] == ["html", "svg"]
+        for template in social_templates.values()
+    )
+
+
+@pytest.mark.django_db
 def test_school_kit_exposes_all_active_products_with_two_priorities_first():
     response = APIClient().get("/api/v1/material-types/", {"country": "MX"})
 
