@@ -8,7 +8,7 @@ from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
 from designs.views import DesignViewSet
 from materials.views import MaterialBundleViewSet, MaterialTemplateViewSet, MaterialTypeViewSet
-from security.views import current_user
+from security.views import current_user, request_magic_link, verify_magic_link
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -32,6 +32,8 @@ router.register("material-templates", MaterialTemplateViewSet, basename="materia
 router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
 
 urlpatterns = [
+    path("auth/magic-link/request/", request_magic_link, name="magic-link-request"),
+    path("auth/magic-link/verify/", verify_magic_link, name="magic-link-verify"),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.
