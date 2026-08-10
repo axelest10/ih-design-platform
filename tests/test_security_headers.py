@@ -6,7 +6,7 @@ from rest_framework.test import APIClient
 
 EXPECTED_CSP_DIRECTIVES = {
     "default-src 'self'",
-    "script-src 'self'",
+    "script-src 'self' https://cdn.jsdelivr.net",
     "style-src 'self'",
     "img-src 'self' data:",
     "font-src 'self'",

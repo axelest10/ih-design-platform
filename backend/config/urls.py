@@ -8,6 +8,7 @@ from common.views import health
 frontend_root = settings.BASE_DIR / "frontend"
 brand_assets_root = settings.BASE_DIR / "brand" / "assets"
 brand_generated_root = settings.BASE_DIR / "brand" / "generated"
+brand_documentation_root = settings.BASE_DIR / "brand" / "documentation"
 
 urlpatterns = [
     path("api/v1/health/", health, name="health"),
@@ -26,6 +27,11 @@ urlpatterns += [
         "templates-gallery.html",
         TemplateView.as_view(template_name="templates-gallery.html"),
         name="frontend-templates-gallery",
+    ),
+    path(
+        "brand-rules.html",
+        TemplateView.as_view(template_name="brand-rules.html"),
+        name="frontend-brand-rules",
     ),
     path("panel.html", TemplateView.as_view(template_name="panel.html"), name="frontend-panel"),
     path("review.html", TemplateView.as_view(template_name="review.html"), name="frontend-review"),
@@ -58,5 +64,11 @@ urlpatterns += [
         serve,
         {"document_root": brand_generated_root},
         name="brand-generated",
+    ),
+    path(
+        "brand/documentation/<path:path>",
+        serve,
+        {"document_root": brand_documentation_root},
+        name="brand-documentation",
     ),
 ]

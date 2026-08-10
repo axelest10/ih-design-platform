@@ -163,10 +163,9 @@ con controles explícitos y verificables:
   ajustar mediante `SITE_ACCESS_THROTTLE_RATE`.
 - Las respuestas incluyen `X-Content-Type-Options: nosniff`, `Referrer-Policy: same-origin`,
   `Cross-Origin-Opener-Policy: same-origin` y `X-Frame-Options: DENY`.
-- La CSP permite recursos del mismo origen, imágenes `data:`, bloquea framing y no admite
-  `unsafe-inline` ni `unsafe-eval`: `default-src`, `script-src`, `style-src`, `font-src`,
-  `connect-src`, `base-uri` y `form-action` usan `'self'`; `img-src` usa `'self' data:` y
-  `frame-ancestors` usa `'none'`.
+- La CSP permite recursos del mismo origen, imágenes `data:` y el origen específico
+  `https://cdn.jsdelivr.net` en `script-src` para el renderizador versionado de Markdown. Bloquea
+  framing y no admite `unsafe-inline` ni `unsafe-eval`; `frame-ancestors` usa `'none'`.
 
 Estos controles mitigan abuso básico y endurecen el navegador; no resuelven las preguntas
 separadas sobre rotación del secreto, 2FA, segmentación por país o una futura recuperación de

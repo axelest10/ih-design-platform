@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3B44B5" />
+    <meta name="description" content="Reglas públicas del sistema de marca de International House LATAM." />
+    <title>Reglas de marca · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
+    <link rel="stylesheet" href="styles/home.css" />
+    <link rel="stylesheet" href="styles/brand-rules.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+        <div class="sidebar__brand">
+          <img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" />
+          <span>Design Platform</span>
+        </div>
+        <div class="sidebar__section-label">Workspace</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item" href="index.html"><span class="nav-item__icon" aria-hidden="true">⌂</span><span>Inicio</span></a>
+          <a class="nav-item" href="panel.html"><span class="nav-item__icon" aria-hidden="true">＋</span><span>Briefs</span></a>
+          <a class="nav-item" href="catalog.html"><span class="nav-item__icon" aria-hidden="true">▦</span><span>Catálogo de marca</span></a>
+          <a class="nav-item" href="templates-gallery.html"><span class="nav-item__icon" aria-hidden="true">◈</span><span>Plantillas</span></a>
+          <a class="nav-item" href="review.html"><span class="nav-item__icon" aria-hidden="true">✓</span><span>Revisiones</span></a>
+        </nav>
+        <div class="sidebar__section-label sidebar__section-label--secondary">Sistema</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item nav-item--active" href="brand-rules.html" aria-current="page"><span class="nav-item__icon" aria-hidden="true">◌</span><span>Reglas de marca</span></a>
+          <a class="nav-item" href="admin.html"><span class="nav-item__icon" aria-hidden="true">⚙</span><span>Configuración</span></a>
+        </nav>
+        <div class="sidebar__footer"><div class="sidebar__status-dot"></div><div><strong>Base documental</strong><span>7 documentos vigentes</span></div></div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-button topbar__menu" id="menu-toggle" type="button" aria-label="Abrir navegación">☰</button>
+          <div class="breadcrumbs"><span>Sistema</span><strong>/</strong><span>Reglas de marca</span></div>
+          <div class="topbar__actions">
+            <a class="text-link" href="index.html">← Volver al inicio</a>
+            <a class="profile-chip" href="login.html" aria-label="Iniciar sesión"><span class="profile-chip__avatar" aria-hidden="true">→</span><span class="profile-chip__name">Iniciar sesión</span></a>
+          </div>
+        </header>
+
+        <div class="content-wrap rules-page">
+          <section class="rules-heading" aria-labelledby="rules-title">
+            <div class="eyebrow">Fuente de verdad</div>
+            <h1 id="rules-title">Reglas de marca</h1>
+            <p>Consulta los lineamientos documentados para logos, color, tipografía, imagen, composición y accesibilidad.</p>
+          </section>
+
+          <div class="rules-layout">
+            <nav class="rules-menu" aria-label="Documentos de marca">
+              <button class="rules-menu__item rules-menu__item--active" type="button" data-document="logo-rules.md">Logotipo</button>
+              <button class="rules-menu__item" type="button" data-document="color-rules.md">Color</button>
+              <button class="rules-menu__item" type="button" data-document="typography-rules.md">Tipografía</button>
+              <button class="rules-menu__item" type="button" data-document="imagery-rules.md">Imágenes</button>
+              <button class="rules-menu__item" type="button" data-document="layout-rules.md">Composición</button>
+              <button class="rules-menu__item" type="button" data-document="accessibility-rules.md">Accesibilidad</button>
+              <button class="rules-menu__item" type="button" data-document="do-and-dont.md">Qué hacer y evitar</button>
+            </nav>
+            <main class="rules-document">
+              <div id="rules-status" class="rules-status" role="status" aria-live="polite">Cargando reglas…</div>
+              <article id="rules-content" class="markdown-body" hidden></article>
+            </main>
+          </div>
+        </div>
+      </main>
+    </div>
+    <script defer src="https://cdn.jsdelivr.net/npm/marked@18.0.7/lib/marked.umd.js"></script>
+    <script defer src="scripts/brand-rules.js"></script>
+  </body>
+</html>
