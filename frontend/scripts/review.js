@@ -3,17 +3,12 @@
   const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
   }[character]));
-  const cookie = (name) => document.cookie.split("; ").find((item) => item.startsWith(`${name}=`))?.split("=")[1] || "";
   const json = async (response) => {
     const body = await response.json().catch(() => ({}));
     if (!response.ok) throw Object.assign(new Error(body.detail || "La solicitud no pudo completarse."), { status: response.status });
     return body;
   };
-  const request = (url, options = {}) => {
-    const headers = new Headers(options.headers || {});
-    if (options.method && options.method !== "GET") headers.set("X-CSRFToken", decodeURIComponent(cookie("csrftoken")));
-    return fetch(url, { ...options, headers }).then(json);
-  };
+  const request = (url, options = {}) => window.authenticatedFetch(url, options).then(json);
   const notice = (message, type = "error") => {
     $("review-notice").textContent = message;
     $("review-notice").className = `notice notice--${type}`;

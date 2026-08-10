@@ -3,6 +3,8 @@ from pathlib import Path
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
+from django.middleware.csrf import get_token
+from django.test import RequestFactory
 from rest_framework.test import APIClient
 
 from briefs.models import DesignBrief
@@ -19,6 +21,21 @@ def _role_client(role):
     client = APIClient()
     client.force_authenticate(user=user)
     return client, user
+
+
+def _session_client_with_csrf(role):
+    user = get_user_model().objects.create_user(
+        username=f"quick-csrf-{role}",
+        email=f"quick-csrf-{role}@ihmexico.com",
+        password="safe-password-123",
+    )
+    user.groups.add(Group.objects.get_or_create(name=role)[0])
+    client = APIClient(enforce_csrf_checks=True)
+    assert client.login(username=user.username, password="safe-password-123")
+    request = RequestFactory().get("/")
+    token = get_token(request)
+    client.cookies["csrftoken"] = request.META["CSRF_COOKIE"]
+    return client, user, token
 
 
 @pytest.mark.corporate_auth
@@ -52,6 +69,34 @@ def test_designer_can_create_persisted_quick_design():
     assert version.template_key == "square-v1"
     assert version.render_data["headline"] == "Inglés para ti"
     assert DesignBrief.objects.filter(pk=payload["brief_id"]).exists()
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_authenticated_user_can_create_quick_design_with_csrf_header():
+    client, user, token = _session_client_with_csrf("designer")
+    payload = {
+        "template_key": "square-v1",
+        "country": "MX",
+        "product_slug": "general-english",
+        "brand_logo_key": "ih-mexico-classic-png",
+        "additional_logo_keys": [],
+        "headline": "Diseño autenticado",
+        "body": "Contenido protegido con CSRF.",
+    }
+
+    rejected = client.post("/api/v1/materials/quick-design/", payload, format="json")
+    assert rejected.status_code == 403
+
+    response = client.post(
+        "/api/v1/materials/quick-design/",
+        payload,
+        format="json",
+        HTTP_X_CSRFTOKEN=token,
+    )
+
+    assert response.status_code == 201, response.json()
+    assert Design.objects.get(pk=response.json()["design_id"]).brief.created_by == user
 
 
 @pytest.mark.corporate_auth

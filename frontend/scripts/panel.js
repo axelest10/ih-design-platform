@@ -1,10 +1,6 @@
 (() => {
   const state = { options: null, user: null };
   const $ = (id) => document.getElementById(id);
-  const cookie = (name) => document.cookie
-    .split("; ")
-    .find((item) => item.startsWith(`${name}=`))
-    ?.split("=")[1] || "";
   const notice = (message, type = "success") => {
     const element = $("notice");
     element.textContent = message;
@@ -101,7 +97,10 @@
     body.append("country", $("country").value);
     body.append("logo_type", $("logo-type").value);
     body.append("usage_notes", $("logo-notes").value);
-    return fetch("/api/v1/uploaded-logos/", { method: "POST", body }).then(json);
+    return window.authenticatedFetch(
+      "/api/v1/uploaded-logos/",
+      { method: "POST", body },
+    ).then(json);
   };
 
   const createBrief = async (event) => {
@@ -135,7 +134,7 @@
           visual_elements: $("visual_elements").value,
         },
       };
-      const response = await fetch("/api/v1/briefs/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+      const response = await window.authenticatedFetch("/api/v1/briefs/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
       const brief = await json(response);
       const referenceFile = $("visual_reference_file").files[0];
       if (referenceFile) {
@@ -143,7 +142,10 @@
         referenceBody.append("brief", brief.id);
         referenceBody.append("file", referenceFile);
         referenceBody.append("caption", "Referencia visual del brief");
-        await fetch("/api/v1/brief-reference-uploads/", { method: "POST", body: referenceBody }).then(json);
+        await window.authenticatedFetch(
+          "/api/v1/brief-reference-uploads/",
+          { method: "POST", body: referenceBody },
+        ).then(json);
       }
       $("form-status").textContent = "Brief guardado";
       notice(`Brief guardado correctamente. ID: ${brief.id}`);
@@ -192,11 +194,9 @@
     }
     status.textContent = "Actualizando…";
     status.className = "form-status";
-    const headers = new Headers({ "Content-Type": "application/json" });
-    headers.set("X-CSRFToken", decodeURIComponent(cookie("csrftoken")));
-    fetch("/api/v1/auth/change-password/", {
+    window.authenticatedFetch("/api/v1/auth/change-password/", {
       method: "POST",
-      headers,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         current_password: form.elements.current_password.value,
         new_password: form.elements.new_password.value,

@@ -277,7 +277,7 @@
       ...fields,
     };
     status.textContent = "Guardando diseño…";
-    fetch("/api/v1/materials/quick-design/", {
+    window.authenticatedFetch("/api/v1/materials/quick-design/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

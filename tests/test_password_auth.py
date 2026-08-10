@@ -242,6 +242,9 @@ def test_password_forms_include_confirmation_and_shared_visibility_control():
     shared_script = (
         REPO_ROOT / "frontend" / "scripts" / "password-fields.js"
     ).read_text(encoding="utf-8")
+    csrf_script = (
+        REPO_ROOT / "frontend" / "scripts" / "csrf.js"
+    ).read_text(encoding="utf-8")
 
     assert 'name="new_password_confirmation"' in panel
     assert 'name="password_confirmation"' in admin
@@ -252,17 +255,25 @@ def test_password_forms_include_confirmation_and_shared_visibility_control():
     assert 'src="scripts/password-fields.js"' in admin
     assert "IHPasswordFields.valuesMatch" in panel_script
     assert admin_script.count("IHPasswordFields.valuesMatch") == 2
-    assert 'fetch("/api/v1/auth/change-password/"' in panel_script
-    assert 'headers.set("X-CSRFToken"' in panel_script
+    assert 'authenticatedFetch("/api/v1/auth/change-password/"' in panel_script
+    assert 'headers.set("X-CSRFToken"' in csrf_script
     assert 'input.type = visible ? "text" : "password"' in shared_script
 
 
 def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
+    login_html = (REPO_ROOT / "frontend" / "login.html").read_text(encoding="utf-8")
     login_script = (
         REPO_ROOT / "frontend" / "scripts" / "login.js"
     ).read_text(encoding="utf-8")
+    csrf_script = (
+        REPO_ROOT / "frontend" / "scripts" / "csrf.js"
+    ).read_text(encoding="utf-8")
 
-    assert 'cookie("csrftoken")' in login_script
-    assert 'headers.set("X-CSRFToken"' in login_script
-    assert 'request("/api/v1/me/")' in login_script
+    assert login_html.index('src="scripts/csrf.js"') < login_html.index(
+        'src="scripts/login.js"'
+    )
+    assert 'window.authenticatedFetch("/api/v1/auth/login/"' in login_script
+    assert 'cookie("csrftoken")' in csrf_script
+    assert 'headers.set("X-CSRFToken"' in csrf_script
+    assert 'fetch("/api/v1/me/")' in login_script
     assert 'window.location.replace("/panel.html")' in login_script

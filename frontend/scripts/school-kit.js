@@ -98,7 +98,7 @@
     const data = formData();
     if (!data.product_slugs.length) throw { detail: "Selecciona al menos un producto." };
     const url = state.currentId ? `/api/v1/material-bundles/${state.currentId}/` : "/api/v1/material-bundles/";
-    const response = await fetch(url, { method: state.currentId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
+    const response = await window.authenticatedFetch(url, { method: state.currentId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
     const bundle = await json(response);
     state.currentId = bundle.id;
     await loadBundles();
@@ -107,7 +107,10 @@
 
   const generateBundle = async () => {
     const bundle = await saveBundle();
-    const response = await fetch(`/api/v1/material-bundles/${bundle.id}/generate/`, { method: "POST" });
+    const response = await window.authenticatedFetch(
+      `/api/v1/material-bundles/${bundle.id}/generate/`,
+      { method: "POST" },
+    );
     const generated = await json(response);
     state.currentId = generated.id;
     await loadBundles();
@@ -192,7 +195,7 @@
     if (!review) return;
     const report = document.querySelector(`[data-report="${review.dataset.design}"]`)?.value || "Revisión registrada desde el panel school-kit.";
     try {
-      await fetch(`/api/v1/designs/${review.dataset.design}/claude-review/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision: review.dataset.review, report: { summary: report, source: "claude" } }) }).then(json);
+      await window.authenticatedFetch(`/api/v1/designs/${review.dataset.design}/claude-review/`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ decision: review.dataset.review, report: { summary: report, source: "claude" } }) }).then(json);
       await loadBundles();
       notice("Revisión de Claude registrada para la pieza.");
     } catch (error) { notice(error.detail || "No pudimos registrar la revisión.", "error"); }
