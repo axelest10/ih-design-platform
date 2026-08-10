@@ -76,7 +76,7 @@ def _approved_logo_path(logo_name: str) -> Path:
         raise RenderValidationError(f"Logo '{logo_name}' no está aprobado en el catálogo.")
     path = loader.ASSETS_DIR / "logos" / entry["file"]
     if path.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
-        raise RenderValidationError("El brochure piloto requiere un logo PNG o JPG aprobado.")
+        raise RenderValidationError("El renderizador requiere un logo PNG o JPG aprobado.")
     if not path.exists():
         raise RenderValidationError(f"El archivo del logo '{logo_name}' no existe en disco.")
     return path

@@ -8,7 +8,7 @@
     "monochrome-white": "Blanco",
     white: "Blanco",
   };
-  const state = { logos: [], country: "", brand: "" };
+  const state = { logos: [], country: "", brand: "", isAdmin: false };
   const grid = document.querySelector("#logo-grid");
   const notice = document.querySelector("#catalog-notice");
   const countryFilter = document.querySelector("#catalog-country");
@@ -64,9 +64,11 @@
     meta.append(tag(logo.country ? (countryNames[logo.country] || logo.country) : "Global"));
     meta.append(tag(variantNames[logo.variant] || logo.variant, true));
     const title = document.createElement("h2");
-    title.textContent = logo.name;
+    title.textContent = state.isAdmin ? logo.name : brandName(logo);
     const brand = document.createElement("p");
-    brand.textContent = brandName(logo);
+    brand.textContent = state.isAdmin
+      ? brandName(logo)
+      : `${variantNames[logo.variant] || logo.variant} · ${logo.country ? (countryNames[logo.country] || logo.country) : "Global"}`;
     const footer = document.createElement("div");
     footer.className = "logo-card__footer";
     const format = document.createElement("span");
@@ -129,13 +131,18 @@
     render();
   });
 
-  fetch("/api/v1/branding/logos/")
-    .then((response) => {
+  Promise.all([
+    fetch("/api/v1/branding/logos/").then((response) => {
       if (!response.ok) throw new Error("catalog unavailable");
       return response.json();
-    })
-    .then((payload) => {
+    }),
+    fetch("/api/v1/me/")
+      .then((response) => (response.ok ? response.json() : null))
+      .catch(() => null),
+  ])
+    .then(([payload, user]) => {
       state.logos = payload.logos;
+      state.isAdmin = Boolean(user?.is_admin);
       document.querySelector("#catalog-version").textContent = `${payload.count} logos · v${payload.version}`;
       fillFilters();
       render();

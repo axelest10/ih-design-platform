@@ -21,6 +21,7 @@
 .template-row strong, .template-row span { display: block; }
 .template-row strong { overflow-wrap: anywhere; font-size: 13px; }
 .template-row span { margin-top: 4px; color: var(--home-muted); font-size: 10px; }
+.template-row__description { max-width: 520px; margin: 5px 0 0; color: var(--home-muted); font-size: 11px; line-height: 1.45; }
 .template-row__outputs { align-self: center; color: var(--ih-knowledge); font-size: 10px; font-weight: 800; letter-spacing: .05em; text-align: right; text-transform: uppercase; }
 .template-empty { margin: 0; padding: 14px; border-radius: 10px; background: #fafbfe; color: var(--home-muted); font-size: 12px; }
 @media (max-width: 900px) { .material-grid { grid-template-columns: 1fr; } }

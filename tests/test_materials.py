@@ -64,6 +64,21 @@ def test_social_post_type_reuses_registered_render_templates():
     )
 
 
+@pytest.mark.django_db
+def test_presentation_type_exposes_registered_pptx_template():
+    client = APIClient()
+    material_types = client.get("/api/v1/material-types/").json()
+    presentation = next(item for item in material_types if item["slug"] == "presentation")
+
+    assert presentation["renderer_family"] == "presentation"
+    assert presentation["supported_formats"] == ["16:9"]
+    templates = client.get("/api/v1/material-templates/").json()
+    template = next(item for item in templates if item["key"] == "presentation-16x9-v1")
+    assert template["material_type"] == presentation["id"]
+    assert template["dimensions"]["ratio"] == "16:9"
+    assert template["output_formats"] == ["pptx"]
+
+
 def _role_client(role):
     user = get_user_model().objects.create_user(
         username=f"{role}@ihmexico.com",

@@ -13,6 +13,7 @@ class MaterialType(models.Model):
         HTML_SVG = "html-svg", "HTML/SVG"
         EMAIL_HTML = "email-html", "Email HTML"
         DOCUMENT = "document", "Documento"
+        PRESENTATION = "presentation", "Presentación"
 
     slug = models.SlugField(max_length=80, unique=True)
     name = models.CharField(max_length=180)
