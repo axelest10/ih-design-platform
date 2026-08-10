@@ -1,4 +1,5 @@
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -10,10 +11,12 @@ from security.permissions import (
     CanCreateBriefPermission,
     CorporateDomainPermission,
     RoleAwareViewSet,
+    is_platform_admin_user,
 )
 
-from .models import MaterialBundle, MaterialTemplate, MaterialType
+from .models import MarketingAsset, MaterialBundle, MaterialTemplate, MaterialType
 from .serializers import (
+    MarketingAssetSerializer,
     MaterialBundleSerializer,
     MaterialTemplateSerializer,
     MaterialTypeSerializer,
@@ -62,6 +65,31 @@ class MaterialTemplateViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelVie
         "partial_update": (ROLE_PLATFORM_ADMIN,),
         "destroy": (ROLE_PLATFORM_ADMIN,),
     }
+
+
+class MarketingAssetViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewSet):
+    queryset = MarketingAsset.objects.select_related("uploaded_by").all()
+    serializer_class = MarketingAssetSerializer
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+    role_rules = {
+        "create": (ROLE_PLATFORM_ADMIN,),
+        "update": (ROLE_PLATFORM_ADMIN,),
+        "partial_update": (ROLE_PLATFORM_ADMIN,),
+        "destroy": (ROLE_PLATFORM_ADMIN,),
+    }
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if not is_platform_admin_user(self.request.user):
+            queryset = queryset.filter(active=True)
+        for field in ("brand", "country", "category"):
+            value = self.request.query_params.get(field)
+            if value:
+                queryset = queryset.filter(**{field: value})
+        return queryset
+
+    def perform_create(self, serializer):
+        serializer.save(uploaded_by=self.request.user)
 
 
 class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):

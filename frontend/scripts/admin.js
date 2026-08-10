@@ -49,6 +49,9 @@
     const typeNames = Object.fromEntries(items(materialTypes).map((type) => [type.id, type.slug]));
     renderRows("material-template-table", items(payload), "No hay templates.", 4, (template) => `<tr><td>${escapeHtml(template.key)}</td><td>${escapeHtml(typeNames[template.material_type] || template.material_type)}</td><td>${escapeHtml(template.output_formats.join(", "))}</td><td class="status">${template.active ? "Sí" : "No"}</td></tr>`);
   };
+  const renderMarketingAssets = (payload) => {
+    renderRows("marketing-asset-table", items(payload), "Todavía no hay materiales cargados.", 6, (asset) => `<tr><td>${escapeHtml(asset.label)}</td><td>${escapeHtml(asset.brand_label)}</td><td>${escapeHtml(asset.country || "Global")}</td><td>${escapeHtml(asset.category_label)}</td><td class="${asset.active ? "status" : "status status--inactive"}">${asset.active ? "Activo" : "Inactivo"}</td><td><button class="button button--small" data-marketing-asset="${asset.id}" data-active="${!asset.active}">${asset.active ? "Desactivar" : "Activar"}</button></td></tr>`);
+  };
 
   const load = () => request("/api/v1/me/").then((user) => {
     if (!user.is_admin) {
@@ -60,10 +63,11 @@
       request("/api/v1/briefs/"), request("/api/v1/uploaded-logos/"),
       request("/api/v1/artwork-references/knowledge/?limit=1"), request("/api/v1/security/users/"),
       request("/api/v1/material-types/"), request("/api/v1/material-templates/"),
+      request("/api/v1/marketing-assets/"),
     ]);
   }).then((payloads) => {
     if (!payloads) return;
-    const [briefs, logos, references, users, materialTypes, materialTemplates] = payloads;
+    const [briefs, logos, references, users, materialTypes, materialTemplates, marketingAssets] = payloads;
     $("access-denied").hidden = true;
     $("admin-content").hidden = false;
     const briefItems = items(briefs);
@@ -77,6 +81,7 @@
     renderUsers(users);
     renderMaterialTypes(materialTypes);
     renderMaterialTemplates(materialTemplates, materialTypes);
+    renderMarketingAssets(marketingAssets);
   }).catch((error) => notice(error.message));
 
   $("user-table").addEventListener("click", (event) => {
@@ -147,6 +152,32 @@
     request("/api/v1/material-templates/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
       material_type: Number(form.get("material_type")), key: form.get("key"), version: form.get("version"), dimensions, output_formats: csv(form.get("output_formats")), required_fields: csv(form.get("required_fields")), constraints: {}, active: form.has("active"),
     }) }).then(() => { event.currentTarget.reset(); notice("Template creado.", "success"); return load(); }).catch((error) => notice(error.message));
+  });
+
+  $("marketing-asset-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    if (!form.has("active")) form.set("active", "false");
+    request("/api/v1/marketing-assets/", { method: "POST", body: form })
+      .then(() => {
+        event.currentTarget.reset();
+        notice("Material de marketing cargado.", "success");
+        return load();
+      })
+      .catch((error) => notice(error.message));
+  });
+
+  $("marketing-asset-table").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-marketing-asset]");
+    if (!button) return;
+    request(`/api/v1/marketing-assets/${button.dataset.marketingAsset}/`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: button.dataset.active === "true" }),
+    }).then(() => {
+      notice("Disponibilidad actualizada.", "success");
+      return load();
+    }).catch((error) => notice(error.message));
   });
 
   $("refresh").addEventListener("click", load);

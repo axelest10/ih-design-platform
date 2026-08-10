@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#3B44B5" />
+    <meta name="description" content="Materiales oficiales de marketing para International House e IELTS." />
+    <title>Materiales de Marketing · IH Design Platform</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
+    <link rel="stylesheet" href="styles/home.css" />
+    <link rel="stylesheet" href="styles/marketing-materials.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+        <div class="sidebar__brand"><img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" /><span>Design Platform</span></div>
+        <div class="sidebar__section-label">Workspace</div>
+        <nav class="sidebar__nav">
+          <a class="nav-item" href="index.html"><span class="nav-item__icon" aria-hidden="true">⌂</span><span>Inicio</span></a>
+          <a class="nav-item" href="panel.html"><span class="nav-item__icon" aria-hidden="true">＋</span><span>Briefs</span></a>
+          <a class="nav-item" href="catalog.html"><span class="nav-item__icon" aria-hidden="true">◦</span><span>Catálogo de marca</span></a>
+          <a class="nav-item" href="templates-gallery.html"><span class="nav-item__icon" aria-hidden="true">◈</span><span>Plantillas</span></a>
+          <a class="nav-item nav-item--active" href="marketing-materials.html" aria-current="page"><span class="nav-item__icon" aria-hidden="true">▣</span><span>Materiales de Marketing</span></a>
+          <a class="nav-item" href="review.html"><span class="nav-item__icon" aria-hidden="true">✓</span><span>Revisiones</span></a>
+        </nav>
+        <div class="sidebar__section-label sidebar__section-label--secondary">Sistema</div>
+        <nav class="sidebar__nav"><a class="nav-item" href="brand-rules.html"><span class="nav-item__icon" aria-hidden="true">◌</span><span>Reglas de marca</span></a><a class="nav-item" href="admin.html"><span class="nav-item__icon" aria-hidden="true">⚙</span><span>Configuración</span></a></nav>
+        <div class="sidebar__footer"><div class="sidebar__status-dot"></div><div><strong>Biblioteca oficial</strong><span id="asset-total">Consultando…</span></div></div>
+      </aside>
+      <main class="main-content">
+        <header class="topbar">
+          <button class="icon-button topbar__menu" id="menu-toggle" type="button" aria-label="Abrir navegación">☰</button>
+          <div class="breadcrumbs"><span>Workspace</span><strong>/</strong><span>Materiales de Marketing</span></div>
+          <div class="topbar__actions"><a class="text-link" href="index.html">← Volver al inicio</a></div>
+        </header>
+        <div class="content-wrap marketing-page">
+          <section class="marketing-heading">
+            <div><div class="eyebrow">Archivos listos para usar</div><h1>Materiales de Marketing</h1><p>Descarga fondos, firmas, banners, imágenes de perfil y presentaciones oficiales por marca y país.</p></div>
+            <div class="catalog-heading__count"><strong id="visible-assets">—</strong><span>archivos</span></div>
+          </section>
+          <section class="marketing-filters" aria-label="Filtros de materiales">
+            <label>Marca<select id="asset-brand"><option value="">Todas</option><option value="ih">International House</option><option value="ielts">IELTS</option></select></label>
+            <label>País<select id="asset-country"><option value="">Todos</option></select></label>
+            <label>Categoría<select id="asset-category"><option value="">Todas</option></select></label>
+            <button id="clear-assets" type="button">Limpiar filtros</button>
+          </section>
+          <div id="marketing-notice" class="marketing-notice" role="status" aria-live="polite">Cargando materiales…</div>
+          <div id="marketing-groups" class="marketing-groups"></div>
+        </div>
+      </main>
+    </div>
+    <script src="scripts/marketing-materials.js"></script>
+  </body>
+</html>

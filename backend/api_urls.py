@@ -9,6 +9,7 @@ from catalog.views import BranchViewSet, ProductViewSet
 from common.views import stats_summary
 from designs.views import DesignViewSet
 from materials.views import (
+    MarketingAssetViewSet,
     MaterialBundleViewSet,
     MaterialTemplateViewSet,
     MaterialTypeViewSet,
@@ -42,6 +43,7 @@ router.register("validations", ValidationRunViewSet, basename="validations")
 router.register("material-types", MaterialTypeViewSet, basename="material-type")
 router.register("material-templates", MaterialTemplateViewSet, basename="material-template")
 router.register("material-bundles", MaterialBundleViewSet, basename="material-bundle")
+router.register("marketing-assets", MarketingAssetViewSet, basename="marketing-asset")
 
 urlpatterns = [
     path("materials/quick-design/", quick_design, name="materials-quick-design"),

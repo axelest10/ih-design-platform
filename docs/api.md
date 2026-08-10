@@ -52,6 +52,10 @@ hasta desactivar el modo.
 - `GET /material-templates/` — templates versionados asociados a un tipo de material.
 - `POST /materials/quick-design/` — crea `DesignBrief`, `Design` y `DesignVersion` desde una
   plantilla activa y sus campos editables; devuelve el preview HTML/SVG o la URL del PDF/PPTX.
+- `GET /marketing-assets/` — biblioteca pública de materiales descargables; filtra por `brand`,
+  `country` y `category`, y solo expone entradas activas a perfiles no administradores.
+- `POST|PATCH|DELETE /marketing-assets/` — administración y carga multipart restringida a
+  `platform_admin`; el archivo usa el storage configurado (local o S3-compatible).
 - `POST /artwork-references/{id}/approve/` — aprueba una referencia como reviewer/admin.
 - `POST /artwork-references/{id}/reject/` — rechaza una referencia como reviewer/admin.
 - `GET|POST /validations/` — ejecuciones de validación.

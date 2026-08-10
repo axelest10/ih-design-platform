@@ -29,6 +29,11 @@ urlpatterns += [
         name="frontend-templates-gallery",
     ),
     path(
+        "marketing-materials.html",
+        TemplateView.as_view(template_name="marketing-materials.html"),
+        name="frontend-marketing-materials",
+    ),
+    path(
         "brand-rules.html",
         TemplateView.as_view(template_name="brand-rules.html"),
         name="frontend-brand-rules",

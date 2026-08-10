@@ -58,7 +58,7 @@
                 <h3>Crear tipo</h3>
                 <label>Slug<input name="slug" required /></label>
                 <label>Nombre<input name="name" required /></label>
-                <label>Renderer<select name="renderer_family" required><option value="html-svg">HTML/SVG</option><option value="email-html">Email HTML</option><option value="document">Documento</option></select></label>
+                <label>Renderer<select name="renderer_family" required><option value="html-svg">HTML/SVG</option><option value="email-html">Email HTML</option><option value="document">Documento</option><option value="presentation">Presentación</option></select></label>
                 <label>Canal<input name="channel" required /></label>
                 <label>Formatos compatibles<input name="supported_formats" placeholder="square, story" /></label>
                 <label class="check-field"><input type="checkbox" name="active" checked /> Activo</label>
@@ -81,6 +81,20 @@
               </form>
             </article>
           </section>
+        </section>
+        <section class="table-card marketing-admin-card">
+          <div class="table-heading"><div><p class="eyebrow">Biblioteca descargable</p><h2>Materiales de Marketing</h2></div></div>
+          <div class="table-wrap"><table><thead><tr><th>Material</th><th>Marca</th><th>País</th><th>Categoría</th><th>Estado</th><th>Acción</th></tr></thead><tbody id="marketing-asset-table"></tbody></table></div>
+          <form id="marketing-asset-form" class="inline-form marketing-upload-form" enctype="multipart/form-data">
+            <h3>Subir material</h3>
+            <label>Marca<select name="brand" required><option value="ih">International House</option><option value="ielts">IELTS</option></select></label>
+            <label>País (opcional)<input name="country" maxlength="8" placeholder="MX, CO, PE o vacío para global" /></label>
+            <label>Categoría<select name="category" required><option value="foto_perfil">Foto de perfil</option><option value="background_computadora">Fondo para computadora</option><option value="background_celular">Fondo para celular</option><option value="zoom_background">Fondo de Zoom</option><option value="firma_electronica">Firma electrónica</option><option value="banner_linkedin">Banner de LinkedIn</option><option value="template_ppt">Template de PowerPoint</option></select></label>
+            <label>Nombre visible<input name="label" maxlength="180" required /></label>
+            <label>Archivo<input name="file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,.ppt,.pptx" required /></label>
+            <label class="check-field"><input type="checkbox" name="active" checked /> Disponible públicamente</label>
+            <button class="button" type="submit">Subir material</button>
+          </form>
         </section>
         <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones del brief <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>
       </div>

@@ -1,6 +1,7 @@
 import uuid
 
 from django.contrib.auth import get_user_model
+from django.core.validators import FileExtensionValidator
 from django.db import models
 
 from briefs.models import DesignBrief
@@ -91,3 +92,44 @@ class MaterialBundleItem(models.Model):
 
     class Meta:
         ordering = ["sort_order", "deliverable_key"]
+
+
+class MarketingAsset(models.Model):
+    class Brand(models.TextChoices):
+        IH = "ih", "International House"
+        IELTS = "ielts", "IELTS"
+
+    class Category(models.TextChoices):
+        PROFILE_PHOTO = "foto_perfil", "Foto de perfil"
+        DESKTOP_BACKGROUND = "background_computadora", "Fondo para computadora"
+        MOBILE_BACKGROUND = "background_celular", "Fondo para celular"
+        ZOOM_BACKGROUND = "zoom_background", "Fondo de Zoom"
+        EMAIL_SIGNATURE = "firma_electronica", "Firma electrónica"
+        LINKEDIN_BANNER = "banner_linkedin", "Banner de LinkedIn"
+        PPT_TEMPLATE = "template_ppt", "Template de PowerPoint"
+
+    brand = models.CharField(max_length=12, choices=Brand.choices)
+    country = models.CharField(max_length=8, blank=True)
+    category = models.CharField(max_length=40, choices=Category.choices)
+    label = models.CharField(max_length=180)
+    file = models.FileField(
+        upload_to="marketing-assets/",
+        validators=[
+            FileExtensionValidator(["png", "jpg", "jpeg", "webp", "pdf", "ppt", "pptx"])
+        ],
+    )
+    active = models.BooleanField(default=True)
+    uploaded_by = models.ForeignKey(
+        get_user_model(),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="marketing_assets",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["brand", "country", "category", "label"]
+
+    def __str__(self):
+        return self.label

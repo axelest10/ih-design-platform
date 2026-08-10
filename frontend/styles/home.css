@@ -120,7 +120,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 .section-heading { display: flex; align-items: end; justify-content: space-between; margin: 48px 0 18px; }
 .section-heading h2, .panel h2 { margin: 0; font: 700 28px/1.2 var(--ih-font-heading); letter-spacing: -.02em; }
-.quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .quick-card { position: relative; display: block; min-height: 235px; padding: 27px; overflow: hidden; border: 1px solid var(--home-line); border-radius: var(--ih-radius-card); background: var(--home-surface); transition: transform 160ms ease, box-shadow 160ms ease; }
 .quick-card:hover { transform: translateY(-4px); box-shadow: var(--home-shadow); }
 .quick-card--primary { border-color: transparent; background: var(--ih-youth); }
@@ -169,6 +169,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .hero-card--front { right: 85px; }
   .hero-card--back { right: 50px; }
   .hero-sticker--green { right: 20px; }
+  .quick-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 860px) {
   .sidebar { width: 260px; transform: translateX(-100%); transition: transform 200ms ease; }

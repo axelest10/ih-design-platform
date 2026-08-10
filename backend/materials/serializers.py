@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from .models import MaterialBundle, MaterialBundleItem, MaterialTemplate, MaterialType
+from .models import (
+    MarketingAsset,
+    MaterialBundle,
+    MaterialBundleItem,
+    MaterialTemplate,
+    MaterialType,
+)
 from .services.catalog import school_kit_products
 from .services.school_kit import school_kit_deliverables
 
@@ -9,6 +15,28 @@ class MaterialTemplateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MaterialTemplate
         fields = "__all__"
+
+
+class MarketingAssetSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField()
+    brand_label = serializers.CharField(source="get_brand_display", read_only=True)
+    category_label = serializers.CharField(source="get_category_display", read_only=True)
+
+    class Meta:
+        model = MarketingAsset
+        fields = "__all__"
+        read_only_fields = ("uploaded_by", "created_at", "file_url")
+
+    def get_file_url(self, obj):
+        return obj.file.url if obj.file else None
+
+    def validate_country(self, value):
+        return value.strip().upper()
+
+    def validate_file(self, value):
+        if value.size > 25 * 1024 * 1024:
+            raise serializers.ValidationError("El archivo no puede superar 25 MB.")
+        return value
 
 
 class MaterialTypeSerializer(serializers.ModelSerializer):

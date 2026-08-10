@@ -1,0 +1,27 @@
+.marketing-page { padding-bottom: 64px; }
+.marketing-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: 24px; }
+.marketing-heading h1 { margin: 6px 0 10px; font: 700 clamp(36px, 5vw, 60px)/1 var(--ih-font-heading); letter-spacing: -.04em; }
+.marketing-heading p { max-width: 760px; margin: 0; color: var(--home-muted); font-size: 16px; }
+.marketing-filters { display: flex; align-items: end; gap: 14px; padding: 18px; border: 1px solid var(--home-line); border-radius: var(--ih-radius-card); background: #fff; }
+.marketing-filters label { display: grid; min-width: 190px; gap: 6px; color: var(--home-muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.marketing-filters select, .marketing-filters button { min-height: 42px; border: 1px solid var(--home-line); border-radius: 9px; padding: 0 12px; background: #fbfbfe; color: var(--home-ink); }
+.marketing-filters button { border: 0; background: #eef0ff; color: var(--ih-knowledge); cursor: pointer; font-weight: 800; }
+.marketing-notice { margin: 55px 0; color: var(--home-muted); text-align: center; }
+.marketing-notice[hidden] { display: none; }
+.marketing-groups { display: grid; gap: 36px; margin-top: 30px; }
+.marketing-brand > h2 { margin: 0 0 18px; font: 700 30px/1.1 var(--ih-font-heading); }
+.marketing-country { margin-top: 22px; padding: 24px; border: 1px solid var(--home-line); border-radius: 20px; background: #fff; }
+.marketing-country > h3 { margin: 0 0 22px; color: var(--ih-knowledge); font: 700 22px/1.1 var(--ih-font-heading); }
+.marketing-category + .marketing-category { margin-top: 28px; }
+.marketing-category > h4 { margin: 0 0 12px; color: var(--home-muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.marketing-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.marketing-card { overflow: hidden; border: 1px solid var(--home-line); border-radius: 14px; background: #fafbfe; }
+.marketing-card__preview { display: grid; min-height: 150px; place-items: center; background: #f0f2f8; }
+.marketing-card__preview img { width: 100%; height: 170px; object-fit: cover; }
+.marketing-card__preview span { display: grid; width: 74px; height: 74px; place-items: center; border-radius: 15px; background: var(--ih-knowledge); color: #fff; font-weight: 800; }
+.marketing-card__body { padding: 15px; }
+.marketing-card__body h4 { min-height: 38px; margin: 0 0 12px; font: 700 15px/1.25 var(--ih-font-heading); }
+.marketing-card__body a { color: var(--ih-knowledge); font-size: 11px; font-weight: 800; }
+@media (max-width: 1120px) { .marketing-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 860px) { .marketing-heading { align-items: flex-start; flex-direction: column; } .marketing-filters { display: grid; grid-template-columns: 1fr 1fr; } .marketing-filters label { min-width: 0; } .marketing-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .marketing-filters, .marketing-grid { grid-template-columns: 1fr; } .marketing-country { padding: 18px; } }
