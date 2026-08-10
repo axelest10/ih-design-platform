@@ -1,6 +1,10 @@
 (() => {
   const state = { options: null, user: null };
   const $ = (id) => document.getElementById(id);
+  const cookie = (name) => document.cookie
+    .split("; ")
+    .find((item) => item.startsWith(`${name}=`))
+    ?.split("=")[1] || "";
   const notice = (message, type = "success") => {
     const element = $("notice");
     element.textContent = message;
@@ -26,6 +30,7 @@
     $("user-label").textContent = "No has iniciado sesión";
     $("role-label").textContent = "Acceso restringido";
     setBriefFormDisabled(true);
+    $("my-account").hidden = true;
     notice("Ingresa con la contraseña de acceso para crear briefs.", "error");
     const loginLink = document.createElement("a");
     loginLink.href = "login.html";
@@ -153,6 +158,7 @@
     setBriefFormDisabled(false);
     $("user-label").textContent = user.email || "Sesión local";
     $("role-label").textContent = user.is_admin ? "Administrador" : (user.roles[0] || "Usuario");
+    $("my-account").hidden = false;
     if (user.can_review) $("review-panel").hidden = false;
     if (user.is_admin) $("admin-panel").hidden = false;
     return fetch("/api/v1/briefs/").then(json);
@@ -171,10 +177,46 @@
 
   const loadAdminStats = () => fetch("/api/v1/uploaded-logos/").then(json).then((logos) => { $("logo-count").textContent = logos.count ?? logos.length ?? "—"; }).catch(() => {});
 
+  const changeOwnPassword = (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const status = $("account-password-status");
+    if (!window.IHPasswordFields.valuesMatch(
+      form,
+      "new_password",
+      "new_password_confirmation",
+    )) {
+      status.textContent = "Las contraseñas nuevas no coinciden.";
+      status.className = "form-status error-text";
+      return;
+    }
+    status.textContent = "Actualizando…";
+    status.className = "form-status";
+    const headers = new Headers({ "Content-Type": "application/json" });
+    headers.set("X-CSRFToken", decodeURIComponent(cookie("csrftoken")));
+    fetch("/api/v1/auth/change-password/", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        current_password: form.elements.current_password.value,
+        new_password: form.elements.new_password.value,
+      }),
+    }).then(json).then((response) => {
+      form.reset();
+      window.IHPasswordFields.hide(form);
+      status.textContent = response.detail;
+      status.className = "form-status";
+    }).catch((error) => {
+      status.textContent = error.message;
+      status.className = "form-status error-text";
+    });
+  };
+
   $("country").addEventListener("change", loadOptions);
   $("product_slug").addEventListener("change", renderProductPreview);
   $("upload-logo-toggle").addEventListener("change", (event) => { $("upload-logo-fields").hidden = !event.target.checked; });
   $("brief-form").addEventListener("submit", createBrief);
+  $("change-password-form").addEventListener("submit", changeOwnPassword);
   $("refresh-admin").addEventListener("click", () => {
     loadUser().then((authenticated) => {
       if (!authenticated) return;
@@ -182,6 +224,7 @@
       loadAdminStats();
     });
   });
+  window.IHPasswordFields.setup();
   loadUser().then((authenticated) => {
     if (!authenticated) return;
     loadInitialOptions();

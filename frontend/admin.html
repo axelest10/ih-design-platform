@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
     <link rel="stylesheet" href="styles/admin.css" />
     <link rel="stylesheet" href="styles/admin-accounts.css" />
+    <link rel="stylesheet" href="styles/password-fields.css" />
   </head>
   <body>
     <header class="admin-header">
@@ -38,14 +39,18 @@
                 <h3>Crear usuario</h3>
                 <label>Usuario<input name="username" autocomplete="off" required /></label>
                 <label>Email corporativo<input name="email" type="email" autocomplete="off" required /></label>
-                <label>Contraseña inicial<input name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <label>Contraseña inicial<input id="create-password" name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <label>Confirmar contraseña<input id="create-password-confirmation" name="password_confirmation" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <button class="password-toggle" type="button" data-password-toggle="create-password,create-password-confirmation" aria-pressed="false">Mostrar contraseñas</button>
                 <fieldset class="role-fields"><legend>Roles</legend><label><input type="checkbox" name="roles" value="platform_admin" /> Administrador</label><label><input type="checkbox" name="roles" value="marketing" /> Marketing</label><label><input type="checkbox" name="roles" value="designer" /> Diseñador</label><label><input type="checkbox" name="roles" value="reviewer" /> Revisor</label><label><input type="checkbox" name="roles" value="viewer" /> Consulta</label></fieldset>
                 <button class="button" type="submit">Crear cuenta</button>
               </form>
               <form id="password-reset-form" class="inline-form account-form">
                 <h3>Establecer contraseña</h3>
                 <label>Usuario<select id="password-user" name="user_id" required></select></label>
-                <label>Nueva contraseña<input name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <label>Nueva contraseña<input id="reset-password" name="password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <label>Confirmar contraseña<input id="reset-password-confirmation" name="password_confirmation" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <button class="password-toggle" type="button" data-password-toggle="reset-password,reset-password-confirmation" aria-pressed="false">Mostrar contraseñas</button>
                 <button class="button" type="submit">Actualizar contraseña</button>
               </form>
             </div>
@@ -99,6 +104,7 @@
         <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones del brief <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>
       </div>
     </main>
+    <script src="scripts/password-fields.js"></script>
     <script src="scripts/admin.js"></script>
   </body>
 </html>

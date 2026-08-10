@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="styles/fonts.css" />
     <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
     <link rel="stylesheet" href="styles/panel.css" />
+    <link rel="stylesheet" href="styles/password-fields.css" />
   </head>
   <body>
     <div class="panel-shell">
@@ -154,6 +155,19 @@
               <a class="button button--secondary" href="admin.html">Abrir panel completo</a>
               <a class="button button--secondary" href="school-kit.html">Crear paquetería escolar</a>
             </section>
+            <section class="card account-card" id="my-account" hidden>
+              <span class="step-label">Mi cuenta</span>
+              <h2>Cambiar contraseña</h2>
+              <p>Usa al menos 12 caracteres. Tu sesión permanecerá abierta después del cambio.</p>
+              <form id="change-password-form" class="account-password-form">
+                <label>Contraseña actual<input id="current-password" name="current_password" type="password" autocomplete="current-password" required /></label>
+                <label>Contraseña nueva<input id="new-password" name="new_password" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <label>Confirmar contraseña nueva<input id="new-password-confirmation" name="new_password_confirmation" type="password" minlength="12" autocomplete="new-password" required /></label>
+                <button class="password-toggle" type="button" data-password-toggle="new-password,new-password-confirmation" aria-pressed="false">Mostrar contraseñas</button>
+                <button class="button button--secondary" type="submit">Actualizar contraseña</button>
+                <span id="account-password-status" class="form-status" role="status" aria-live="polite"></span>
+              </form>
+            </section>
             <section class="card guidance-card">
               <span class="step-label">Durante las primeras 50 pruebas</span>
               <h2>Sin aprobación formal</h2>
@@ -163,6 +177,7 @@
         </section>
       </main>
     </div>
+    <script src="scripts/password-fields.js"></script>
     <script src="scripts/panel.js"></script>
   </body>
 </html>

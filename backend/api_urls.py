@@ -21,7 +21,7 @@ from security.admin_views import (
     corporate_user_password,
     corporate_user_roles,
 )
-from security.views import current_user, password_login
+from security.views import change_password, current_user, password_login
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -65,6 +65,7 @@ urlpatterns = [
         name="security-user-password",
     ),
     path("auth/login/", password_login, name="password-login"),
+    path("auth/change-password/", change_password, name="change-password"),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.

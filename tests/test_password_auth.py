@@ -1,9 +1,13 @@
+from pathlib import Path
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from rest_framework.test import APIClient
 
 from security.throttles import LoginIPThrottle
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(autouse=True)
@@ -110,3 +114,123 @@ def test_initial_admin_exists_and_shared_access_is_disabled():
     assert admin.has_usable_password()
     assert admin.groups.filter(name="platform_admin").exists()
     assert shared.is_active is False
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_user_changes_own_password_without_losing_current_session():
+    user = get_user_model().objects.create_user(
+        username="self-service-user",
+        email="self-service@ihmexico.com",
+        password="current-password-123",
+    )
+    client = APIClient()
+    assert client.login(username=user.username, password="current-password-123")
+
+    response = client.post(
+        "/api/v1/auth/change-password/",
+        {
+            "current_password": "current-password-123",
+            "new_password": "replacement-password-456",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"detail": "Contraseña actualizada correctamente."}
+    user.refresh_from_db()
+    assert user.check_password("replacement-password-456")
+
+    current_user = client.get("/api/v1/me/")
+    assert current_user.status_code == 200
+    assert current_user.json()["authenticated"] is True
+    assert current_user.json()["email"] == user.email
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_user_cannot_change_password_with_incorrect_current_password():
+    user = get_user_model().objects.create_user(
+        username="self-service-user",
+        email="self-service@ihmexico.com",
+        password="current-password-123",
+    )
+    client = APIClient()
+    assert client.login(username=user.username, password="current-password-123")
+
+    response = client.post(
+        "/api/v1/auth/change-password/",
+        {
+            "current_password": "incorrect-password",
+            "new_password": "replacement-password-456",
+        },
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "La contraseña actual no es correcta."}
+    user.refresh_from_db()
+    assert user.check_password("current-password-123")
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_change_password_requires_twelve_character_new_password():
+    user = get_user_model().objects.create_user(
+        username="self-service-user",
+        email="self-service@ihmexico.com",
+        password="current-password-123",
+    )
+    client = APIClient()
+    assert client.login(username=user.username, password="current-password-123")
+
+    response = client.post(
+        "/api/v1/auth/change-password/",
+        {"current_password": "current-password-123", "new_password": "too-short"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "new_password" in response.json()
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_change_password_requires_an_authenticated_session():
+    response = APIClient().post(
+        "/api/v1/auth/change-password/",
+        {
+            "current_password": "current-password-123",
+            "new_password": "replacement-password-456",
+        },
+        format="json",
+    )
+
+    assert response.status_code in {401, 403}
+
+
+def test_password_forms_include_confirmation_and_shared_visibility_control():
+    panel = (REPO_ROOT / "frontend" / "panel.html").read_text(encoding="utf-8")
+    admin = (REPO_ROOT / "frontend" / "admin.html").read_text(encoding="utf-8")
+    panel_script = (
+        REPO_ROOT / "frontend" / "scripts" / "panel.js"
+    ).read_text(encoding="utf-8")
+    admin_script = (
+        REPO_ROOT / "frontend" / "scripts" / "admin.js"
+    ).read_text(encoding="utf-8")
+    shared_script = (
+        REPO_ROOT / "frontend" / "scripts" / "password-fields.js"
+    ).read_text(encoding="utf-8")
+
+    assert 'name="new_password_confirmation"' in panel
+    assert 'name="password_confirmation"' in admin
+    assert admin.count('name="password_confirmation"') == 2
+    assert "data-password-toggle" in panel
+    assert admin.count("data-password-toggle") == 2
+    assert 'src="scripts/password-fields.js"' in panel
+    assert 'src="scripts/password-fields.js"' in admin
+    assert "IHPasswordFields.valuesMatch" in panel_script
+    assert admin_script.count("IHPasswordFields.valuesMatch") == 2
+    assert 'fetch("/api/v1/auth/change-password/"' in panel_script
+    assert 'headers.set("X-CSRFToken"' in panel_script
+    assert 'input.type = visible ? "text" : "password"' in shared_script

@@ -36,6 +36,8 @@ hasta desactivar el modo.
 - `GET /me/` — perfil, roles, paneles disponibles y acceso regional del usuario actual.
 - `POST /auth/login/` — autentica un usuario individual con contraseña Django y limita intentos
   por IP; el error no distingue entre usuario y contraseña incorrectos.
+- `POST /auth/change-password/` — permite que una persona autenticada cambie su propia contraseña
+  verificando la actual; conserva la sesión activa después del cambio.
 - `GET|POST /security/users/` — lista o crea usuarios corporativos (`platform_admin`).
 - `POST /security/users/{id}/password/` — establece una contraseña nueva (`platform_admin`).
 - `GET /material-types/` — tipos de material activos; `school-kit` expone todos los productos

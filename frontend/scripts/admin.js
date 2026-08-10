@@ -106,6 +106,14 @@
   $("user-create-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    if (!window.IHPasswordFields.valuesMatch(
+      event.currentTarget,
+      "password",
+      "password_confirmation",
+    )) {
+      notice("Las contraseñas de la cuenta nueva no coinciden.");
+      return;
+    }
     request("/api/v1/security/users/", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -117,6 +125,7 @@
       }),
     }).then(() => {
       event.currentTarget.reset();
+      window.IHPasswordFields.hide(event.currentTarget);
       notice("Usuario creado.", "success");
       return load();
     }).catch((error) => notice(error.message));
@@ -125,12 +134,21 @@
   $("password-reset-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    if (!window.IHPasswordFields.valuesMatch(
+      event.currentTarget,
+      "password",
+      "password_confirmation",
+    )) {
+      notice("Las contraseñas nuevas no coinciden.");
+      return;
+    }
     request(`/api/v1/security/users/${form.get("user_id")}/password/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password: form.get("password") }),
     }).then(() => {
       event.currentTarget.reset();
+      window.IHPasswordFields.hide(event.currentTarget);
       notice("Contraseña actualizada.", "success");
       return load();
     }).catch((error) => notice(error.message));
@@ -181,5 +199,6 @@
   });
 
   $("refresh").addEventListener("click", load);
+  window.IHPasswordFields.setup();
   load();
 })();

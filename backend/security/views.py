@@ -1,7 +1,7 @@
 from django.conf import settings
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, update_session_auth_hash
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from .permissions import (
@@ -9,10 +9,12 @@ from .permissions import (
     ROLE_MARKETING,
     ROLE_REVIEWER,
     ROLE_VIEWER,
+    CorporateDomainPermission,
     can_create_briefs_user,
     is_allowed_corporate_email,
     is_platform_admin_user,
 )
+from .serializers import PasswordChangeSerializer
 from .throttles import LoginIPThrottle
 
 
@@ -30,6 +32,21 @@ def password_login(request):
         )
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
     return Response({"authenticated": True, "username": user.get_username()})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated, CorporateDomainPermission])
+def change_password(request):
+    serializer = PasswordChangeSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = request.user
+    if not user.check_password(serializer.validated_data["current_password"]):
+        return Response({"detail": "La contraseña actual no es correcta."}, status=400)
+
+    user.set_password(serializer.validated_data["new_password"])
+    user.save(update_fields=["password"])
+    update_session_auth_hash(request, user)
+    return Response({"detail": "Contraseña actualizada correctamente."})
 
 
 @api_view(["GET"])
