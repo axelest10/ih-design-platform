@@ -51,6 +51,31 @@ Si el cliente confirma una cifra oficial distinta (p. ej. desde una versión má
 manual o desde Marketing), esta tabla debe reemplazarse y el `status` pasar de `mx_designated`
 a `approved`.
 
+### Tamaño estándar recomendado (confirmado por el cliente, 2026-08-09 — basado en medición empírica del catálogo real)
+
+**status: `mx_designated`.** Es una regla operativa confirmada por el cliente en chat; no es una
+cifra del manual oficial.
+
+La referencia se obtuvo mediante detección automática del isotipo circular “ih” sobre una
+muestra aleatoria de 80 imágenes del catálogo de 316 diseños reales de Chile, Colombia, México,
+Perú e IELTS LATAM en `brand/assets/artwork-references/`. La detección buscó círculos con relación
+de aspecto entre 0.85 y 1.15 y relación área/caja delimitadora igual o mayor a 0.65. Se conservaron
+13 mediciones confiables y se descartaron las ambiguas, principalmente por fondos fotográficos o
+patrones decorativos.
+
+Normalizadas a un canvas de 1080px de alto, las mediciones del isotipo dieron un mínimo de 33px,
+un máximo de 160px, una mediana de 77px y una media de 82px. La mayoría quedó entre 70 y 115px,
+aproximadamente 7–10% de la altura del canvas.
+
+| Aplicación nueva | Tamaño estándar recomendado |
+| --- | --- |
+| Isotipo solo en canvas de 1080px de alto | 80–90px de diámetro, aproximadamente 8% de la altura del canvas |
+| Lockup completo (isotipo + wordmark) | Ancho total aproximado de 2.3–2.7 veces el diámetro del isotipo, basado en revisión manual de ejemplos del catálogo |
+
+Este estándar recomendado **no reemplaza** el mínimo de legibilidad `mx_designated` de la tabla
+anterior. Ambos coexisten: 24px sigue siendo el piso para usos digitales muy pequeños, mientras
+que 80–90px es el tamaño de partida recomendado para nuevas piezas sobre canvas de 1080px de alto.
+
 ## Variantes de color permitidas y sus fondos
 
 | Variante del logo | Fondo permitido |
@@ -113,6 +138,30 @@ Cita textual (sección "Logo Application / Background"):
   - No está permitido alinear lateralmente los logos en la versión vertical (deben ir
     centrados).
   - La línea separadora no puede exceder la altura/ancho de los logos.
+
+## Dual-branding en piezas de redes sociales (IH + colegio/socio) — confirmado por el cliente, 2026-08-09
+
+**Reglas operativas confirmadas por el cliente en chat, no provienen del manual oficial — status:
+`mx_designated`.** Este caso es distinto del lockup oficial “IHWO Member” documentado en la
+sección anterior.
+
+- Se permiten **máximo 4 logos en total** por pieza: IH y hasta 3 logos de colegio o socio.
+- El logo de IH siempre va primero y tiene prioridad de posición.
+- **2 logos (IH + 1):** hay dos layouts válidos, a elegir según el espacio disponible:
+  1. Ambos logos con el mismo peso visual, uno junto al otro.
+  2. Un logo en cada esquina superior del diseño.
+- **3 logos (IH + 2):** el logo de IH va al centro y se coloca un logo de colegio o socio en
+  cada esquina lateral, izquierda y derecha.
+- **4 logos (IH + 3, máximo permitido):** el logo de IH va primero, en el extremo izquierdo,
+  seguido de los otros tres logos en línea.
+- **Tamaño y alineación óptica:** los logos deben percibirse con el mismo peso visual. No es
+  obligatorio que todos ocupen la misma caja en píxeles: formas y proporciones distintas a una
+  misma altura pueden percibirse de tamaños diferentes. Se ajusta cada logo caso por caso hasta
+  que ninguno domine visualmente sobre los demás.
+- **Contraste:** si el fondo no garantiza la legibilidad de cualquiera de los logos —por ejemplo,
+  un logo claro sobre fondo claro o uno oscuro sobre fondo oscuro— se coloca una pleca de color
+  sólido detrás del lockup completo para asegurar el contraste. Es la aplicación específica al
+  lockup multi-logo del principio ya documentado que prohíbe fondos de bajo contraste.
 
 ## Validación automática
 

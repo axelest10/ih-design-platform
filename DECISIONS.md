@@ -19,6 +19,24 @@ En la página de paleta también aparecen los códigos sueltos `#f4a261`, `#c4c4
 `#000000`. Se descartaron porque no tienen nombre ni relación visual con ninguno de los ocho
 swatches nombrados y corresponden a texto de plantilla de Canva sin editar.
 
+## 2026-08-09 — Tamaño estándar y dual-branding operativo para redes sociales
+
+Axel confirmó en chat dos extensiones operativas para `brand/documentation/logo-rules.md`. Ambas
+tienen estado `mx_designated` y no provienen del manual oficial:
+
+1. Para nuevas piezas con canvas de 1080px de alto se recomienda un isotipo de 80–90px de
+   diámetro y un lockup completo de aproximadamente 2.3–2.7 veces ese diámetro. El estándar se
+   deriva de una medición empírica sobre una muestra de 80 de los 316 diseños reales del catálogo,
+   con 13 detecciones confiables; coexiste con el mínimo de legibilidad ya documentado y no lo
+   reemplaza.
+2. Para piezas de redes sociales con logos de colegio o socio se permiten hasta 4 logos en total,
+   siempre con IH primero o con prioridad de posición. Los layouts dependen de si participan 2, 3
+   o 4 logos; su tamaño se equilibra por peso visual mediante alineación óptica, y se usa una
+   pleca sólida detrás del lockup cuando el fondo no asegure contraste.
+
+Estas reglas son adicionales y distintas del caso oficial “IHWO Member” del manual global, que
+permanece intacto.
+
 ## 2026-08-08 — Productos prioritarios del `school-kit` confirmados por Axel
 
 Axel ratificó `qc-2026` y `teacher-training-certifications` como productos prioritarios por
