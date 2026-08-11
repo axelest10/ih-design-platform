@@ -15,17 +15,20 @@ import unicodedata
 from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urljoin
 
 DEFAULT_BASE_URL = "https://ih-design-platform-production.up.railway.app"
 MAX_BATCH_FILES = 30
 MAX_FILE_BYTES = 25 * 1024 * 1024
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "pdf", "ppt", "pptx", "docx"}
+MARKETING_ASSETS_PATH = "/api/v1/marketing-assets/"
 
 # Ajusta o amplía este diccionario después de revisar el dry-run si Drive usa otros nombres.
 CATEGORY_RULES = {
     "foto de perfil": "foto_perfil",
     "fotos de perfil": "foto_perfil",
     "foto whatsapp": "foto_perfil",
+    "perfil whatsapp": "foto_perfil",
     "zoom": "zoom_background",
     "background computadora": "background_computadora",
     "fondo computadora": "background_computadora",
@@ -83,7 +86,13 @@ def normalize_text(value: str) -> str:
 
 
 def label_from_filename(filename: str) -> str:
-    return re.sub(r"\s+", " ", re.sub(r"[-_]+", " ", Path(filename).stem)).strip()
+    words = re.sub(r"[-_]+", " ", Path(filename).stem).split()
+    return " ".join(
+        word
+        if word.isupper() or any(character.isdigit() for character in word)
+        else word.capitalize()
+        for word in words
+    )
 
 
 def _brand_and_directories(source: Path, path: Path) -> tuple[str, list[str], str]:
@@ -237,6 +246,73 @@ def _response_reason(response) -> str:
     return str(payload.get("detail") or f"HTTP {response.status_code}")
 
 
+def marketing_asset_key(brand: str, country: str, category: str, label: str) -> tuple[str, ...]:
+    return (
+        str(brand).strip().casefold(),
+        str(country).strip().upper(),
+        str(category).strip().casefold(),
+        str(label).strip(),
+    )
+
+
+def candidate_key(candidate: AssetCandidate) -> tuple[str, ...]:
+    return marketing_asset_key(
+        candidate.brand,
+        candidate.country,
+        candidate.category,
+        candidate.label,
+    )
+
+
+def authenticated_api_session(base_url: str):
+    username, password = _credentials()
+    requests = _requests_module()
+    session = requests.Session()
+    base_url = base_url.rstrip("/")
+    try:
+        login_response = session.post(
+            f"{base_url}/api/v1/auth/login/",
+            json={"username": username, "password": password},
+            timeout=30,
+        )
+    except requests.RequestException as exc:
+        raise UploadError(f"No se pudo conectar con la plataforma: {exc}") from exc
+    if login_response.status_code != 200:
+        raise UploadError(f"El login falló con HTTP {login_response.status_code}.")
+    if not session.cookies.get("csrftoken"):
+        raise UploadError("El login fue exitoso, pero no devolvió la cookie csrftoken.")
+    return requests, session, base_url
+
+
+def fetch_all_marketing_assets(session, base_url: str, requests) -> list[dict]:
+    assets = []
+    url = f"{base_url}{MARKETING_ASSETS_PATH}"
+    while url:
+        try:
+            response = session.get(url, timeout=30)
+        except requests.RequestException as exc:
+            raise UploadError(f"No se pudo consultar el inventario existente: {exc}") from exc
+        if response.status_code >= 400:
+            raise UploadError(
+                "No se pudo consultar el inventario existente: "
+                f"{_response_reason(response)}"
+            )
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise UploadError("El inventario existente no devolvió JSON válido.") from exc
+        if isinstance(payload, list):
+            assets.extend(payload)
+            url = ""
+            continue
+        if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+            raise UploadError("El inventario existente devolvió un formato inesperado.")
+        assets.extend(payload["results"])
+        next_url = payload.get("next")
+        url = urljoin(f"{base_url}/", next_url) if next_url else ""
+    return assets
+
+
 def _upload_batch(session, base_url: str, batch: list[AssetCandidate]):
     csrf_token = session.cookies.get("csrftoken")
     if not csrf_token:
@@ -270,24 +346,28 @@ def _upload_batch(session, base_url: str, batch: list[AssetCandidate]):
 
 
 def execute_upload(candidates: list[AssetCandidate], base_url: str) -> int:
-    username, password = _credentials()
-    requests = _requests_module()
-    session = requests.Session()
-    base_url = base_url.rstrip("/")
-    try:
-        login_response = session.post(
-            f"{base_url}/api/v1/auth/login/",
-            json={"username": username, "password": password},
-            timeout=30,
+    requests, session, base_url = authenticated_api_session(base_url)
+    existing_assets = fetch_all_marketing_assets(session, base_url, requests)
+    existing_keys = {
+        marketing_asset_key(
+            asset.get("brand", ""),
+            asset.get("country", ""),
+            asset.get("category", ""),
+            asset.get("label", ""),
         )
-    except requests.RequestException as exc:
-        raise UploadError(f"No se pudo conectar con la plataforma: {exc}") from exc
-    if login_response.status_code != 200:
-        raise UploadError(f"El login falló con HTTP {login_response.status_code}.")
-    if not session.cookies.get("csrftoken"):
-        raise UploadError("El login fue exitoso, pero no devolvió la cookie csrftoken.")
+        for asset in existing_assets
+    }
 
-    valid = [candidate for candidate in candidates if candidate.valid]
+    valid = [
+        candidate
+        for candidate in candidates
+        if candidate.valid and candidate_key(candidate) not in existing_keys
+    ]
+    already_existing = [
+        candidate
+        for candidate in candidates
+        if candidate.valid and candidate_key(candidate) in existing_keys
+    ]
     groups: dict[tuple[str, str, str], list[AssetCandidate]] = defaultdict(list)
     for candidate in valid:
         groups[(candidate.brand, candidate.country, candidate.category)].append(candidate)
@@ -331,6 +411,10 @@ def execute_upload(candidates: list[AssetCandidate], base_url: str) -> int:
         print("\nOmitidos localmente:")
         for candidate in skipped:
             print(f"- {candidate.relative_path}: {candidate.reason}")
+    if already_existing:
+        print("\nYa existentes en la plataforma:")
+        for candidate in already_existing:
+            print(f"- {candidate.relative_path}: ya existe en la plataforma, omitido")
     if server_failures:
         print("\nFallidos en servidor:")
         for filename, reason in server_failures:
@@ -338,7 +422,8 @@ def execute_upload(candidates: list[AssetCandidate], base_url: str) -> int:
     print(
         "\nResumen final: "
         f"encontrados={len(candidates)}, subidos={uploaded}, "
-        f"omitidos={len(skipped)}, fallidos={len(server_failures)}"
+        f"omitidos={len(skipped)}, ya_existentes={len(already_existing)}, "
+        f"fallidos={len(server_failures)}"
     )
     return 1 if server_failures else 0
 
