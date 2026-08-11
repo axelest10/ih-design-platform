@@ -6,8 +6,8 @@
   <image x="120" y="120" width="280" height="92" preserveAspectRatio="xMinYMid meet" href="{{ logo_data_uri }}" aria-label="{{ logo_alt }}" />
   {{ additional_logos_svg }}
   <text x="120" y="340" fill="{{ accent_hex }}" font-family="Open Sans, sans-serif" font-size="18" font-weight="600" letter-spacing="1.5" text-transform="uppercase">{{ eyebrow }}</text>
-  <text x="120" y="460" fill="{{ accent_hex }}" font-family="Aptos, Arial, sans-serif" font-size="72" font-weight="700">{{ headline }}</text>
-  <text x="120" y="580" fill="{{ text_hex }}" font-family="Open Sans, sans-serif" font-size="34" font-weight="400">{{ body }}</text>
+  <text x="120" y="460" fill="{{ accent_hex }}" font-family="Aptos, Arial, sans-serif" font-size="{{ headline_font_size }}" font-weight="700">{{ headline_svg_markup }}</text>
+  <text x="120" y="580" fill="{{ text_hex }}" font-family="Open Sans, sans-serif" font-size="{{ body_font_size }}" font-weight="400">{{ body_svg_markup }}</text>
   <rect x="120" y="720" width="300" height="72" rx="36" fill="{{ accent_hex }}" />
   <text x="270" y="766" text-anchor="middle" fill="{{ surface_hex }}" font-family="Aptos, Arial, sans-serif" font-size="24" font-weight="600">{{ cta }}</text>
 </svg>

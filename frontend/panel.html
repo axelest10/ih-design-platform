@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="styles/logo-combobox.css" />
     <link rel="stylesheet" href="styles/panel-sidebar.css" />
     <link rel="stylesheet" href="styles/loading-indicator.css" />
+    <link rel="stylesheet" href="styles/design-final.css" />
   </head>
   <body>
     <div class="panel-shell">
@@ -137,16 +138,6 @@
             <div class="form-actions">
               <button id="brief-submit" class="button button--primary" type="submit">Guardar brief y continuar <span>→</span></button>
               <span id="form-status" class="form-status"></span>
-              <div id="brief-loading" class="loading-indicator" role="status" aria-live="polite" hidden>
-                <span class="loading-indicator__dots" aria-hidden="true">
-                  <span class="loading-indicator__dot"></span>
-                  <span class="loading-indicator__dot"></span>
-                  <span class="loading-indicator__dot"></span>
-                  <span class="loading-indicator__dot"></span>
-                  <span class="loading-indicator__dot"></span>
-                </span>
-                <span>Generando tu pieza…</span>
-              </div>
             </div>
           </form>
 
@@ -176,6 +167,35 @@
               <button id="prompt-back" class="button button--secondary" type="button">Volver</button>
               <button id="prompt-continue" class="button button--primary" type="button">Continuar <span>→</span></button>
               <span id="prompt-status" class="form-status" role="status" aria-live="polite"></span>
+              <div id="brief-loading" class="loading-indicator" role="status" aria-live="polite" hidden>
+                <span class="loading-indicator__dots" aria-hidden="true">
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                </span>
+                <span>Generando tu pieza…</span>
+              </div>
+            </div>
+          </section>
+
+          <section
+            id="design-final-step"
+            class="card brief-card design-final-card"
+            aria-labelledby="design-final-title"
+            hidden
+          >
+            <div class="card-heading">
+              <div>
+                <span class="step-label">03 · Diseño final</span>
+                <h2 id="design-final-title">Tu pieza está lista para revisar</h2>
+              </div>
+            </div>
+            <div id="design-preview" class="design-final-preview" aria-live="polite"></div>
+            <div class="form-actions">
+              <button id="design-save" class="button button--primary" type="button">Guardar</button>
+              <span id="design-status" class="form-status" role="status" aria-live="polite"></span>
             </div>
           </section>
 

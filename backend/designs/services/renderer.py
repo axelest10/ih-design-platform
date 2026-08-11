@@ -4,6 +4,7 @@ from __future__ import annotations
 import base64
 import html
 import json
+import math
 import mimetypes
 from dataclasses import dataclass
 from pathlib import Path
@@ -223,13 +224,83 @@ def _estimate_text_width(value: str, font_size: int) -> float:
     return len(value) * font_size * 0.55
 
 
+def _fit_text(
+    name: str,
+    value: str,
+    base_font_size: int,
+    max_width: int,
+    min_font_size: int | None = None,
+) -> dict[str, Any]:
+    """Ajusta tamaño y líneas sin truncar ni cortar palabras."""
+    minimum = min_font_size or math.ceil(base_font_size * 0.6)
+    sizes = list(range(base_font_size, minimum - 1, -4))
+    if not sizes or sizes[-1] != minimum:
+        sizes.append(minimum)
+
+    for font_size in sizes:
+        estimated_width = _estimate_text_width(value, font_size)
+        if estimated_width <= max_width:
+            return {
+                "name": name,
+                "base_font_size": base_font_size,
+                "font_size": font_size,
+                "lines": [value],
+                "line_count": 1,
+                "estimated_width_px": round(estimated_width, 2),
+                "max_width_px": max_width,
+                "adjustment": "none" if font_size == base_font_size else "font_size",
+            }
+
+    lines: list[str] = []
+    current_line = ""
+    for word in value.split():
+        candidate = f"{current_line} {word}".strip()
+        if current_line and _estimate_text_width(candidate, minimum) > max_width:
+            lines.append(current_line)
+            current_line = word
+        else:
+            current_line = candidate
+    if current_line or not lines:
+        lines.append(current_line)
+
+    widest_line = max((_estimate_text_width(line, minimum) for line in lines), default=0)
+    return {
+        "name": name,
+        "base_font_size": base_font_size,
+        "font_size": minimum,
+        "lines": lines,
+        "line_count": len(lines),
+        "estimated_width_px": round(widest_line, 2),
+        "max_width_px": max_width,
+        "adjustment": "wrapped",
+    }
+
+
 def _validate_text_layout(name: str, value: str, font_size: int, max_width: int) -> dict:
     estimated_width = round(_estimate_text_width(value, font_size), 2)
     if estimated_width > max_width:
         raise RenderValidationError(
             f"'{name}' desborda el ancho seguro ({estimated_width}px > {max_width}px)."
         )
-    return {"name": name, "estimated_width_px": estimated_width, "max_width_px": max_width}
+    return {
+        "name": name,
+        "base_font_size": font_size,
+        "font_size": font_size,
+        "lines": [value],
+        "line_count": 1,
+        "estimated_width_px": estimated_width,
+        "max_width_px": max_width,
+        "adjustment": "none",
+    }
+
+
+def _svg_text_markup(lines: list[str], *, x: int, font_size: int) -> str:
+    line_height = round(font_size * 1.15, 2)
+    markup = []
+    for index, line in enumerate(lines):
+        dy = "0" if index == 0 else f"{line_height:g}"
+        markup.append(f'<tspan x="{x}" dy="{dy}">{_escape(line)}</tspan>')
+    return "".join(markup)
 
 
 def _validate_template_layout(
@@ -258,8 +329,8 @@ def _validate_template_layout(
 
     text_layout = [
         _validate_text_layout("eyebrow", eyebrow, 18, 820),
-        _validate_text_layout("headline", headline, 72, 820),
-        _validate_text_layout("body", body, 34, 760),
+        _fit_text("headline", headline, 72, 820),
+        _fit_text("body", body, 34, 760),
         _validate_text_layout("cta", cta, 24, 244),
     ]
     return {
@@ -336,6 +407,9 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
     text_hex = _color_hex(text_token, default="dark_navy")
     surface_hex = _color_hex("white", default="white")
     layout_summary = _validate_template_layout(template_key, headline, body, eyebrow, cta)
+    text_layout = {item["name"]: item for item in layout_summary["text_layout"]}
+    headline_layout = text_layout["headline"]
+    body_layout = text_layout["body"]
     contrast_summary = _validate_contrast(
         accent_hex,
         text_hex,
@@ -354,7 +428,19 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
         "additional_logos_svg": additional_svg,
         "eyebrow": _escape(eyebrow),
         "headline": _escape(headline),
+        "headline_font_size": str(headline_layout["font_size"]),
+        "headline_svg_markup": _svg_text_markup(
+            headline_layout["lines"],
+            x=120,
+            font_size=headline_layout["font_size"],
+        ),
         "body": _escape(body),
+        "body_font_size": str(body_layout["font_size"]),
+        "body_svg_markup": _svg_text_markup(
+            body_layout["lines"],
+            x=120,
+            font_size=body_layout["font_size"],
+        ),
         "cta": _escape(cta),
     }
     html_template = _template_path(template_key, "html").read_text(encoding="utf-8")
@@ -397,7 +483,11 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
         "template_version": TEMPLATE_VERSION,
         "product_slug": product_slug,
         "headline": headline,
+        "headline_font_size": headline_layout["font_size"],
+        "headline_lines": headline_layout["lines"],
         "body": body,
+        "body_font_size": body_layout["font_size"],
+        "body_lines": body_layout["lines"],
         "eyebrow": eyebrow,
         "cta": cta,
         "logo_name": logo_name,

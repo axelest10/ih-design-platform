@@ -134,3 +134,52 @@ def test_prompt_back_only_changes_the_visible_step_without_network_calls():
     assert '$("brief-form").hidden = false' in handler
     assert "fetch(" not in handler
     assert "authenticatedFetch" not in handler
+
+
+def test_design_final_step_uses_the_persisted_svg_preview_and_starts_hidden():
+    html = (FRONTEND / "panel.html").read_text(encoding="utf-8")
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    section = html.split('id="design-final-step"', 1)[1].split(">", 1)[0]
+
+    assert "hidden" in section
+    assert 'id="design-preview"' in html
+    assert 'id="design-save"' in html
+    assert 'href="styles/design-final.css"' in html
+    assert "const svg = version?.render_data?.svg" in script
+    assert "data:image/svg+xml;charset=utf-8" in script
+    assert '$("design-final-step").hidden = false' in script
+
+
+def test_prompt_continue_calls_confirm_design_after_optional_patch():
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    handler = script.split("const continueFromPrompt", 1)[1].split(
+        "const saveDesign", 1
+    )[0]
+
+    assert handler.index('method: "PATCH"') < handler.index("/confirm-design/")
+    assert 'method: "POST"' in handler
+    assert "showDesignFinal(design)" in handler
+
+
+def test_design_generation_reuses_loading_indicator_in_prompt_step():
+    html = (FRONTEND / "panel.html").read_text(encoding="utf-8")
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    prompt_section = html.split('id="prompt-review-step"', 1)[1].split(
+        'id="design-final-step"', 1
+    )[0]
+
+    assert html.count('id="brief-loading"') == 1
+    assert 'id="brief-loading"' in prompt_section
+    assert "loading.hidden = false" in script
+    assert "loading.hidden = true" in script
+
+
+def test_design_save_only_confirms_completion_without_network_call():
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    handler = script.split("const saveDesign", 1)[1].split(
+        "const createBrief", 1
+    )[0]
+
+    assert "listo para continuar con el flujo de revisión" in handler
+    assert "fetch(" not in handler
+    assert "authenticatedFetch" not in handler

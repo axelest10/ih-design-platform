@@ -35,71 +35,47 @@ def _next_test_number() -> int:
     ) + 1
 
 
-def _mark_ready(brief: DesignBrief) -> None:
-    brief.status = DesignBrief.Status.READY
-    brief.save(update_fields=["status", "updated_at"])
-
-
-def _body_for(brief: DesignBrief) -> str:
-    brief_data = brief.brief_data or {}
-    for candidate in (
-        brief.requested_message,
-        brief_data.get("campaign_info"),
-        brief.objective,
-    ):
-        normalized = str(candidate or "").strip()
-        if normalized:
-            return normalized
-    return ""
-
-
-def generate_initial_design(brief: DesignBrief) -> Design | None:
-    """Crea Design y versión para formatos HTML/SVG soportados; conserva el brief si falla."""
+def generate_initial_design(brief: DesignBrief, copy_fields: dict[str, str]) -> Design:
+    """Crea la primera versión desde el copy estructurado confirmado por la persona."""
     if brief.format not in SUPPORTED_FORMATS:
-        _mark_ready(brief)
-        return None
-
-    body = _body_for(brief)
-    if not body:
-        _mark_ready(brief)
-        return None
+        raise RenderValidationError(
+            f"El formato '{brief.format}' todavía no tiene una plantilla disponible."
+        )
 
     render_payload = {
         "template_key": f"{brief.format}-v1",
-        "headline": brief.title,
-        "body": body,
+        "headline": str(copy_fields.get("headline") or "").strip(),
+        "body": str(copy_fields.get("body") or "").strip(),
+        "eyebrow": str(copy_fields.get("eyebrow") or "International House").strip(),
         "logo_name": brief.brand_logo_key,
         "additional_logo_keys": brief.additional_logo_keys,
         "product_slug": brief.product_slug,
         # Igual que quick-design: conserva la alerta de contraste sin bloquear el render.
         "_allow_validation_warnings": True,
     }
-    cta = CTA_LABELS.get(str((brief.brief_data or {}).get("cta") or "").strip())
+    cta = str(copy_fields.get("cta") or "").strip() or CTA_LABELS.get(
+        str((brief.brief_data or {}).get("cta") or "").strip(),
+        "",
+    )
     if cta:
         render_payload["cta"] = cta
 
-    try:
-        with transaction.atomic():
-            rendered = render_preview(render_payload)
-            test_mode = bool(brief.product_slug and settings.DESIGN_TEST_MODE)
-            design = Design.objects.create(
-                brief=brief,
-                status=(
-                    Design.Status.SELF_REVIEW if test_mode else Design.Status.IN_REVIEW
-                ),
-                test_number=_next_test_number() if test_mode else None,
-            )
-            DesignVersion.objects.create(
-                design=design,
-                number=1,
-                template_key=rendered.template_key,
-                render_data={**rendered.data, "html": rendered.html, "svg": rendered.svg},
-                asset_refs=rendered.asset_refs,
-                validation_summary=rendered.validation_summary,
-            )
-            brief.status = DesignBrief.Status.IN_REVIEW
-            brief.save(update_fields=["status", "updated_at"])
-            return design
-    except RenderValidationError:
-        _mark_ready(brief)
-        return None
+    with transaction.atomic():
+        rendered = render_preview(render_payload)
+        test_mode = bool(brief.product_slug and settings.DESIGN_TEST_MODE)
+        design = Design.objects.create(
+            brief=brief,
+            status=(Design.Status.SELF_REVIEW if test_mode else Design.Status.IN_REVIEW),
+            test_number=_next_test_number() if test_mode else None,
+        )
+        DesignVersion.objects.create(
+            design=design,
+            number=1,
+            template_key=rendered.template_key,
+            render_data={**rendered.data, "html": rendered.html, "svg": rendered.svg},
+            asset_refs=rendered.asset_refs,
+            validation_summary=rendered.validation_summary,
+        )
+        brief.status = DesignBrief.Status.IN_REVIEW
+        brief.save(update_fields=["status", "updated_at"])
+        return design

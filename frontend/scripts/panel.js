@@ -3,7 +3,9 @@
     options: null,
     user: null,
     briefId: null,
+    briefFormat: null,
     originalPrompt: "",
+    designId: null,
   };
   const $ = (id) => document.getElementById(id);
   const additionalLogoPicker = window.IHLogoCombobox.create({
@@ -109,13 +111,32 @@
 
   const showPromptReview = (brief) => {
     state.briefId = brief.id;
+    state.briefFormat = brief.format;
     state.originalPrompt = brief.generated_prompt || "";
     $("generated-prompt").value = state.originalPrompt;
     $("prompt-manual-notice").hidden = brief.prompt_source !== "manual";
-    $("prompt-status").textContent = "";
+    const supported = ["square", "story", "portrait"].includes(state.briefFormat);
+    $("prompt-continue").disabled = !supported;
+    $("prompt-status").textContent = supported
+      ? ""
+      : "Este formato todavía no tiene una plantilla para generar la pieza.";
     $("brief-form").hidden = true;
     $("prompt-review-step").hidden = false;
     $("generated-prompt").focus();
+  };
+
+  const showDesignFinal = (design) => {
+    const version = design.versions?.[0];
+    const svg = version?.render_data?.svg;
+    if (!svg) throw new Error("El diseño no devolvió una vista previa SVG.");
+    const image = document.createElement("img");
+    image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    image.alt = "Vista previa del diseño generado";
+    $("design-preview").replaceChildren(image);
+    state.designId = design.id;
+    $("design-status").textContent = "";
+    $("prompt-review-step").hidden = true;
+    $("design-final-step").hidden = false;
   };
 
   const returnToBrief = () => {
@@ -129,8 +150,11 @@
     const prompt = $("generated-prompt").value;
     const continueButton = $("prompt-continue");
     const status = $("prompt-status");
+    const loading = $("brief-loading");
     continueButton.disabled = true;
-    status.textContent = "Guardando…";
+    loading.hidden = false;
+    $("prompt-review-step").setAttribute("aria-busy", "true");
+    status.textContent = "Generando tu pieza…";
     try {
       if (prompt !== state.originalPrompt) {
         const response = await window.authenticatedFetch(
@@ -147,15 +171,27 @@
         const updatedBrief = await json(response);
         state.originalPrompt = updatedBrief.generated_prompt || "";
       }
-      const message = "Guardado — la generación de la pieza (paso 3) llega en la siguiente fase.";
-      status.textContent = message;
-      notice(message);
+      const designResponse = await window.authenticatedFetch(
+        `/api/v1/briefs/${state.briefId}/confirm-design/`,
+        { method: "POST" },
+      );
+      const design = await json(designResponse);
+      showDesignFinal(design);
+      notice("Diseño generado correctamente.");
     } catch (error) {
-      status.textContent = "No pudimos guardar los cambios.";
-      notice(error?.detail || "No pudimos guardar el copy editado.", "error");
+      status.textContent = "No pudimos generar la pieza.";
+      notice(error?.detail || error?.message || "No pudimos generar la pieza.", "error");
     } finally {
+      loading.hidden = true;
+      $("prompt-review-step").removeAttribute("aria-busy");
       continueButton.disabled = false;
     }
+  };
+
+  const saveDesign = () => {
+    const message = "Diseño guardado y listo para continuar con el flujo de revisión.";
+    $("design-status").textContent = message;
+    notice(message);
   };
 
   const createBrief = async (event) => {
@@ -301,6 +337,7 @@
   $("brief-form").addEventListener("submit", createBrief);
   $("prompt-back").addEventListener("click", returnToBrief);
   $("prompt-continue").addEventListener("click", continueFromPrompt);
+  $("design-save").addEventListener("click", saveDesign);
   $("change-password-form").addEventListener("submit", changeOwnPassword);
   $("refresh-admin").addEventListener("click", () => {
     loadUser().then((authenticated) => {

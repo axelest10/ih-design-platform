@@ -3,7 +3,7 @@ from rest_framework.test import APIClient
 
 from briefs.models import DesignBrief
 from designs.models import Design, DesignVersion
-from designs.services.renderer import RenderValidationError, render_preview
+from designs.services.renderer import RenderValidationError, _fit_text, render_preview
 
 
 def test_square_v1_renderer_returns_html_and_svg_with_escaped_content():
@@ -21,6 +21,8 @@ def test_square_v1_renderer_returns_html_and_svg_with_escaped_content():
     assert "&lt;inglés&gt;" in rendered.html
     assert "Una experiencia &amp; segura." in rendered.svg
     assert "data:image/png;base64," in rendered.svg
+    assert "{{" not in rendered.html
+    assert "{{" not in rendered.svg
 
 
 def test_renderer_rejects_unapproved_logo():
@@ -49,14 +51,41 @@ def test_renderer_reports_safe_area_text_layout_and_contrast():
     assert checks["contrast"]["pairs"][0]["ratio"] >= 4.5
 
 
-def test_renderer_rejects_text_that_overflows_safe_width():
-    with pytest.raises(RenderValidationError, match="desborda el ancho seguro"):
-        render_preview(
-            {
-                "headline": "A" * 170,
-                "body": "Cuerpo",
-            }
-        )
+def test_renderer_adapts_text_that_exceeds_the_base_safe_width():
+    headline = "Spanish + Culture 20% de descuento"
+    rendered = render_preview({"headline": headline, "body": "Cuerpo"})
+
+    assert rendered.data["headline"] == headline
+    assert rendered.data["headline_font_size"] < 72
+    assert len(rendered.data["headline_lines"]) >= 2
+    assert "<tspan" in rendered.svg
+
+
+def test_fit_text_keeps_base_size_for_short_text():
+    fitted = _fit_text("headline", "Inglés para ti", 72, 820)
+
+    assert fitted["font_size"] == 72
+    assert fitted["lines"] == ["Inglés para ti"]
+    assert fitted["adjustment"] == "none"
+
+
+def test_fit_text_reduces_size_before_wrapping():
+    value = "A" * 24
+    fitted = _fit_text("headline", value, 72, 820)
+
+    assert fitted["font_size"] == 60
+    assert fitted["lines"] == [value]
+    assert fitted["adjustment"] == "font_size"
+
+
+def test_fit_text_wraps_by_complete_words_at_minimum_size():
+    value = "Aprende inglés para crecer y abrir nuevas oportunidades profesionales"
+    fitted = _fit_text("headline", value, 72, 820)
+
+    assert fitted["font_size"] == 44
+    assert len(fitted["lines"]) >= 2
+    assert " ".join(fitted["lines"]) == value
+    assert fitted["adjustment"] == "wrapped"
 
 
 def test_renderer_rejects_insufficient_contrast():
@@ -87,6 +116,8 @@ def test_renderer_supports_story_and_portrait_templates(template_key, width, hei
     assert rendered.template_key == template_key
     assert f'width="{width}"' in rendered.svg
     assert f'height="{height}"' in rendered.svg
+    assert "{{" not in rendered.html
+    assert "{{" not in rendered.svg
     safe_area = next(
         check for check in rendered.validation_summary["checks"] if check["name"] == "safe_area"
     )
