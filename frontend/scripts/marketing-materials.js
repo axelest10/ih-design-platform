@@ -14,7 +14,12 @@
   const imageExtensions = new Set(["png", "jpg", "jpeg", "webp"]);
   const groups = document.querySelector("#marketing-groups");
   const notice = document.querySelector("#marketing-notice");
-  const extension = (asset) => String(asset.file || "").split(".").pop().toLowerCase();
+  const extension = (asset) => {
+    const cleanPath = String(asset.file_url || "").split(/[?#]/, 1)[0];
+    const filename = cleanPath.split("/").pop() || "";
+    const dotIndex = filename.lastIndexOf(".");
+    return dotIndex === -1 ? "" : filename.slice(dotIndex + 1).toLowerCase();
+  };
   const assetCard = (asset) => {
     const card = document.createElement("article");
     card.className = "marketing-card";

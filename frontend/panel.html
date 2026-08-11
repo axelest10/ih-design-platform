@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
     <link rel="stylesheet" href="styles/panel.css" />
     <link rel="stylesheet" href="styles/password-fields.css" />
+    <link rel="stylesheet" href="styles/logo-combobox.css" />
+    <link rel="stylesheet" href="styles/panel-sidebar.css" />
   </head>
   <body>
     <div class="panel-shell">
@@ -74,7 +76,7 @@
             <div class="section-divider"><span>Logos adicionales</span></div>
             <fieldset class="logo-fieldset">
               <legend>7. ¿Necesitas incluir algún logo adicional?</legend>
-              <div id="additional-logos" class="checkbox-grid"></div>
+              <div id="additional-logos"></div>
               <label class="inline-check"><input type="checkbox" id="upload-logo-toggle" /> Subir un logo nuevo</label>
               <div id="upload-logo-fields" class="upload-fields" hidden>
                 <label>8. Archivo del logo (opcional)
@@ -151,9 +153,11 @@
               <div class="card-heading"><div><span class="step-label">Panel administrador</span><h2>Control de plataforma</h2></div></div>
               <div class="admin-stats"><div><strong id="brief-count">—</strong><span>briefs</span></div><div><strong id="logo-count">—</strong><span>logos subidos</span></div></div>
               <p>Desde aquí podrás gestionar el catálogo, usuarios, permisos y las primeras 50 pruebas.</p>
-              <button id="refresh-admin" class="button button--secondary" type="button">Actualizar resumen</button>
-              <a class="button button--secondary" href="admin.html">Abrir panel completo</a>
-              <a class="button button--secondary" href="school-kit.html">Crear paquetería escolar</a>
+              <div class="admin-actions">
+                <button id="refresh-admin" class="button button--secondary" type="button">Actualizar resumen</button>
+                <a class="button button--secondary" href="admin.html">Abrir panel completo</a>
+                <a class="button button--secondary" href="school-kit.html">Crear paquetería escolar</a>
+              </div>
             </section>
             <section class="card account-card" id="my-account" hidden>
               <span class="step-label">Mi cuenta</span>
@@ -179,6 +183,7 @@
     </div>
     <script src="scripts/password-fields.js"></script>
     <script src="scripts/csrf.js"></script>
+    <script src="scripts/logo-combobox.js"></script>
     <script src="scripts/panel.js"></script>
   </body>
 </html>

@@ -1,6 +1,10 @@
 (() => {
   const state = { options: null, user: null };
   const $ = (id) => document.getElementById(id);
+  const additionalLogoPicker = window.IHLogoCombobox.create({
+    host: "#additional-logos",
+    emptyMessage: "No hay logos adicionales disponibles para esta selección.",
+  });
   const notice = (message, type = "success") => {
     const element = $("notice");
     element.textContent = message;
@@ -69,15 +73,10 @@
     const localLogos = options.logos.filter((logo) => logo.scope === "regional");
     fillSelect($("brand_logo_key"), localLogos, "name", "brand", "Selecciona el logo IH de la sede");
     fillSelect($("product_slug"), options.products, "product_slug", "canonical_name", "Selecciona un producto");
-    const logoContainer = $("additional-logos");
-    logoContainer.innerHTML = "";
-    [...options.logos.filter((logo) => logo.scope !== "regional"), ...(options.uploaded_logos || [])].forEach((logo) => {
-      const label = document.createElement("label");
-      label.className = "checkbox-item";
-      label.innerHTML = `<input type="checkbox" value="${logo.name}" /> <span>${logo.brand || logo.name}</span>`;
-      logoContainer.appendChild(label);
-    });
-    if (!logoContainer.children.length) logoContainer.innerHTML = "<small>No hay logos adicionales disponibles para esta selección.</small>";
+    additionalLogoPicker.setOptions([
+      ...options.logos.filter((logo) => logo.scope !== "regional"),
+      ...(options.uploaded_logos || []),
+    ]);
     renderProductPreview();
   }).catch(handleOptionsError);
 

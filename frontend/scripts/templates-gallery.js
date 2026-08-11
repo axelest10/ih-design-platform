@@ -46,6 +46,10 @@
   const notice = document.querySelector("#templates-notice");
   const dialog = document.querySelector("#quick-design-dialog");
   const quickState = { user: null, template: null, options: null };
+  const additionalLogoPicker = window.IHLogoCombobox.create({
+    host: "#quick-additional-logo-picker",
+    selectionElement: "#quick-additional-logos",
+  });
 
   const itemsFrom = (payload) => Array.isArray(payload) ? payload : (payload.results || []);
   const json = async (response) => {
@@ -103,13 +107,7 @@
       ...options.logos.filter((logo) => logo.scope !== "regional"),
       ...(options.uploaded_logos || []),
     ];
-    fillSelect(
-      document.querySelector("#quick-additional-logos"),
-      additional,
-      "name",
-      "brand",
-      "",
-    );
+    additionalLogoPicker.setOptions(additional);
   };
   const loadQuickOptions = (country = "") => fetch(
     `/api/v1/briefs/options/?country=${encodeURIComponent(country)}`,

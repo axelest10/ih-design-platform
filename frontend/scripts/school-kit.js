@@ -1,6 +1,10 @@
 (() => {
   const state = { type: null, options: null, bundles: [], currentId: null };
   const $ = (id) => document.getElementById(id);
+  const additionalLogoPicker = window.IHLogoCombobox.create({
+    host: "#additional-logos",
+    emptyMessage: "No hay logos secundarios disponibles.",
+  });
   const json = async (response) => {
     const body = await response.json();
     if (!response.ok) throw body;
@@ -33,22 +37,8 @@
   };
 
   const renderLogos = () => {
-    const target = $("additional-logos");
-    target.innerHTML = "";
     const logos = [...(state.options?.logos || []).filter((logo) => logo.scope !== "regional"), ...(state.options?.uploaded_logos || [])];
-    logos.forEach((logo) => {
-      const label = document.createElement("label");
-      label.className = "check-item";
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.value = logo.name;
-      input.dataset.logo = logo.name;
-      const text = document.createElement("span");
-      text.textContent = logo.brand || logo.name;
-      label.append(input, text);
-      target.appendChild(label);
-    });
-    if (!logos.length) target.innerHTML = '<span class="muted">No hay logos secundarios disponibles.</span>';
+    additionalLogoPicker.setOptions(logos);
   };
 
   const renderDeliverables = () => {
@@ -169,7 +159,7 @@
     $("eyebrow_text").value = context.eyebrow || "";
     $("channel").value = context.channel || "instagram";
     document.querySelectorAll("#products input").forEach((input) => { input.checked = bundle.product_slugs.includes(input.value); });
-    document.querySelectorAll("#additional-logos input").forEach((input) => { input.checked = (context.additional_logo_keys || []).includes(input.value); });
+    additionalLogoPicker.setSelected(context.additional_logo_keys || []);
     notice("Paquete cargado para edición.");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -187,7 +177,7 @@
   });
   $("country").addEventListener("change", () => loadOptions().catch(() => notice("No pudimos cargar las opciones.", "error")));
   $("refresh").addEventListener("click", () => loadBundles().catch(() => notice("No pudimos cargar los paquetes.", "error")));
-  $("reset").addEventListener("click", () => { state.currentId = null; $("kit-form").reset(); $("country").value = "MX"; loadOptions(); });
+  $("reset").addEventListener("click", () => { state.currentId = null; $("kit-form").reset(); additionalLogoPicker.setSelected([]); $("country").value = "MX"; loadOptions(); });
   $("bundles").addEventListener("click", async (event) => {
     const edit = event.target.closest("[data-edit]");
     if (edit) { loadBundleIntoForm(edit.dataset.edit); return; }

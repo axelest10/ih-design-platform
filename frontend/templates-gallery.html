@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
     <link rel="stylesheet" href="styles/home.css" />
     <link rel="stylesheet" href="styles/templates-gallery.css" />
+    <link rel="stylesheet" href="styles/logo-combobox.css" />
   </head>
   <body>
     <div class="app-shell">
@@ -67,7 +68,10 @@
             <label>País<select id="quick-country" required></select></label>
             <label>Producto<select id="quick-product" required></select></label>
             <label>Logo IH<select id="quick-logo" required></select></label>
-            <label>Logos adicionales (opcional)<select id="quick-additional-logos" multiple size="4"></select></label>
+            <div class="quick-dialog__field"><span>Logos adicionales (opcional)</span>
+              <div id="quick-additional-logo-picker"></div>
+              <select id="quick-additional-logos" multiple hidden aria-hidden="true" tabindex="-1"></select>
+            </div>
             <div id="quick-content-fields"></div>
             <div class="quick-dialog__actions">
               <button class="button button--dark" type="submit">Guardar diseño</button>
@@ -85,6 +89,7 @@
       </form>
     </dialog>
     <script src="scripts/csrf.js"></script>
+    <script src="scripts/logo-combobox.js"></script>
     <script src="scripts/templates-gallery.js"></script>
   </body>
 </html>

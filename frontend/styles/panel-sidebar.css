@@ -1,0 +1,15 @@
+.admin-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.admin-actions .button {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+}
