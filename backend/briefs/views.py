@@ -11,8 +11,8 @@ from security.permissions import (
 
 from .models import BriefReferenceUpload, DesignBrief
 from .serializers import BriefReferenceUploadSerializer, DesignBriefSerializer
-from .services.generation import generate_initial_design
 from .services.options import brief_options, is_regional_admin
+from .services.prompt_generation import generate_prompt_for_brief
 
 
 class DesignBriefViewSet(RoleAwareViewSet, ModelViewSet):
@@ -23,6 +23,7 @@ class DesignBriefViewSet(RoleAwareViewSet, ModelViewSet):
         "update": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "partial_update": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "destroy": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING),
+        "generate_prompt": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
     }
 
     def get_queryset(self):
@@ -34,8 +35,13 @@ class DesignBriefViewSet(RoleAwareViewSet, ModelViewSet):
 
     def perform_create(self, serializer):
         creator = self.request.user if self.request.user.is_authenticated else None
-        brief = serializer.save(created_by=creator)
-        generate_initial_design(brief)
+        serializer.save(created_by=creator)
+
+    @action(detail=True, methods=["post"], url_path="generate-prompt")
+    def generate_prompt(self, request, pk=None):
+        brief = self.get_object()
+        generate_prompt_for_brief(brief)
+        return Response(self.get_serializer(brief).data)
 
     @action(detail=False, methods=["get"])
     def options(self, request):

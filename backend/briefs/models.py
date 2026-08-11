@@ -24,6 +24,11 @@ class DesignBrief(models.Model):
         IN_REVIEW = "in_review", "En revisión"
         COMPLETED = "completed", "Completado"
 
+    class PromptSource(models.TextChoices):
+        AI = "ai", "IA"
+        MANUAL = "manual", "Manual"
+        AI_EDITED = "ai_edited", "IA editada"
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     status = models.CharField(max_length=24, choices=Status.choices, default=Status.DRAFT)
     format = models.CharField(max_length=16, choices=Format.choices)
@@ -45,6 +50,13 @@ class DesignBrief(models.Model):
     audience = models.TextField()
     objective = models.TextField()
     requested_message = models.TextField(blank=True)
+    generated_prompt = models.TextField(blank=True, default="")
+    prompt_source = models.CharField(
+        max_length=16,
+        choices=PromptSource.choices,
+        blank=True,
+        default="",
+    )
     source_references = models.JSONField(default=list)
     visual_reference_urls = models.JSONField(default=list)
     language = models.CharField(max_length=12, default="es")

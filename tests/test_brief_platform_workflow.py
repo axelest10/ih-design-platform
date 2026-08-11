@@ -30,7 +30,7 @@ def test_brief_options_expose_only_primary_products_and_country_logos():
 
 
 @pytest.mark.django_db
-def test_brief_product_color_and_dual_branding_flow_to_first_50_review():
+def test_brief_product_color_and_dual_branding_are_saved_without_design():
     client = APIClient()
     response = client.post(
         "/api/v1/briefs/",
@@ -53,28 +53,10 @@ def test_brief_product_color_and_dual_branding_flow_to_first_50_review():
     assert response.status_code == 201
     brief = DesignBrief.objects.get(pk=response.json()["id"])
     assert response.json()["authorized_color"]["primary_hex"] == "#E31736"
-
-    design = Design.objects.get(brief=brief)
-    version = design.versions.get(number=1)
-    assert design.status == Design.Status.SELF_REVIEW
-    assert design.test_number is not None
-    assert version.render_data["cta"] == "Regístrate"
-    assert "secondary-logo" in version.render_data["html"]
-
-    review = client.post(
-        f"/api/v1/designs/{design.pk}/claude-review/",
-        {"decision": "pass", "version": 1, "report": {"safe_area": "pass"}},
-        format="json",
-    )
-    assert review.status_code == 200
-    assert review.json()["status"] == "test_ready"
-
-    approval = client.post(
-        f"/api/v1/designs/{design.pk}/review/",
-        {"decision": "approve", "version": 1},
-        format="json",
-    )
-    assert approval.status_code == 409
+    assert brief.additional_logo_keys == ["ielts-test-centre-pantone-svg"]
+    assert not Design.objects.filter(brief=brief).exists()
+    # Claude review and human review have independent coverage in
+    # test_materials.py and test_design_review.py, respectively.
 
 
 @pytest.mark.django_db

@@ -6,7 +6,7 @@ from django.test import RequestFactory
 from rest_framework.test import APIClient
 
 from briefs.models import DesignBrief
-from designs.models import Design, DesignVersion
+from designs.models import Design
 
 
 def _brief_payload(**overrides):
@@ -122,67 +122,32 @@ def test_invalid_brief_format_is_rejected():
     assert response.status_code == 400
 
 
+@pytest.mark.parametrize(
+    ("brief_format", "product_slug"),
+    [
+        ("square", "general-english"),
+        ("story", ""),
+        ("portrait", "ielts-preparation"),
+        ("reel", ""),
+        ("carousel", "business-english"),
+        ("banner", ""),
+        ("html", "spanish-courses"),
+        ("svg", ""),
+    ],
+)
 @pytest.mark.django_db
-def test_supported_brief_automatically_creates_rendered_design(settings):
-    settings.DESIGN_TEST_MODE = True
+def test_creating_brief_never_creates_design(brief_format, product_slug):
     response = APIClient().post(
         "/api/v1/briefs/",
-        _brief_payload(product_slug="general-english"),
+        _brief_payload(
+            format=brief_format,
+            product_slug=product_slug,
+            brief_data={"cta": "buy"},
+        ),
         format="json",
     )
 
     assert response.status_code == 201, response.json()
     brief = DesignBrief.objects.get(pk=response.json()["id"])
-    design = Design.objects.get(brief=brief)
-    version = DesignVersion.objects.get(design=design, number=1)
-    assert brief.status == DesignBrief.Status.IN_REVIEW
-    assert design.status == Design.Status.SELF_REVIEW
-    assert design.test_number == 1
-    assert version.template_key == "square-v1"
-    assert version.render_data["html"]
-    assert version.render_data["svg"]
-    assert version.asset_refs
-    assert version.validation_summary["status"] in {"passed", "needs_changes"}
-
-
-@pytest.mark.django_db
-def test_unsupported_brief_format_is_saved_ready_without_design():
-    response = APIClient().post(
-        "/api/v1/briefs/",
-        _brief_payload(format="reel"),
-        format="json",
-    )
-
-    assert response.status_code == 201, response.json()
-    brief = DesignBrief.objects.get(pk=response.json()["id"])
-    assert brief.status == DesignBrief.Status.READY
+    assert brief.status == DesignBrief.Status.DRAFT
     assert not Design.objects.filter(brief=brief).exists()
-
-
-@pytest.mark.django_db
-def test_invalid_render_content_saves_brief_ready_without_500_or_design():
-    response = APIClient().post(
-        "/api/v1/briefs/",
-        _brief_payload(title="W" * 180),
-        format="json",
-    )
-
-    assert response.status_code == 201, response.json()
-    brief = DesignBrief.objects.get(pk=response.json()["id"])
-    assert brief.status == DesignBrief.Status.READY
-    assert not Design.objects.filter(brief=brief).exists()
-
-
-@pytest.mark.django_db
-def test_brief_cta_type_is_rendered_as_expected_copy():
-    response = APIClient().post(
-        "/api/v1/briefs/",
-        _brief_payload(brief_data={"cta": "buy"}),
-        format="json",
-    )
-
-    assert response.status_code == 201, response.json()
-    version = DesignVersion.objects.get(design__brief_id=response.json()["id"])
-    assert version.render_data["cta"] == "Compra ahora"
-    assert "Compra ahora" in version.render_data["html"]
-    assert "Compra ahora" in version.render_data["svg"]

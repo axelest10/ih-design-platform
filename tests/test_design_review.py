@@ -103,6 +103,21 @@ def test_review_decision_persists_optional_comment_when_test_mode_is_off(setting
     assert comment.comment == "Aprobado para publicación."
 
 
+@pytest.mark.django_db
+def test_product_design_rejects_formal_review_during_first_50_tests(settings):
+    settings.DESIGN_TEST_MODE = True
+    design, version = _design_with_version(product_slug="ielts-preparation")
+
+    response = APIClient().post(
+        f"/api/v1/designs/{design.pk}/review/",
+        {"decision": "approve", "version": version.number},
+        format="json",
+    )
+
+    assert response.status_code == 409
+    assert response.json()["next"] == "claude-review"
+
+
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
 def test_reviewer_profile_exposes_review_and_test_mode_capabilities(settings):
