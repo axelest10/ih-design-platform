@@ -46,9 +46,9 @@ def test_logo_combobox_assets_load_before_page_scripts():
         ("templates-gallery.html", "templates-gallery.js"),
     ):
         html = (FRONTEND / page_name).read_text(encoding="utf-8")
-        assert 'href="styles/logo-combobox.css"' in html
-        assert html.index('src="scripts/logo-combobox.js"') < html.index(
-            f'src="scripts/{script_name}"'
+        assert "asset_url 'styles/logo-combobox.css'" in html
+        assert html.index("asset_url 'scripts/logo-combobox.js'") < html.index(
+            f"asset_url 'scripts/{script_name}'"
         )
 
 
@@ -77,7 +77,7 @@ def test_brief_form_has_a_bounded_loading_state():
     )[0]
     assert prompt_section.count('class="loading-indicator__dot"') == 5
     assert 'id="brief-submit"' in html
-    assert 'href="styles/loading-indicator.css"' in html
+    assert "asset_url 'styles/loading-indicator.css'" in html
     assert "loading.hidden = false" in script
     assert "submitButton.disabled = true" in script
     assert "} finally {" in script
@@ -147,7 +147,7 @@ def test_design_final_step_uses_the_persisted_svg_preview_and_starts_hidden():
     assert "hidden" in section
     assert 'id="design-preview"' in html
     assert 'id="design-save"' in html
-    assert 'href="styles/design-final.css"' in html
+    assert "asset_url 'styles/design-final.css'" in html
     assert "const svg = version?.render_data?.svg" in script
     assert "data:image/svg+xml;charset=utf-8" in script
     assert '$("design-final-step").hidden = false' in script

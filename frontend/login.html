@@ -4,9 +4,9 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Iniciar sesión · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/auth.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/auth.css' %}" />
   </head>
   <body class="auth-page">
     <header class="auth-header">
@@ -35,7 +35,7 @@
         <p class="auth-help">Si aún no tienes una cuenta, solicítala al administrador de la plataforma.</p>
       </section>
     </main>
-    <script src="scripts/csrf.js"></script>
-    <script src="scripts/login.js"></script>
+    <script src="{% asset_url 'scripts/csrf.js' %}"></script>
+    <script src="{% asset_url 'scripts/login.js' %}"></script>
   </body>
 </html>

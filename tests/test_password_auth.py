@@ -251,8 +251,8 @@ def test_password_forms_include_confirmation_and_shared_visibility_control():
     assert admin.count('name="password_confirmation"') == 2
     assert "data-password-toggle" in panel
     assert admin.count("data-password-toggle") == 2
-    assert 'src="scripts/password-fields.js"' in panel
-    assert 'src="scripts/password-fields.js"' in admin
+    assert "asset_url 'scripts/password-fields.js'" in panel
+    assert "asset_url 'scripts/password-fields.js'" in admin
     assert "IHPasswordFields.valuesMatch" in panel_script
     assert admin_script.count("IHPasswordFields.valuesMatch") == 2
     assert 'authenticatedFetch("/api/v1/auth/change-password/"' in panel_script
@@ -269,8 +269,8 @@ def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
         REPO_ROOT / "frontend" / "scripts" / "csrf.js"
     ).read_text(encoding="utf-8")
 
-    assert login_html.index('src="scripts/csrf.js"') < login_html.index(
-        'src="scripts/login.js"'
+    assert login_html.index("asset_url 'scripts/csrf.js'") < login_html.index(
+        "asset_url 'scripts/login.js'"
     )
     assert 'window.authenticatedFetch("/api/v1/auth/login/"' in login_script
     assert 'cookie("csrftoken")' in csrf_script

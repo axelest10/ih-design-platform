@@ -9,9 +9,9 @@
       content="IH Design Platform: composición y revisión de piezas de marca para LATAM."
     />
     <title>IH Design Platform — Inicio</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/home.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/home.css' %}" />
   </head>
   <body>
     <div class="app-shell">
@@ -236,6 +236,6 @@
       </main>
     </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
-    <script src="scripts/home.js"></script>
+    <script src="{% asset_url 'scripts/home.js' %}"></script>
   </body>
 </html>

@@ -1,8 +1,12 @@
 from django.conf import settings
 from django.urls import include, path
-from django.views.generic import TemplateView
-from django.views.static import serve
 
+from common.frontend_views import (
+    RevalidatedTemplateView,
+    serve_brand_asset,
+    serve_revalidated_file,
+    serve_versioned_asset,
+)
 from common.views import health
 
 frontend_root = settings.BASE_DIR / "frontend"
@@ -16,63 +20,79 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path("", TemplateView.as_view(template_name="index.html"), name="frontend-home"),
-    path("login.html", TemplateView.as_view(template_name="login.html"), name="frontend-login"),
+    path("", RevalidatedTemplateView.as_view(template_name="index.html"), name="frontend-home"),
+    path(
+        "login.html",
+        RevalidatedTemplateView.as_view(template_name="login.html"),
+        name="frontend-login",
+    ),
     path(
         "catalog.html",
-        TemplateView.as_view(template_name="catalog.html"),
+        RevalidatedTemplateView.as_view(template_name="catalog.html"),
         name="frontend-catalog",
     ),
     path(
         "templates-gallery.html",
-        TemplateView.as_view(template_name="templates-gallery.html"),
+        RevalidatedTemplateView.as_view(template_name="templates-gallery.html"),
         name="frontend-templates-gallery",
     ),
     path(
         "marketing-materials.html",
-        TemplateView.as_view(template_name="marketing-materials.html"),
+        RevalidatedTemplateView.as_view(template_name="marketing-materials.html"),
         name="frontend-marketing-materials",
     ),
     path(
         "brand-rules.html",
-        TemplateView.as_view(template_name="brand-rules.html"),
+        RevalidatedTemplateView.as_view(template_name="brand-rules.html"),
         name="frontend-brand-rules",
     ),
-    path("panel.html", TemplateView.as_view(template_name="panel.html"), name="frontend-panel"),
-    path("review.html", TemplateView.as_view(template_name="review.html"), name="frontend-review"),
+    path(
+        "panel.html",
+        RevalidatedTemplateView.as_view(template_name="panel.html"),
+        name="frontend-panel",
+    ),
+    path(
+        "review.html",
+        RevalidatedTemplateView.as_view(template_name="review.html"),
+        name="frontend-review",
+    ),
     path(
         "school-kit.html",
-        TemplateView.as_view(template_name="school-kit.html"),
+        RevalidatedTemplateView.as_view(template_name="school-kit.html"),
         name="frontend-school-kit",
     ),
-    path("admin.html", TemplateView.as_view(template_name="admin.html"), name="frontend-admin"),
+    path(
+        "admin.html",
+        RevalidatedTemplateView.as_view(template_name="admin.html"),
+        name="frontend-admin",
+    ),
     path(
         "styles/<path:path>",
-        serve,
+        serve_versioned_asset,
         {"document_root": frontend_root / "styles"},
         name="frontend-styles",
     ),
     path(
         "scripts/<path:path>",
-        serve,
+        serve_versioned_asset,
         {"document_root": frontend_root / "scripts"},
         name="frontend-scripts",
     ),
     path(
         "brand/assets/<path:path>",
-        serve,
+        serve_brand_asset,
         {"document_root": brand_assets_root},
         name="brand-assets",
     ),
     path(
         "brand/generated/<path:path>",
-        serve,
+        serve_versioned_asset,
         {"document_root": brand_generated_root},
         name="brand-generated",
     ),
     path(
         "brand/documentation/<path:path>",
-        serve,
+        serve_revalidated_file,
         {"document_root": brand_documentation_root},
         name="brand-documentation",
     ),

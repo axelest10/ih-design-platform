@@ -6,10 +6,10 @@
     <meta name="theme-color" content="#3B44B5" />
     <meta name="description" content="Reglas públicas del sistema de marca de International House LATAM." />
     <title>Reglas de marca · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/home.css" />
-    <link rel="stylesheet" href="styles/brand-rules.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/home.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/brand-rules.css' %}" />
   </head>
   <body>
     <div class="app-shell">
@@ -70,6 +70,6 @@
       </main>
     </div>
     <script defer src="https://cdn.jsdelivr.net/npm/marked@18.0.7/lib/marked.umd.js"></script>
-    <script defer src="scripts/brand-rules.js"></script>
+    <script defer src="{% asset_url 'scripts/brand-rules.js' %}"></script>
   </body>
 </html>

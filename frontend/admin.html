@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Administración · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/admin.css" />
-    <link rel="stylesheet" href="styles/admin-accounts.css" />
-    <link rel="stylesheet" href="styles/password-fields.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/admin.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/admin-accounts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/password-fields.css' %}" />
   </head>
   <body>
     <header class="admin-header">
@@ -113,8 +113,8 @@
         <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones de diseño <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>
       </div>
     </main>
-    <script src="scripts/password-fields.js"></script>
-    <script src="scripts/csrf.js"></script>
-    <script src="scripts/admin.js"></script>
+    <script src="{% asset_url 'scripts/password-fields.js' %}"></script>
+    <script src="{% asset_url 'scripts/csrf.js' %}"></script>
+    <script src="{% asset_url 'scripts/admin.js' %}"></script>
   </body>
 </html>

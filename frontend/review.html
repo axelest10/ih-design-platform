@@ -4,10 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Revisión de diseños · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/panel.css" />
-    <link rel="stylesheet" href="styles/review.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/panel.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/review.css' %}" />
   </head>
   <body>
     <div class="panel-shell">
@@ -22,7 +22,7 @@
         <section id="review-list" class="review-list" aria-live="polite"></section>
       </main>
     </div>
-    <script src="scripts/csrf.js"></script>
-    <script src="scripts/review.js"></script>
+    <script src="{% asset_url 'scripts/csrf.js' %}"></script>
+    <script src="{% asset_url 'scripts/review.js' %}"></script>
   </body>
 </html>

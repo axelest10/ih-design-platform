@@ -6,10 +6,10 @@
     <meta name="theme-color" content="#3B44B5" />
     <meta name="description" content="Materiales oficiales de marketing para International House e IELTS." />
     <title>Materiales de Marketing · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/home.css" />
-    <link rel="stylesheet" href="styles/marketing-materials.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/home.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/marketing-materials.css' %}" />
   </head>
   <body>
     <div class="app-shell">
@@ -50,6 +50,6 @@
         </div>
       </main>
     </div>
-    <script src="scripts/marketing-materials.js"></script>
+    <script src="{% asset_url 'scripts/marketing-materials.js' %}"></script>
   </body>
 </html>

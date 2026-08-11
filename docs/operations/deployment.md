@@ -158,3 +158,22 @@ OK 200 https://<dominio>/api/v1/health/ {'status': 'ok', 'service': 'ih-design-p
    antes de iniciar o reanudar el lote de pruebas.
 6. Probar que la cuenta administradora puede abrir el panel y crear una cuenta de equipo.
 7. Recién entonces iniciar el lote de 50 pruebas.
+
+## Invalidación de caché del frontend
+
+El frontend se sirve desde Django con una política diferenciada para evitar que un deploy mezcle
+HTML nuevo con JavaScript anterior:
+
+- las respuestas HTML usan `Cache-Control: max-age=0, no-cache, must-revalidate`;
+- las plantillas generan URLs de CSS, JavaScript y `brand/generated/` con una huella SHA-256 del
+  contenido (`?v=<12 caracteres>`); cuando la huella coincide, esos archivos se sirven por un año
+  con `immutable`;
+- una URL de CSS/JS sin versión o con una versión incorrecta se revalida, por lo que enlaces
+  antiguos no quedan congelados;
+- los logos y demás archivos de `brand/assets/` conservan caché público de 24 horas y no se marcan
+  como inmutables; la documentación de marca se revalida;
+- los archivos subidos siguen su política propia del proxy de materiales (una hora) o del storage
+  configurado.
+
+La versión se calcula desde el contenido durante el render del HTML; no requiere actualizar una
+constante manual ni configurar una variable adicional en Railway.

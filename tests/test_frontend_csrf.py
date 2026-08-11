@@ -19,8 +19,8 @@ def test_mutating_pages_load_shared_csrf_helper_before_page_script(
 ):
     html = (FRONTEND / page_name).read_text(encoding="utf-8")
 
-    assert html.index('src="scripts/csrf.js"') < html.index(
-        f'src="scripts/{script_name}"'
+    assert html.index("asset_url 'scripts/csrf.js'") < html.index(
+        f"asset_url 'scripts/{script_name}'"
     )
 
 

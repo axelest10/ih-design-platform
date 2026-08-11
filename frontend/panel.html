@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Crear diseño · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/panel.css" />
-    <link rel="stylesheet" href="styles/password-fields.css" />
-    <link rel="stylesheet" href="styles/logo-combobox.css" />
-    <link rel="stylesheet" href="styles/panel-sidebar.css" />
-    <link rel="stylesheet" href="styles/loading-indicator.css" />
-    <link rel="stylesheet" href="styles/design-final.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/panel.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/password-fields.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/logo-combobox.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/panel-sidebar.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/loading-indicator.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/design-final.css' %}" />
   </head>
   <body>
     <div class="panel-shell">
@@ -271,9 +271,9 @@
         </section>
       </main>
     </div>
-    <script src="scripts/password-fields.js"></script>
-    <script src="scripts/csrf.js"></script>
-    <script src="scripts/logo-combobox.js"></script>
-    <script src="scripts/panel.js"></script>
+    <script src="{% asset_url 'scripts/password-fields.js' %}"></script>
+    <script src="{% asset_url 'scripts/csrf.js' %}"></script>
+    <script src="{% asset_url 'scripts/logo-combobox.js' %}"></script>
+    <script src="{% asset_url 'scripts/panel.js' %}"></script>
   </body>
 </html>

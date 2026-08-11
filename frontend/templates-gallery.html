@@ -6,11 +6,11 @@
     <meta name="theme-color" content="#3B44B5" />
     <meta name="description" content="Galería pública de tipos de material y plantillas disponibles." />
     <title>Plantillas · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/home.css" />
-    <link rel="stylesheet" href="styles/templates-gallery.css" />
-    <link rel="stylesheet" href="styles/logo-combobox.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/home.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/templates-gallery.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/logo-combobox.css' %}" />
   </head>
   <body>
     <div class="app-shell">
@@ -88,8 +88,8 @@
         </div>
       </form>
     </dialog>
-    <script src="scripts/csrf.js"></script>
-    <script src="scripts/logo-combobox.js"></script>
-    <script src="scripts/templates-gallery.js"></script>
+    <script src="{% asset_url 'scripts/csrf.js' %}"></script>
+    <script src="{% asset_url 'scripts/logo-combobox.js' %}"></script>
+    <script src="{% asset_url 'scripts/templates-gallery.js' %}"></script>
   </body>
 </html>

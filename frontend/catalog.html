@@ -6,10 +6,10 @@
     <meta name="theme-color" content="#3B44B5" />
     <meta name="description" content="Catálogo público de logos aprobados de IH Design Platform." />
     <title>Catálogo de marca · IH Design Platform</title>
-    <link rel="stylesheet" href="styles/fonts.css" />
-    <link rel="stylesheet" href="../brand/generated/ih-brand.css" />
-    <link rel="stylesheet" href="styles/home.css" />
-    <link rel="stylesheet" href="styles/catalog.css" />
+    <link rel="stylesheet" href="{% asset_url 'styles/fonts.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'brand/generated/ih-brand.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/home.css' %}" />
+    <link rel="stylesheet" href="{% asset_url 'styles/catalog.css' %}" />
   </head>
   <body>
     <div class="app-shell">
@@ -75,6 +75,6 @@
         </div>
       </main>
     </div>
-    <script src="scripts/catalog.js"></script>
+    <script src="{% asset_url 'scripts/catalog.js' %}"></script>
   </body>
 </html>
