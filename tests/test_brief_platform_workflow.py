@@ -54,20 +54,12 @@ def test_brief_product_color_and_dual_branding_flow_to_first_50_review():
     brief = DesignBrief.objects.get(pk=response.json()["id"])
     assert response.json()["authorized_color"]["primary_hex"] == "#E31736"
 
-    design = Design.objects.create(brief=brief)
-    preview = client.post(
-        f"/api/v1/designs/{design.pk}/preview/",
-        {
-            "headline": "Prepárate para IELTS",
-            "body": "Una experiencia para avanzar.",
-            "cta": "Regístrate",
-        },
-        format="json",
-    )
-    assert preview.status_code == 201
-    assert preview.json()["status"] == "self_review"
-    assert preview.json()["test_number"] is not None
-    assert "secondary-logo" in preview.json()["preview"]["html"]
+    design = Design.objects.get(brief=brief)
+    version = design.versions.get(number=1)
+    assert design.status == Design.Status.SELF_REVIEW
+    assert design.test_number is not None
+    assert version.render_data["cta"] == "Regístrate"
+    assert "secondary-logo" in version.render_data["html"]
 
     review = client.post(
         f"/api/v1/designs/{design.pk}/claude-review/",

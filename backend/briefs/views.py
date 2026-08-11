@@ -11,6 +11,7 @@ from security.permissions import (
 
 from .models import BriefReferenceUpload, DesignBrief
 from .serializers import BriefReferenceUploadSerializer, DesignBriefSerializer
+from .services.generation import generate_initial_design
 from .services.options import brief_options, is_regional_admin
 
 
@@ -33,7 +34,8 @@ class DesignBriefViewSet(RoleAwareViewSet, ModelViewSet):
 
     def perform_create(self, serializer):
         creator = self.request.user if self.request.user.is_authenticated else None
-        serializer.save(created_by=creator)
+        brief = serializer.save(created_by=creator)
+        generate_initial_design(brief)
 
     @action(detail=False, methods=["get"])
     def options(self, request):

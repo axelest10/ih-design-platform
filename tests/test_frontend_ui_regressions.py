@@ -60,3 +60,27 @@ def test_admin_actions_have_a_non_overlapping_stack_layout():
     assert "display: grid" in css
     assert "gap: 10px" in css
     assert "min-height: 44px" in css
+
+
+def test_brief_form_has_a_bounded_loading_state():
+    html = (FRONTEND / "panel.html").read_text(encoding="utf-8")
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    css = (FRONTEND / "styles" / "loading-indicator.css").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'id="brief-loading"' in html
+    assert 'class="loading-indicator"' in html
+    assert "hidden" in html
+    assert html.count('class="loading-indicator__dot"') == 5
+    assert 'id="brief-submit"' in html
+    assert 'href="styles/loading-indicator.css"' in html
+    assert "loading.hidden = false" in script
+    assert "submitButton.disabled = true" in script
+    assert "} finally {" in script
+    assert "loading.hidden = true" in script
+    assert "submitButton.disabled = false" in script
+    assert "@keyframes ih-system-processing" in css
+    assert "linear-gradient" not in css
+    for color in ("#3b44b5", "#f06c6a", "#e070a2", "#f4ab63", "#f4cf80", "#b7db6e"):
+        assert color in css

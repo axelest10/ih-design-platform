@@ -104,6 +104,12 @@
 
   const createBrief = async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;
+    const loading = $("brief-loading");
+    const submitButton = $("brief-submit");
+    loading.hidden = false;
+    submitButton.disabled = true;
+    form.setAttribute("aria-busy", "true");
     $("form-status").textContent = "Guardando…";
     try {
       const uploaded = $("upload-logo-toggle").checked ? await uploadLogo() : null;
@@ -151,6 +157,10 @@
     } catch (error) {
       $("form-status").textContent = "Revisa los campos";
       notice(error?.detail || error?.country || "No pudimos guardar el brief.", "error");
+    } finally {
+      loading.hidden = true;
+      submitButton.disabled = false;
+      form.removeAttribute("aria-busy");
     }
   };
 

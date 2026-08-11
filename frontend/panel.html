@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="styles/password-fields.css" />
     <link rel="stylesheet" href="styles/logo-combobox.css" />
     <link rel="stylesheet" href="styles/panel-sidebar.css" />
+    <link rel="stylesheet" href="styles/loading-indicator.css" />
   </head>
   <body>
     <div class="panel-shell">
@@ -134,8 +135,18 @@
             </div>
 
             <div class="form-actions">
-              <button class="button button--primary" type="submit">Guardar brief y continuar <span>→</span></button>
+              <button id="brief-submit" class="button button--primary" type="submit">Guardar brief y continuar <span>→</span></button>
               <span id="form-status" class="form-status"></span>
+              <div id="brief-loading" class="loading-indicator" role="status" aria-live="polite" hidden>
+                <span class="loading-indicator__dots" aria-hidden="true">
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                </span>
+                <span>Generando tu pieza…</span>
+              </div>
             </div>
           </form>
 
