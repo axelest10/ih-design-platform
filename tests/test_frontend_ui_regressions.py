@@ -72,7 +72,10 @@ def test_brief_form_has_a_bounded_loading_state():
     assert 'id="brief-loading"' in html
     assert 'class="loading-indicator"' in html
     assert "hidden" in html
-    assert html.count('class="loading-indicator__dot"') == 5
+    prompt_section = html.split('id="prompt-review-step"', 1)[1].split(
+        'id="design-final-step"', 1
+    )[0]
+    assert prompt_section.count('class="loading-indicator__dot"') == 5
     assert 'id="brief-submit"' in html
     assert 'href="styles/loading-indicator.css"' in html
     assert "loading.hidden = false" in script
@@ -181,5 +184,29 @@ def test_design_save_only_confirms_completion_without_network_call():
     )[0]
 
     assert "listo para continuar con el flujo de revisión" in handler
+    assert 'link.href = "review.html"' in handler
     assert "fetch(" not in handler
     assert "authenticatedFetch" not in handler
+
+
+def test_design_final_step_requests_independent_revisions_and_updates_preview():
+    html = (FRONTEND / "panel.html").read_text(encoding="utf-8")
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    handler = script.split("const requestDesignRevision", 1)[1].split(
+        "const returnToBrief", 1
+    )[0]
+
+    assert 'id="design-revision-form"' in html
+    assert 'id="design-revision-instruction"' in html
+    assert 'id="design-revision-history"' in html
+    assert 'id="design-revision-loading"' in html
+    revision_section = html.split('id="design-revision-loading"', 1)[1].split(
+        "</div>", 2
+    )[0]
+    assert revision_section.count('class="loading-indicator__dot"') == 5
+    assert "/revise/" in handler
+    assert "body: JSON.stringify({ instruction })" in handler
+    assert "renderDesignPreview(design)" in handler
+    assert "revisionInstructions.push(instruction)" in handler
+    assert "instruction_history" not in handler
+    assert "maxAttempts" not in handler

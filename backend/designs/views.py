@@ -22,6 +22,8 @@ from .serializers import DesignReviewCommentSerializer, DesignSerializer
 from .services.renderer import RenderValidationError, render_preview
 from .services.renderer_document import render_document_preview
 from .services.renderer_presentation import render_presentation_preview
+from .services.revision import DesignRevisionError, revise_design
+from .services.versioning import create_next_version
 
 
 class DesignViewSet(RoleAwareViewSet, ModelViewSet):
@@ -35,6 +37,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         "partial_update": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "destroy": (ROLE_PLATFORM_ADMIN,),
         "preview": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
+        "revise": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "claude_review": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "comments": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
@@ -71,37 +74,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         except RenderValidationError as exc:
             return Response({"detail": str(exc)}, status=400)
 
-        with transaction.atomic():
-            next_number = (
-                design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
-            ) + 1
-            version = DesignVersion.objects.create(
-                design=design,
-                number=next_number,
-                template_key=rendered.template_key,
-                render_data={
-                    **rendered.data,
-                    "html": rendered.html,
-                    "svg": rendered.svg,
-                },
-                asset_refs=rendered.asset_refs,
-                validation_summary=rendered.validation_summary,
-            )
-            update_fields = ["status", "updated_at"]
-            if design.brief.product_slug and settings.DESIGN_TEST_MODE:
-                if design.test_number is None:
-                    latest_test = (
-                        Design.objects.filter(test_number__isnull=False).aggregate(
-                            max_number=Max("test_number")
-                        )["max_number"]
-                        or 0
-                    )
-                    design.test_number = latest_test + 1
-                    update_fields.append("test_number")
-                design.status = Design.Status.SELF_REVIEW
-            else:
-                design.status = Design.Status.IN_REVIEW
-            design.save(update_fields=update_fields)
+        design, version = create_next_version(design, rendered)
 
         return Response(
             {
@@ -118,6 +91,19 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 ),
                 "preview": {"html": rendered.html, "svg": rendered.svg},
             },
+            status=201,
+        )
+
+    @action(detail=True, methods=["post"], url_path="revise")
+    def revise(self, request, pk=None):
+        """Refina el copy vigente mediante una instrucción independiente."""
+        design = self.get_object()
+        try:
+            design = revise_design(design, request.data.get("instruction"))
+        except DesignRevisionError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response(
+            DesignSerializer(design, context=self.get_serializer_context()).data,
             status=201,
         )
 

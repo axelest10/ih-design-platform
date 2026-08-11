@@ -6,6 +6,7 @@
     briefFormat: null,
     originalPrompt: "",
     designId: null,
+    revisionInstructions: [],
   };
   const $ = (id) => document.getElementById(id);
   const additionalLogoPicker = window.IHLogoCombobox.create({
@@ -125,7 +126,7 @@
     $("generated-prompt").focus();
   };
 
-  const showDesignFinal = (design) => {
+  const renderDesignPreview = (design) => {
     const version = design.versions?.[0];
     const svg = version?.render_data?.svg;
     if (!svg) throw new Error("El diseño no devolvió una vista previa SVG.");
@@ -133,10 +134,61 @@
     image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     image.alt = "Vista previa del diseño generado";
     $("design-preview").replaceChildren(image);
+  };
+
+  const showDesignFinal = (design) => {
+    renderDesignPreview(design);
     state.designId = design.id;
+    state.revisionInstructions = [];
+    $("design-revision-list").replaceChildren();
+    $("design-revision-history").hidden = true;
+    $("design-revision-form").reset();
+    $("design-revision-status").textContent = "";
     $("design-status").textContent = "";
     $("prompt-review-step").hidden = true;
     $("design-final-step").hidden = false;
+  };
+
+  const requestDesignRevision = async (event) => {
+    event.preventDefault();
+    const instruction = $("design-revision-instruction").value.trim();
+    const button = $("design-revise");
+    const loading = $("design-revision-loading");
+    const status = $("design-revision-status");
+    if (!instruction) {
+      status.textContent = "Escribe qué quieres ajustar.";
+      return;
+    }
+
+    button.disabled = true;
+    loading.hidden = false;
+    $("design-revision-form").setAttribute("aria-busy", "true");
+    status.textContent = "Aplicando el cambio…";
+    try {
+      const response = await window.authenticatedFetch(
+        `/api/v1/designs/${state.designId}/revise/`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ instruction }),
+        },
+      );
+      const design = await json(response);
+      renderDesignPreview(design);
+      state.revisionInstructions.push(instruction);
+      const item = document.createElement("li");
+      item.textContent = `Pediste: “${instruction}” → aplicado`;
+      $("design-revision-list").appendChild(item);
+      $("design-revision-history").hidden = false;
+      $("design-revision-instruction").value = "";
+      status.textContent = "Cambio aplicado en una nueva versión.";
+    } catch (error) {
+      status.textContent = error?.detail || error?.message || "No pudimos aplicar el cambio.";
+    } finally {
+      loading.hidden = true;
+      $("design-revision-form").removeAttribute("aria-busy");
+      button.disabled = false;
+    }
   };
 
   const returnToBrief = () => {
@@ -190,7 +242,14 @@
 
   const saveDesign = () => {
     const message = "Diseño guardado y listo para continuar con el flujo de revisión.";
-    $("design-status").textContent = message;
+    const confirmation = document.createElement("span");
+    confirmation.className = "design-save-confirmation";
+    confirmation.append(`${message} `);
+    const link = document.createElement("a");
+    link.href = "review.html";
+    link.textContent = "Abrir revisión";
+    confirmation.appendChild(link);
+    $("design-status").replaceChildren(confirmation);
     notice(message);
   };
 
@@ -337,6 +396,7 @@
   $("brief-form").addEventListener("submit", createBrief);
   $("prompt-back").addEventListener("click", returnToBrief);
   $("prompt-continue").addEventListener("click", continueFromPrompt);
+  $("design-revision-form").addEventListener("submit", requestDesignRevision);
   $("design-save").addEventListener("click", saveDesign);
   $("change-password-form").addEventListener("submit", changeOwnPassword);
   $("refresh-admin").addEventListener("click", () => {

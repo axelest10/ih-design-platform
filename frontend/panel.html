@@ -193,6 +193,36 @@
               </div>
             </div>
             <div id="design-preview" class="design-final-preview" aria-live="polite"></div>
+            <form id="design-revision-form" class="design-revision-form">
+              <label for="design-revision-instruction">¿Qué quieres ajustar?
+                <textarea
+                  id="design-revision-instruction"
+                  name="instruction"
+                  rows="3"
+                  required
+                  placeholder="Ej. Haz el titular más corto o cambia el CTA a “Regístrate”."
+                ></textarea>
+                <small>Cada pedido se aplica sobre la versión visible. Escribe una sola instrucción por intento.</small>
+              </label>
+              <div class="design-revision-actions">
+                <button id="design-revise" class="button button--secondary" type="submit">Pedir cambio</button>
+                <span id="design-revision-status" class="form-status" role="status" aria-live="polite"></span>
+              </div>
+              <div id="design-revision-loading" class="loading-indicator" role="status" aria-live="polite" hidden>
+                <span class="loading-indicator__dots" aria-hidden="true">
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                  <span class="loading-indicator__dot"></span>
+                </span>
+                <span>Aplicando tu cambio…</span>
+              </div>
+            </form>
+            <section id="design-revision-history" class="design-revision-history" aria-labelledby="design-revision-history-title" hidden>
+              <h3 id="design-revision-history-title">Cambios pedidos en esta sesión</h3>
+              <ol id="design-revision-list"></ol>
+            </section>
             <div class="form-actions">
               <button id="design-save" class="button button--primary" type="button">Guardar</button>
               <span id="design-status" class="form-status" role="status" aria-live="polite"></span>

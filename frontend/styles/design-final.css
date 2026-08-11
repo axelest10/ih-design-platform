@@ -16,3 +16,71 @@
   max-height: 70vh;
   object-fit: contain;
 }
+
+.design-revision-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fbfbfe;
+}
+
+.design-revision-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.design-revision-form textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.design-revision-form textarea:focus {
+  outline: 3px solid rgba(59, 68, 181, .13);
+  border-color: var(--blue);
+}
+
+.design-revision-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.design-revision-history {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-left: 4px solid var(--youth);
+  border-radius: 10px;
+  background: #f6f7fc;
+}
+
+.design-revision-history h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.design-revision-history ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.design-save-confirmation {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}

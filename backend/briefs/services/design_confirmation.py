@@ -1,10 +1,9 @@
 """Confirmación del copy y creación de la primera pieza del brief."""
 from __future__ import annotations
 
-import json
-
-from ai.providers import AIProviderError, GenerationRequest, OpenAIProvider
+from ai.providers import GenerationRequest, OpenAIProvider
 from designs.models import Design
+from designs.services.copy_generation import StructuredCopyError, generate_structured_copy
 from designs.services.renderer import RenderValidationError
 
 from ..models import DesignBrief
@@ -13,25 +12,6 @@ from .generation import SUPPORTED_FORMATS, generate_initial_design
 
 class DesignConfirmationError(ValueError):
     """Error controlado que permite reintentar el paso 2 sin crear un diseño parcial."""
-
-
-def _parse_structured_copy(content: str) -> dict[str, str] | None:
-    try:
-        payload = json.loads(content)
-    except (json.JSONDecodeError, TypeError):
-        return None
-    if not isinstance(payload, dict):
-        return None
-
-    copy_fields = {
-        "headline": str(payload.get("headline") or "").strip(),
-        "body": str(payload.get("body") or "").strip(),
-        "cta": str(payload.get("cta") or "").strip(),
-        "eyebrow": str(payload.get("eyebrow") or "").strip(),
-    }
-    if not copy_fields["headline"] or not copy_fields["body"]:
-        return None
-    return copy_fields
 
 
 def confirm_brief_design(brief: DesignBrief, prompt_text: str) -> Design:
@@ -65,23 +45,10 @@ def confirm_brief_design(brief: DesignBrief, prompt_text: str) -> Design:
         },
         output_format="json",
     )
-    provider = OpenAIProvider()
-    copy_fields = None
     try:
-        for _attempt in range(2):
-            response = provider.generate(generation_request)
-            copy_fields = _parse_structured_copy(response.content)
-            if copy_fields is not None:
-                break
-    except AIProviderError as exc:
-        raise DesignConfirmationError(
-            "No pudimos estructurar el copy en este momento. Intenta de nuevo."
-        ) from exc
-
-    if copy_fields is None:
-        raise DesignConfirmationError(
-            "La propuesta no pudo convertirse en los campos de diseño después de dos intentos."
-        )
+        copy_fields = generate_structured_copy(OpenAIProvider(), generation_request)
+    except StructuredCopyError as exc:
+        raise DesignConfirmationError(str(exc)) from exc
 
     try:
         return generate_initial_design(brief, copy_fields)
