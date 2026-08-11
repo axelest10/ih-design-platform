@@ -1,7 +1,8 @@
 # Auditoría de niveles de acceso
 
-Fecha de auditoría: 2026-08-09. Alcance: documentación del comportamiento actual; **no se
-modificaron permisos ni asignaciones de rol**.
+Fecha de auditoría inicial: 2026-08-09. Verificación de matriz: 2026-08-11. Alcance:
+documentación y pruebas del comportamiento actual; **no se modificaron permisos ni asignaciones
+de rol**.
 
 Fuentes revisadas:
 
@@ -71,8 +72,13 @@ La tabla refleja el código existente. No representa una ratificación de negoci
 | designs | `DesignViewSet` | `create`, `update`, `partial_update` | `platform_admin`, `marketing`, `designer` |
 | designs | `DesignViewSet` | `destroy` | `platform_admin` |
 | designs | `DesignViewSet` | `preview` | `platform_admin`, `marketing`, `designer` |
+| designs | `DesignViewSet` | `revise` | `platform_admin`, `marketing`, `designer` |
 | designs | `DesignViewSet` | `claude_review` | `platform_admin`, `marketing`, `designer` |
 | designs | `DesignViewSet` | `review` | `platform_admin`, `reviewer` |
+| designs | `DesignViewSet` | `comments` | `platform_admin`, `reviewer` |
+| materials | `MaterialTypeViewSet` | `create`, `update`, `partial_update`, `destroy` | `platform_admin` |
+| materials | `MaterialTemplateViewSet` | `create`, `update`, `partial_update`, `destroy` | `platform_admin` |
+| materials | `MarketingAssetViewSet` | `create`, `bulk`, `update`, `partial_update`, `destroy` | `platform_admin` |
 | materials | `MaterialBundleViewSet` | `create`, `update`, `partial_update` | `platform_admin`, `marketing`, `designer` |
 | materials | `MaterialBundleViewSet` | `destroy` | `platform_admin` |
 | materials | `MaterialBundleViewSet` | `generate` | `platform_admin`, `marketing`, `designer` |
@@ -93,8 +99,6 @@ No se encontraron otros viewsets con `role_rules` fuera de `assets`, `branding`,
 | `ArtworkReferenceViewSet.knowledge` | Cualquier usuario corporativo | Acción GET sin entrada en `role_rules`; expone la base de conocimiento visual. |
 | `DesignBriefViewSet.options` | Cualquier usuario corporativo | Acción GET sin entrada en `role_rules`; alimenta países, productos y logos del brief. |
 | `BriefReferenceUploadViewSet.update/partial_update` | Cualquier usuario corporativo sobre objetos visibles | Hallazgo relevante: son acciones mutables sin regla de rol. El queryset limita usuarios no administradores a sus propios uploads. |
-| `MaterialTypeViewSet` | Cualquier usuario corporativo | No define `role_rules`, pero limita métodos a GET/HEAD/OPTIONS. |
-| `MaterialTemplateViewSet` | Cualquier usuario corporativo | No define `role_rules`, pero limita métodos a GET/HEAD/OPTIONS. |
 | `GET /api/v1/me/` | Cualquier usuario corporativo | Devuelve perfil, roles y capacidades derivadas. |
 
 Límites por propietario existentes, independientes del rol:
@@ -112,6 +116,8 @@ Límites por propietario existentes, independientes del rol:
 | `GET /api/v1/branding/tokens/` | Catálogo público no sensible de tokens. |
 | `GET /api/v1/branding/logos/` | Catálogo público de logos aprobados. |
 | `GET /api/v1/branding/validate-color/` | Validación pública contra colores autorizados. |
+| `GET /api/v1/material-types/` y `/material-templates/` | Catálogo público de tipos y plantillas. |
+| `GET /api/v1/marketing-assets/` | Biblioteca pública de materiales activos. |
 
 ## Brechas conocidas frente al estándar de referencia
 
@@ -133,7 +139,7 @@ Evaluación contra el código actual después de recuperar cuentas individuales:
 | Brecha de referencia | ¿Aplica al login individual? | Estado observado |
 | --- | --- | --- |
 | Flujo de invitación explícito | Parcialmente | `platform_admin` crea cada cuenta desde el panel; no existe invitación por correo. |
-| Reseteo de contraseña | Sí | `platform_admin` puede establecer una contraseña nueva desde el panel; no hay autoservicio. |
+| Reseteo de contraseña | Sí | `platform_admin` puede restablecerla y cada usuario autenticado puede cambiar la propia desde el panel. |
 | Verificación de email | Parcialmente | Se valida el dominio permitido al crear y al iniciar sesión, sin enviar correo de verificación. |
 | Rate limiting | Sí | `POST /api/v1/auth/login/` limita por IP; la tasa predeterminada es `10/hour`. |
 | Bloqueo tras fallos repetidos | Parcialmente | El throttle bloquea temporalmente por IP, pero no existe bloqueo persistente por cuenta. |
@@ -142,9 +148,9 @@ Evaluación contra el código actual después de recuperar cuentas individuales:
 
 ## Preguntas abiertas para Axel
 
-1. ¿Se requiere autoservicio de recuperación de contraseña en una fase posterior?
+1. ¿Se requiere recuperación de contraseña para una persona que no puede iniciar sesión?
 2. ¿Qué política de rotación de contraseñas debe aplicarse al equipo?
-3. Si se recupera identidad, ¿debe `viewer` leer todos los catálogos y referencias LATAM o solo datos del país asociado a
+3. ¿Debe `viewer` leer todos los catálogos y referencias LATAM o solo datos del país asociado a
    su cuenta?
 4. ¿Se ratifica que `marketing` y `designer` puedan ejecutar `claude_review`, mientras
    `reviewer` queda reservado para la decisión humana `review`?
