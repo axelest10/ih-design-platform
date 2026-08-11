@@ -194,3 +194,70 @@ def test_revise_requires_non_empty_instruction_without_creating_version():
     assert response.status_code == 400
     assert design.versions.count() == 1
     generate.assert_not_called()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("brief_format", "template_key"),
+    [
+        (DesignBrief.Format.SQUARE, "square-v1"),
+        (DesignBrief.Format.STORY, "story-v1"),
+        (DesignBrief.Format.PORTRAIT, "portrait-v1"),
+    ],
+)
+def test_revise_preserves_previous_version_for_every_social_format(
+    brief_format, template_key
+):
+    brief = DesignBrief.objects.create(
+        title=f"Prueba de revisión {template_key}",
+        format=brief_format,
+        product_slug="general-english",
+        channel="instagram",
+        language="es",
+    )
+    design = Design.objects.create(brief=brief)
+    rendered = render_preview(
+        {
+            "template_key": template_key,
+            "headline": "Inglés para avanzar",
+            "body": "Aprende con acompañamiento experto.",
+            "cta": "Conoce más",
+            "additional_logo_keys": ["hello-live-kids-svg"],
+            "product_slug": brief.product_slug,
+            "_allow_validation_warnings": True,
+        }
+    )
+    original = DesignVersion.objects.create(
+        design=design,
+        number=1,
+        template_key=template_key,
+        render_data={**rendered.data, "html": rendered.html, "svg": rendered.svg},
+        asset_refs=rendered.asset_refs,
+        validation_summary=rendered.validation_summary,
+    )
+    updated = {
+        "headline": "Avanza con confianza",
+        "body": "Practica inglés para situaciones reales.",
+        "cta": "Regístrate",
+        "eyebrow": "International House",
+    }
+
+    with patch(
+        "designs.services.revision.OpenAIProvider.generate",
+        return_value=_generation_response(json.dumps(updated)),
+    ):
+        response = APIClient().post(
+            f"/api/v1/designs/{design.pk}/revise/",
+            {"instruction": "Haz el mensaje más directo."},
+            format="json",
+        )
+
+    assert response.status_code == 201, response.json()
+    assert [version.number for version in design.versions.all()] == [2, 1]
+    original.refresh_from_db()
+    assert original.render_data["headline"] == "Inglés para avanzar"
+    latest = design.versions.first()
+    assert latest.template_key == template_key
+    assert latest.render_data["headline"] == updated["headline"]
+    assert latest.render_data["additional_logo_keys"] == ["hello-live-kids-svg"]
+    assert latest.asset_refs == ["ih-mexico-classic-png", "hello-live-kids-svg"]

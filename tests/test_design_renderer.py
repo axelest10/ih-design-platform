@@ -5,7 +5,13 @@ from rest_framework.test import APIClient
 
 from briefs.models import DesignBrief
 from designs.models import Design, DesignVersion
-from designs.services.renderer import RenderValidationError, _fit_text, render_preview
+from designs.services.renderer import (
+    SVG_BASE_POSITIONS,
+    TEMPLATE_SPECS,
+    RenderValidationError,
+    _fit_text,
+    render_preview,
+)
 
 
 def _svg_positions(svg):
@@ -222,6 +228,65 @@ def test_renderer_supports_story_and_portrait_templates(template_key, width, hei
         check for check in rendered.validation_summary["checks"] if check["name"] == "safe_area"
     )
     assert safe_area["canvas"] == {"width": width, "height": height}
+
+
+@pytest.mark.parametrize("template_key", ["square-v1", "story-v1", "portrait-v1"])
+def test_social_templates_reflow_long_copy_and_preserve_dual_branding(template_key):
+    headline = "Aprende inglés para crecer y abrir nuevas oportunidades profesionales"
+    body = (
+        "Desarrolla habilidades prácticas para comunicarte con confianza en situaciones "
+        "personales, académicas y profesionales."
+    )
+    cta = "Conoce más"
+    additional_logo = "hello-live-kids-svg"
+
+    rendered = render_preview(
+        {
+            "template_key": template_key,
+            "headline": headline,
+            "body": body,
+            "cta": cta,
+            "additional_logo_keys": [additional_logo],
+        }
+    )
+
+    assert len(rendered.data["headline_lines"]) >= 2
+    assert len(rendered.data["body_lines"]) >= 2
+    assert rendered.asset_refs == ["ih-mexico-classic-png", additional_logo]
+    assert rendered.data["additional_logo_keys"] == [additional_logo]
+    for visible_copy in (headline, body, cta, "Hello Live Kids"):
+        assert visible_copy in rendered.html
+        assert visible_copy in rendered.svg
+
+    positions = SVG_BASE_POSITIONS[template_key]
+    headline_extra = (len(rendered.data["headline_lines"]) - 1) * round(
+        rendered.data["headline_font_size"] * 1.15, 2
+    )
+    body_extra = (len(rendered.data["body_lines"]) - 1) * round(
+        rendered.data["body_font_size"] * 1.15, 2
+    )
+    body_y, cta_rect_y, cta_text_y = _svg_positions(rendered.svg)
+    assert body_y == pytest.approx(positions["body_y"] + headline_extra)
+    assert cta_rect_y == pytest.approx(
+        positions["cta_rect_y"] + headline_extra + body_extra
+    )
+    assert cta_text_y == pytest.approx(
+        positions["cta_text_y"] + headline_extra + body_extra
+    )
+    spec = TEMPLATE_SPECS[template_key]
+    assert cta_rect_y + positions["cta_rect_height"] <= spec["height"] - spec["safe_margin"]
+
+
+@pytest.mark.parametrize("template_key", ["square-v1", "story-v1", "portrait-v1"])
+def test_social_templates_reject_copy_over_the_global_readability_limit(template_key):
+    with pytest.raises(RenderValidationError, match="supera el máximo"):
+        render_preview(
+            {
+                "template_key": template_key,
+                "headline": "x" * 181,
+                "body": "Cuerpo legible",
+            }
+        )
 
 
 @pytest.mark.django_db

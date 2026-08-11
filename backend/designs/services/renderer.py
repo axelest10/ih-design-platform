@@ -547,7 +547,7 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
         template_key=template_key,
         template_version=TEMPLATE_VERSION,
         data=render_data,
-        asset_refs=[logo_name],
+        asset_refs=[logo_name, *resolved_additional],
         validation_summary=validation_summary,
         html=html_template,
         svg=svg_template,
