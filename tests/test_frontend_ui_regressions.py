@@ -84,3 +84,53 @@ def test_brief_form_has_a_bounded_loading_state():
     assert "linear-gradient" not in css
     for color in ("#3b44b5", "#f06c6a", "#e070a2", "#f4ab63", "#f4cf80", "#b7db6e"):
         assert color in css
+
+
+def test_prompt_review_step_is_present_and_hidden_by_default():
+    html = (FRONTEND / "panel.html").read_text(encoding="utf-8")
+    section = html.split('id="prompt-review-step"', 1)[1].split(">", 1)[0]
+
+    assert "hidden" in section
+    assert 'id="generated-prompt"' in html
+    assert 'rows="8"' in html
+    assert 'id="prompt-manual-notice"' in html
+    assert 'id="prompt-continue"' in html
+    assert 'id="prompt-back"' in html
+    assert "maxlength" not in html.split('id="generated-prompt"', 1)[1].split(">", 1)[0]
+
+
+def test_brief_creation_requests_prompt_after_brief_and_reference_are_saved():
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+
+    brief_created = script.index("const brief = await json(response)")
+    reference_saved = script.index('"/api/v1/brief-reference-uploads/"')
+    prompt_requested = script.index("/generate-prompt/")
+    prompt_shown = script.index("showPromptReview(promptedBrief)")
+
+    assert brief_created < reference_saved < prompt_requested < prompt_shown
+
+
+def test_prompt_continue_patches_only_when_text_changed():
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    handler = script.split("const continueFromPrompt", 1)[1].split(
+        "const createBrief", 1
+    )[0]
+
+    assert "if (prompt !== state.originalPrompt)" in handler
+    assert 'method: "PATCH"' in handler
+    assert handler.index("if (prompt !== state.originalPrompt)") < handler.index(
+        'method: "PATCH"'
+    )
+    assert 'prompt_source: "ai_edited"' in handler
+
+
+def test_prompt_back_only_changes_the_visible_step_without_network_calls():
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+    handler = script.split("const returnToBrief", 1)[1].split(
+        "const continueFromPrompt", 1
+    )[0]
+
+    assert '$("prompt-review-step").hidden = true' in handler
+    assert '$("brief-form").hidden = false' in handler
+    assert "fetch(" not in handler
+    assert "authenticatedFetch" not in handler

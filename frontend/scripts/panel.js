@@ -1,5 +1,10 @@
 (() => {
-  const state = { options: null, user: null };
+  const state = {
+    options: null,
+    user: null,
+    briefId: null,
+    originalPrompt: "",
+  };
   const $ = (id) => document.getElementById(id);
   const additionalLogoPicker = window.IHLogoCombobox.create({
     host: "#additional-logos",
@@ -102,6 +107,57 @@
     ).then(json);
   };
 
+  const showPromptReview = (brief) => {
+    state.briefId = brief.id;
+    state.originalPrompt = brief.generated_prompt || "";
+    $("generated-prompt").value = state.originalPrompt;
+    $("prompt-manual-notice").hidden = brief.prompt_source !== "manual";
+    $("prompt-status").textContent = "";
+    $("brief-form").hidden = true;
+    $("prompt-review-step").hidden = false;
+    $("generated-prompt").focus();
+  };
+
+  const returnToBrief = () => {
+    $("prompt-review-step").hidden = true;
+    $("brief-form").hidden = false;
+    $("form-status").textContent = "Brief guardado";
+    $("brief-submit").focus();
+  };
+
+  const continueFromPrompt = async () => {
+    const prompt = $("generated-prompt").value;
+    const continueButton = $("prompt-continue");
+    const status = $("prompt-status");
+    continueButton.disabled = true;
+    status.textContent = "Guardando…";
+    try {
+      if (prompt !== state.originalPrompt) {
+        const response = await window.authenticatedFetch(
+          `/api/v1/briefs/${state.briefId}/`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              generated_prompt: prompt,
+              prompt_source: "ai_edited",
+            }),
+          },
+        );
+        const updatedBrief = await json(response);
+        state.originalPrompt = updatedBrief.generated_prompt || "";
+      }
+      const message = "Guardado — la generación de la pieza (paso 3) llega en la siguiente fase.";
+      status.textContent = message;
+      notice(message);
+    } catch (error) {
+      status.textContent = "No pudimos guardar los cambios.";
+      notice(error?.detail || "No pudimos guardar el copy editado.", "error");
+    } finally {
+      continueButton.disabled = false;
+    }
+  };
+
   const createBrief = async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -111,6 +167,7 @@
     submitButton.disabled = true;
     form.setAttribute("aria-busy", "true");
     $("form-status").textContent = "Guardando…";
+    let savedBrief = null;
     try {
       const uploaded = $("upload-logo-toggle").checked ? await uploadLogo() : null;
       const selectedAdditional = [...document.querySelectorAll("#additional-logos input:checked")].map((input) => input.value);
@@ -141,6 +198,8 @@
       };
       const response = await window.authenticatedFetch("/api/v1/briefs/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) });
       const brief = await json(response);
+      savedBrief = brief;
+      state.briefId = brief.id;
       const referenceFile = $("visual_reference_file").files[0];
       if (referenceFile) {
         const referenceBody = new FormData();
@@ -152,11 +211,26 @@
           { method: "POST", body: referenceBody },
         ).then(json);
       }
+      $("form-status").textContent = "Generando propuesta…";
+      const promptResponse = await window.authenticatedFetch(
+        `/api/v1/briefs/${brief.id}/generate-prompt/`,
+        { method: "POST" },
+      );
+      const promptedBrief = await json(promptResponse);
       $("form-status").textContent = "Brief guardado";
       notice(`Brief guardado correctamente. ID: ${brief.id}`);
+      showPromptReview(promptedBrief);
     } catch (error) {
-      $("form-status").textContent = "Revisa los campos";
-      notice(error?.detail || error?.country || "No pudimos guardar el brief.", "error");
+      if (savedBrief) {
+        $("form-status").textContent = "Brief guardado; propuesta pendiente";
+        notice(
+          `El brief ${savedBrief.id} quedó guardado, pero no pudimos completar el siguiente paso. ${error?.detail || "Intenta de nuevo."}`,
+          "error",
+        );
+      } else {
+        $("form-status").textContent = "Revisa los campos";
+        notice(error?.detail || error?.country || "No pudimos guardar el brief.", "error");
+      }
     } finally {
       loading.hidden = true;
       submitButton.disabled = false;
@@ -225,6 +299,8 @@
   $("product_slug").addEventListener("change", renderProductPreview);
   $("upload-logo-toggle").addEventListener("change", (event) => { $("upload-logo-fields").hidden = !event.target.checked; });
   $("brief-form").addEventListener("submit", createBrief);
+  $("prompt-back").addEventListener("click", returnToBrief);
+  $("prompt-continue").addEventListener("click", continueFromPrompt);
   $("change-password-form").addEventListener("submit", changeOwnPassword);
   $("refresh-admin").addEventListener("click", () => {
     loadUser().then((authenticated) => {
