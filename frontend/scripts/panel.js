@@ -39,7 +39,7 @@
     $("role-label").textContent = "Acceso restringido";
     setBriefFormDisabled(true);
     $("my-account").hidden = true;
-    notice("Ingresa con la contraseña de acceso para crear briefs.", "error");
+    notice("Ingresa con la contraseña de acceso para crear diseños.", "error");
     const loginLink = document.createElement("a");
     loginLink.href = "login.html";
     loginLink.textContent = "Iniciar sesión";
@@ -50,7 +50,7 @@
       showUnauthenticatedState();
       return;
     }
-    notice("No pudimos cargar las opciones del brief. Verifica que la API esté disponible.", "error");
+    notice("No pudimos cargar las opciones de diseño. Verifica que la API esté disponible.", "error");
   };
 
   const fillSelect = (select, items, valueKey, labelKey, placeholder) => {
@@ -194,7 +194,7 @@
   const returnToBrief = () => {
     $("prompt-review-step").hidden = true;
     $("brief-form").hidden = false;
-    $("form-status").textContent = "Brief guardado";
+    $("form-status").textContent = "Diseño guardado";
     $("brief-submit").focus();
   };
 
@@ -300,7 +300,7 @@
         const referenceBody = new FormData();
         referenceBody.append("brief", brief.id);
         referenceBody.append("file", referenceFile);
-        referenceBody.append("caption", "Referencia visual del brief");
+        referenceBody.append("caption", "Referencia visual del diseño");
         await window.authenticatedFetch(
           "/api/v1/brief-reference-uploads/",
           { method: "POST", body: referenceBody },
@@ -312,19 +312,19 @@
         { method: "POST" },
       );
       const promptedBrief = await json(promptResponse);
-      $("form-status").textContent = "Brief guardado";
-      notice(`Brief guardado correctamente. ID: ${brief.id}`);
+      $("form-status").textContent = "Diseño guardado";
+      notice(`Diseño guardado correctamente. ID: ${brief.id}`);
       showPromptReview(promptedBrief);
     } catch (error) {
       if (savedBrief) {
-        $("form-status").textContent = "Brief guardado; propuesta pendiente";
+        $("form-status").textContent = "Diseño guardado; propuesta pendiente";
         notice(
-          `El brief ${savedBrief.id} quedó guardado, pero no pudimos completar el siguiente paso. ${error?.detail || "Intenta de nuevo."}`,
+          `El diseño ${savedBrief.id} quedó guardado, pero no pudimos completar el siguiente paso. ${error?.detail || "Intenta de nuevo."}`,
           "error",
         );
       } else {
         $("form-status").textContent = "Revisa los campos";
-        notice(error?.detail || error?.country || "No pudimos guardar el brief.", "error");
+        notice(error?.detail || error?.country || "No pudimos guardar el diseño.", "error");
       }
     } finally {
       loading.hidden = true;

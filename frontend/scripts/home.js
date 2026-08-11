@@ -19,7 +19,7 @@
   };
 
   const workflowState = (workflow) => {
-    if (!workflow.briefs) return { active: 0, label: "Crear brief", href: "panel.html" };
+    if (!workflow.briefs) return { active: 0, label: "Crear diseño", href: "panel.html" };
     if (!workflow.designs) return { active: 1, label: "Generar preview", href: "panel.html" };
     if (workflow.pending_review || !workflow.approved) {
       return { active: 2, label: "Revisión pendiente", href: "review.html" };

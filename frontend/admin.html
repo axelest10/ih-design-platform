@@ -13,21 +13,21 @@
   <body>
     <header class="admin-header">
       <a href="index.html" class="brand"><img src="../brand/assets/logos/global/ih-world/ih-logo-primary.svg" alt="International House" /><span>Design Platform</span></a>
-      <a href="panel.html" class="back-link">← Volver al brief</a>
+      <a href="panel.html" class="back-link">← Volver a Crear diseño</a>
     </header>
     <main class="admin-main">
-      <section class="intro"><p class="eyebrow">Panel administrador</p><h1>Control del sistema LATAM.</h1><p>Gestiona briefs, logos aportados y el lote de las primeras 50 pruebas.</p></section>
+      <section class="intro"><p class="eyebrow">Panel administrador</p><h1>Control del sistema LATAM.</h1><p>Gestiona diseños, logos aportados y el lote de las primeras 50 pruebas.</p></section>
       <div id="admin-notice" class="notice" role="status"></div>
       <section id="access-denied" class="access-denied" hidden><h2>Este panel requiere acceso administrador.</h2><p>Solicita a un administrador el rol correspondiente.</p></section>
       <div id="admin-content" hidden>
         <section class="stats-grid" aria-label="Resumen administrativo">
-          <article><span>Briefs</span><strong id="stat-briefs">—</strong></article>
+          <article><span>Diseños</span><strong id="stat-briefs">—</strong></article>
           <article><span>Logos aportados</span><strong id="stat-logos">—</strong></article>
           <article><span>Referencias visuales</span><strong id="stat-references">—</strong></article>
           <article><span>Pruebas listas</span><strong id="stat-ready">—</strong></article>
         </section>
         <section class="admin-grid">
-          <article class="table-card"><div class="table-heading"><div><p class="eyebrow">Producción</p><h2>Briefs recientes</h2></div><button id="refresh" class="button">Actualizar</button></div><div class="table-wrap"><table><thead><tr><th>Brief</th><th>Producto</th><th>Estado</th><th>Prueba</th></tr></thead><tbody id="brief-table"></tbody></table></div></article>
+          <article class="table-card"><div class="table-heading"><div><p class="eyebrow">Producción</p><h2>Diseños recientes</h2></div><button id="refresh" class="button">Actualizar</button></div><div class="table-wrap"><table><thead><tr><th>Diseño</th><th>Producto</th><th>Estado</th><th>Prueba</th></tr></thead><tbody id="brief-table"></tbody></table></div></article>
           <article class="table-card"><div class="table-heading"><div><p class="eyebrow">Catálogo incremental</p><h2>Logos aportados</h2></div></div><div class="table-wrap"><table><thead><tr><th>Nombre</th><th>País</th><th>Estado</th></tr></thead><tbody id="logo-table"></tbody></table></div></article>
         </section>
         <section class="management-stack" aria-label="Gestión de plataforma">
@@ -110,7 +110,7 @@
             <p id="marketing-asset-bulk-status" class="form-status" role="status" aria-live="polite"></p>
           </form>
         </section>
-        <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones del brief <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>
+        <section class="link-grid"><a href="/api/v1/briefs/options/" target="_blank">Ver opciones de diseño <span>↗</span></a><a href="/api/v1/branding/logos/" target="_blank">Ver catálogo oficial <span>↗</span></a><a href="/api/v1/artwork-references/knowledge/?limit=20" target="_blank">Ver base visual <span>↗</span></a><a href="/api/v1/me/" target="_blank">Ver permisos actuales <span>↗</span></a></section>
       </div>
     </main>
     <script src="scripts/password-fields.js"></script>

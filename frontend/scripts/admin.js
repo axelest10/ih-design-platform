@@ -71,7 +71,7 @@
     $("stat-logos").textContent = logos.count ?? logoItems.length;
     $("stat-references").textContent = references.summary?.total_assets ?? "—";
     $("stat-ready").textContent = briefItems.filter((brief) => ["test_ready", "completed"].includes(brief.status)).length;
-    renderRows("brief-table", briefItems.slice(0, 20), "Todavía no hay briefs.", 4, (brief) => `<tr><td>${escapeHtml(brief.title)}</td><td>${escapeHtml(brief.product_slug || "—")}</td><td class="status">${escapeHtml(brief.status)}</td><td>${brief.test_number || "—"}</td></tr>`);
+    renderRows("brief-table", briefItems.slice(0, 20), "Todavía no hay diseños.", 4, (brief) => `<tr><td>${escapeHtml(brief.title)}</td><td>${escapeHtml(brief.product_slug || "—")}</td><td class="status">${escapeHtml(brief.status)}</td><td>${brief.test_number || "—"}</td></tr>`);
     renderRows("logo-table", logoItems.slice(0, 20), "Todavía no hay logos aportados.", 3, (logo) => `<tr><td>${escapeHtml(logo.name)}</td><td>${escapeHtml(logo.country || "—")}</td><td class="status">${escapeHtml(logo.status)}</td></tr>`);
     renderUsers(users);
     renderMaterialTypes(materialTypes);
