@@ -21,6 +21,8 @@ COUNTRY_LABELS = {
     "CL": "Chile",
     "PE": "Perú",
 }
+LOGO_VARIANT_PRIORITY = {"classic": 0, "color": 1, "black": 2, "white": 3}
+LOGO_FORMAT_PRIORITY = {"svg": 0, "png": 1, "jpg": 2, "jpeg": 3}
 
 
 def is_regional_admin(user) -> bool:
@@ -72,6 +74,34 @@ def approved_logos_for_brief(country: str, user) -> list[dict]:
     return entries
 
 
+def primary_regional_logos(logos: list[dict]) -> list[dict]:
+    """Elige un único archivo canónico por sede para el selector principal."""
+    selected = {}
+    for entry in logos:
+        if entry.get("scope") != "regional":
+            continue
+        brand = str(entry.get("brand") or entry.get("name") or "").strip()
+        key = (str(entry.get("country") or ""), brand.casefold())
+        priority = (
+            LOGO_VARIANT_PRIORITY.get(str(entry.get("variant") or ""), 99),
+            LOGO_FORMAT_PRIORITY.get(str(entry.get("format") or ""), 99),
+            str(entry.get("name") or ""),
+        )
+        current = selected.get(key)
+        if current is None or priority < current[0]:
+            selected[key] = (priority, dict(entry))
+    return [
+        item[1]
+        for item in sorted(
+            selected.values(),
+            key=lambda item: (
+                str(item[1].get("country") or ""),
+                str(item[1].get("brand") or "").casefold(),
+            ),
+        )
+    ]
+
+
 def brief_options(user, country: str | None = None) -> dict:
     selected_country = country or ""
     regional_admin = is_regional_admin(user)
@@ -98,6 +128,7 @@ def brief_options(user, country: str | None = None) -> dict:
         ],
         "products": primary_products(),
         "logos": logos,
+        "primary_logos": primary_regional_logos(logos),
         "uploaded_logos": uploaded_logos,
         "regional_access": regional_admin,
         "regional_brand_notice": (

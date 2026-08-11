@@ -78,7 +78,8 @@
 
   const loadOptions = () => fetch(`/api/v1/briefs/options/?country=${encodeURIComponent($("country").value)}`).then(json).then((options) => {
     state.options = options;
-    const localLogos = options.logos.filter((logo) => logo.scope === "regional");
+    const localLogos = options.primary_logos
+      || options.logos.filter((logo) => logo.scope === "regional");
     fillSelect($("brand_logo_key"), localLogos, "name", "brand", "Selecciona el logo IH de la sede");
     fillSelect($("product_slug"), options.products, "product_slug", "canonical_name", "Selecciona un producto");
     additionalLogoPicker.setOptions([

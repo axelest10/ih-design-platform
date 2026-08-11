@@ -1,4 +1,5 @@
 import pytest
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 
@@ -27,6 +28,31 @@ def test_brief_options_expose_only_primary_products_and_country_logos():
         and (logo["scope"] != "regional" or logo.get("country") == "CO")
         for logo in payload["logos"]
     )
+    assert len(payload["primary_logos"]) == len(
+        {logo["brand"].casefold() for logo in payload["primary_logos"]}
+    )
+
+
+@pytest.mark.django_db
+def test_regional_admin_primary_logo_options_are_unique_and_prefer_classic_svg():
+    user = get_user_model().objects.create_user(
+        username="regional-logo-admin",
+        email="regional-logo-admin@ihmexico.com",
+        password="temporary-password",
+        is_staff=True,
+    )
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.get("/api/v1/briefs/options/", {"country": "CO"})
+
+    assert response.status_code == 200
+    primary_logos = response.json()["primary_logos"]
+    labels = [logo["brand"].casefold() for logo in primary_logos]
+    assert len(labels) == len(set(labels))
+    by_brand = {logo["brand"]: logo for logo in primary_logos}
+    assert by_brand["International House Bogotá"]["name"] == "ih-bogota-svg"
+    assert by_brand["International House México"]["name"] == "ih-mexico-drive-svg"
 
 
 @pytest.mark.django_db
