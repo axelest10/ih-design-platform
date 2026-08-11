@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.urls import reverse
 from rest_framework.test import APIClient
 
 from materials.models import MarketingAsset
@@ -26,7 +27,7 @@ def _role_client(role):
 def test_public_marketing_assets_only_expose_active_files_and_filters(tmp_path, monkeypatch):
     storage = FileSystemStorage(location=tmp_path, base_url="/media/")
     monkeypatch.setattr(MarketingAsset._meta.get_field("file"), "storage", storage)
-    MarketingAsset.objects.create(
+    active_asset = MarketingAsset.objects.create(
         brand="ih",
         country="MX",
         category="banner_linkedin",
@@ -49,8 +50,97 @@ def test_public_marketing_assets_only_expose_active_files_and_filters(tmp_path, 
 
     assert response.status_code == 200
     assert [item["label"] for item in response.json()] == ["Banner México"]
-    assert response.json()[0]["file_url"].endswith("banner.png")
+    assert response.json()[0]["file_url"] == reverse(
+        "marketing-asset-file", args=[active_asset.pk, "banner.png"]
+    )
     assert response.json()[0]["category_label"] == "Banner de LinkedIn"
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_public_marketing_asset_file_proxy_returns_content_and_cache_headers(
+    tmp_path, monkeypatch
+):
+    storage = FileSystemStorage(location=tmp_path, base_url="https://r2.example.invalid/")
+    monkeypatch.setattr(MarketingAsset._meta.get_field("file"), "storage", storage)
+    asset = MarketingAsset.objects.create(
+        brand="ih",
+        country="MX",
+        category="foto_perfil",
+        label="Perfil México",
+        file=SimpleUploadedFile("perfil.png", b"real-png-content"),
+    )
+
+    response = APIClient().get(
+        reverse("marketing-asset-file", args=[asset.pk, "nombre-ignorado.png"])
+    )
+
+    assert response.status_code == 200
+    assert b"".join(response.streaming_content) == b"real-png-content"
+    assert response["Content-Type"] == "image/png"
+    assert response["Cache-Control"] == "public, max-age=3600"
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_marketing_asset_file_proxy_returns_404_for_missing_asset():
+    response = APIClient().get(
+        reverse("marketing-asset-file", args=[999_999, "missing.png"])
+    )
+
+    assert response.status_code == 404
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_marketing_asset_file_proxy_hides_inactive_asset_from_non_admin(
+    tmp_path, monkeypatch
+):
+    storage = FileSystemStorage(location=tmp_path, base_url="/media/")
+    monkeypatch.setattr(MarketingAsset._meta.get_field("file"), "storage", storage)
+    asset = MarketingAsset.objects.create(
+        brand="ielts",
+        country="MX",
+        category="foto_perfil",
+        label="IELTS inactivo",
+        file=SimpleUploadedFile("ielts.png", b"inactive-content"),
+        active=False,
+    )
+    client, _ = _role_client("marketing")
+
+    response = client.get(
+        reverse("marketing-asset-file", args=[asset.pk, "ielts.png"])
+    )
+
+    assert response.status_code == 404
+    admin_client, _ = _role_client("platform_admin")
+    admin_response = admin_client.get(
+        reverse("marketing-asset-file", args=[asset.pk, "ielts.png"])
+    )
+    assert admin_response.status_code == 200
+    assert b"".join(admin_response.streaming_content) == b"inactive-content"
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_marketing_asset_file_proxy_returns_404_when_storage_object_is_missing(
+    tmp_path, monkeypatch
+):
+    storage = FileSystemStorage(location=tmp_path, base_url="/media/")
+    monkeypatch.setattr(MarketingAsset._meta.get_field("file"), "storage", storage)
+    asset = MarketingAsset.objects.create(
+        brand="ih",
+        country="MX",
+        category="foto_perfil",
+        label="Archivo perdido",
+        file="marketing-assets/missing.png",
+    )
+
+    response = APIClient().get(
+        reverse("marketing-asset-file", args=[asset.pk, "missing.png"])
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.corporate_auth

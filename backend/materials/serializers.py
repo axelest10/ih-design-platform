@@ -1,3 +1,7 @@
+from pathlib import Path
+from urllib.parse import quote
+
+from django.urls import reverse
 from rest_framework import serializers
 
 from .models import (
@@ -28,7 +32,10 @@ class MarketingAssetSerializer(serializers.ModelSerializer):
         read_only_fields = ("uploaded_by", "created_at", "file_url")
 
     def get_file_url(self, obj):
-        return obj.file.url if obj.file else None
+        if not obj.file:
+            return None
+        filename = quote(Path(obj.file.name).name)
+        return reverse("marketing-asset-file", args=[obj.pk, filename])
 
     def validate_country(self, value):
         return value.strip().upper()

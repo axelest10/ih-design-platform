@@ -1,6 +1,8 @@
+import mimetypes
 import re
 from pathlib import Path
 
+from django.http import FileResponse, Http404
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import AllowAny
@@ -104,6 +106,11 @@ class MarketingAssetViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewS
         "destroy": (ROLE_PLATFORM_ADMIN,),
     }
 
+    def get_permissions(self):
+        if self.action == "file":
+            return [AllowAny()]
+        return super().get_permissions()
+
     def get_queryset(self):
         queryset = super().get_queryset()
         if not is_platform_admin_user(self.request.user):
@@ -116,6 +123,26 @@ class MarketingAssetViewSet(PublicCatalogReadMixin, RoleAwareViewSet, ModelViewS
 
     def perform_create(self, serializer):
         serializer.save(uploaded_by=self.request.user)
+
+    def file(self, request, pk=None, filename=None):
+        """Sirve un material desde el storage sin exponer su URL firmada al navegador."""
+        asset = self.get_object()
+        if not asset.file:
+            raise Http404
+
+        try:
+            file_handle = asset.file.open("rb")
+        except Exception as exc:
+            raise Http404 from exc
+
+        content_type, _ = mimetypes.guess_type(asset.file.name)
+        response = FileResponse(
+            file_handle,
+            content_type=content_type or "application/octet-stream",
+            filename=Path(asset.file.name).name,
+        )
+        response["Cache-Control"] = "public, max-age=3600"
+        return response
 
     @action(detail=False, methods=["post"])
     def bulk(self, request):

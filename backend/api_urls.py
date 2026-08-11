@@ -52,6 +52,11 @@ urlpatterns = [
         MarketingAssetViewSet.as_view({"post": "bulk"}),
         name="materials-marketing-assets-bulk",
     ),
+    path(
+        "marketing-assets/<int:pk>/file/<str:filename>",
+        MarketingAssetViewSet.as_view({"get": "file"}),
+        name="marketing-asset-file",
+    ),
     path("stats/summary/", stats_summary, name="stats-summary"),
     path("security/users/", corporate_user_list, name="security-user-list"),
     path(
