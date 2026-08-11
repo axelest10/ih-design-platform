@@ -25,6 +25,7 @@ ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "pdf", "ppt", "pptx", "docx"
 CATEGORY_RULES = {
     "foto de perfil": "foto_perfil",
     "fotos de perfil": "foto_perfil",
+    "foto whatsapp": "foto_perfil",
     "zoom": "zoom_background",
     "background computadora": "background_computadora",
     "fondo computadora": "background_computadora",
@@ -36,6 +37,7 @@ CATEGORY_RULES = {
     "banner linkedin": "banner_linkedin",
     "linkedin": "banner_linkedin",
     "template ppt": "template_ppt",
+    "templates ppt": "template_ppt",
     "plantilla ppt": "template_ppt",
     "powerpoint": "template_ppt",
 }
@@ -259,7 +261,7 @@ def _upload_batch(session, base_url: str, batch: list[AssetCandidate]):
                 "category": first.category,
             },
             files=multipart,
-            headers={"X-CSRFToken": csrf_token},
+            headers={"X-CSRFToken": csrf_token, "Referer": f"{base_url}/"},
             timeout=180,
         )
     finally:

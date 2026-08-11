@@ -1,5 +1,12 @@
 import pytest
-from scripts.bulk_upload_marketing_assets import UploadError, execute_upload, main, scan_assets
+from scripts.bulk_upload_marketing_assets import (
+    AssetCandidate,
+    UploadError,
+    _upload_batch,
+    execute_upload,
+    main,
+    scan_assets,
+)
 
 
 def test_scan_assets_infers_brand_country_category_and_label(tmp_path):
@@ -8,6 +15,8 @@ def test_scan_assets_infers_brand_country_category_and_label(tmp_path):
         source / "INTERNATIONAL HOUSE" / "México" / "Fotos de perfil" / "IH-MX_perfil.png",
         source / "INTERNATIONAL HOUSE" / "Colombia" / "Desktop" / "COL 1-100.jpg",
         source / "IELTS" / "Firmas electrónicas" / "IELTS_FIRMA.docx",
+        source / "INTERNATIONAL HOUSE" / "Chile" / "Foto Whatsapp" / "whatsapp.png",
+        source / "IELTS" / "Templates Ppt" / "plantilla.pptx",
         source / "IELTS" / "Carpeta desconocida" / "sin-categoria.pdf",
     )
     for path in files:
@@ -37,6 +46,8 @@ def test_scan_assets_infers_brand_country_category_and_label(tmp_path):
         "",
         "firma_electronica",
     )
+    assert by_name["whatsapp.png"].category == "foto_perfil"
+    assert by_name["plantilla.pptx"].category == "template_ppt"
     assert by_name["sin-categoria.pdf"].reason == "sin categoría reconocida"
 
 
@@ -62,3 +73,35 @@ def test_execute_requires_environment_credentials(monkeypatch):
 
     with pytest.raises(UploadError, match="IH_DESIGN_USERNAME, IH_DESIGN_PASSWORD"):
         execute_upload([], "https://example.invalid")
+
+
+def test_upload_batch_sends_https_referer_with_csrf_header(tmp_path):
+    file_path = tmp_path / "perfil.png"
+    file_path.write_bytes(b"png")
+    candidate = AssetCandidate(
+        path=file_path,
+        relative_path="perfil.png",
+        brand="ih",
+        country="MX",
+        category="foto_perfil",
+        label="perfil",
+    )
+
+    class StubSession:
+        cookies = {"csrftoken": "csrf-token"}
+
+        def post(self, url, **kwargs):
+            self.url = url
+            self.kwargs = kwargs
+            return "response"
+
+    session = StubSession()
+
+    response = _upload_batch(session, "https://example.test", [candidate])
+
+    assert response == "response"
+    assert session.url == "https://example.test/api/v1/materials/marketing-assets/bulk/"
+    assert session.kwargs["headers"] == {
+        "X-CSRFToken": "csrf-token",
+        "Referer": "https://example.test/",
+    }
