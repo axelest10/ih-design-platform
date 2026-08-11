@@ -60,6 +60,32 @@ TEMPLATE_SPECS = {
         },
     },
 }
+SVG_BASE_POSITIONS = {
+    "square-v1": {
+        "eyebrow_y": 340,
+        "headline_y": 460,
+        "body_y": 580,
+        "cta_rect_y": 720,
+        "cta_rect_height": 72,
+        "cta_text_y": 766,
+    },
+    "story-v1": {
+        "eyebrow_y": 548,
+        "headline_y": 650,
+        "body_y": 780,
+        "cta_rect_y": 1040,
+        "cta_rect_height": 72,
+        "cta_text_y": 1086,
+    },
+    "portrait-v1": {
+        "eyebrow_y": 388,
+        "headline_y": 490,
+        "body_y": 620,
+        "cta_rect_y": 860,
+        "cta_rect_height": 72,
+        "cta_text_y": 906,
+    },
+}
 
 
 class RenderValidationError(ValueError):
@@ -410,6 +436,24 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
     text_layout = {item["name"]: item for item in layout_summary["text_layout"]}
     headline_layout = text_layout["headline"]
     body_layout = text_layout["body"]
+    base_positions = SVG_BASE_POSITIONS[template_key]
+    headline_extra = max(0, headline_layout["line_count"] - 1) * round(
+        headline_layout["font_size"] * 1.15, 2
+    )
+    body_extra = max(0, body_layout["line_count"] - 1) * round(
+        body_layout["font_size"] * 1.15, 2
+    )
+    body_y = base_positions["body_y"] + headline_extra
+    cta_shift = headline_extra + body_extra
+    cta_rect_y = base_positions["cta_rect_y"] + cta_shift
+    cta_text_y = base_positions["cta_text_y"] + cta_shift
+    spec = TEMPLATE_SPECS[template_key]
+    safe_bottom = spec["height"] - spec["safe_margin"]
+    if cta_rect_y + base_positions["cta_rect_height"] > safe_bottom:
+        raise RenderValidationError(
+            "El copy es demasiado largo para esta plantilla incluso después de ajustar "
+            "tamaño y líneas; acórtalo o elige otro formato."
+        )
     contrast_summary = _validate_contrast(
         accent_hex,
         text_hex,
@@ -441,7 +485,10 @@ def render_preview(payload: dict[str, Any]) -> RenderedPreview:
             x=120,
             font_size=body_layout["font_size"],
         ),
+        "body_y": f"{body_y:g}",
         "cta": _escape(cta),
+        "cta_rect_y": f"{cta_rect_y:g}",
+        "cta_text_y": f"{cta_text_y:g}",
     }
     html_template = _template_path(template_key, "html").read_text(encoding="utf-8")
     svg_template = _template_path(template_key, "svg").read_text(encoding="utf-8")

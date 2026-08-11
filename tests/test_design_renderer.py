@@ -1,9 +1,19 @@
+import re
+
 import pytest
 from rest_framework.test import APIClient
 
 from briefs.models import DesignBrief
 from designs.models import Design, DesignVersion
 from designs.services.renderer import RenderValidationError, _fit_text, render_preview
+
+
+def _svg_positions(svg):
+    body = re.search(r'<text x="120" y="([^"]+)"[^>]+font-weight="400">', svg)
+    cta_rect = re.search(r'<rect x="120" y="([^"]+)" width="300" height="72"', svg)
+    cta_text = re.search(r'<text x="270" y="([^"]+)"', svg)
+    assert body and cta_rect and cta_text
+    return tuple(float(match.group(1)) for match in (body, cta_rect, cta_text))
 
 
 def test_square_v1_renderer_returns_html_and_svg_with_escaped_content():
@@ -59,6 +69,96 @@ def test_renderer_adapts_text_that_exceeds_the_base_safe_width():
     assert rendered.data["headline_font_size"] < 72
     assert len(rendered.data["headline_lines"]) >= 2
     assert "<tspan" in rendered.svg
+
+
+def test_svg_moves_body_by_headline_extra_line_height():
+    headline = "Aprende inglés para crecer y abrir nuevas oportunidades profesionales"
+    rendered = render_preview({"headline": headline, "body": "Cuerpo corto"})
+
+    line_count = len(rendered.data["headline_lines"])
+    assert line_count >= 2
+    expected_extra = (line_count - 1) * round(
+        rendered.data["headline_font_size"] * 1.15, 2
+    )
+    body_y, cta_rect_y, cta_text_y = _svg_positions(rendered.svg)
+    assert body_y == 580 + expected_extra
+    assert body_y > 580
+    assert cta_rect_y == 720 + expected_extra
+    assert cta_text_y == 766 + expected_extra
+
+
+def test_svg_moves_cta_for_wrapped_body_without_moving_body_baseline():
+    body = (
+        "Aprende inglés con acompañamiento experto y actividades prácticas para "
+        "comunicarte con confianza todos los días."
+    )
+    rendered = render_preview({"headline": "Inglés para ti", "body": body})
+
+    assert len(rendered.data["headline_lines"]) == 1
+    body_line_count = len(rendered.data["body_lines"])
+    assert body_line_count >= 2
+    body_extra = (body_line_count - 1) * round(
+        rendered.data["body_font_size"] * 1.15, 2
+    )
+    body_y, cta_rect_y, cta_text_y = _svg_positions(rendered.svg)
+    assert body_y == 580
+    assert cta_rect_y == 720 + body_extra
+    assert cta_text_y == 766 + body_extra
+
+
+def test_svg_moves_cta_by_combined_headline_and_body_extra_height():
+    headline = "Aprende inglés para crecer y abrir nuevas oportunidades profesionales"
+    body = (
+        "Desarrolla habilidades prácticas para comunicarte con confianza en situaciones "
+        "personales, académicas y profesionales."
+    )
+    rendered = render_preview({"headline": headline, "body": body})
+
+    headline_extra = (len(rendered.data["headline_lines"]) - 1) * round(
+        rendered.data["headline_font_size"] * 1.15, 2
+    )
+    body_extra = (len(rendered.data["body_lines"]) - 1) * round(
+        rendered.data["body_font_size"] * 1.15, 2
+    )
+    assert headline_extra > 0
+    assert body_extra > 0
+    body_y, cta_rect_y, cta_text_y = _svg_positions(rendered.svg)
+    assert body_y == 580 + headline_extra
+    assert cta_rect_y == 720 + headline_extra + body_extra
+    assert cta_text_y == 766 + headline_extra + body_extra
+
+
+def test_svg_rejects_copy_that_pushes_cta_beyond_safe_area():
+    extreme = ("palabra " * 22).strip()
+
+    with pytest.raises(RenderValidationError, match="demasiado largo para esta plantilla"):
+        render_preview({"headline": extreme, "body": extreme})
+
+
+@pytest.mark.parametrize(
+    ("template_key", "body_y", "cta_rect_y", "cta_text_y"),
+    [
+        ("square-v1", 580, 720, 766),
+        ("story-v1", 780, 1040, 1086),
+        ("portrait-v1", 620, 860, 906),
+    ],
+)
+def test_svg_keeps_original_positions_for_short_copy(
+    template_key, body_y, cta_rect_y, cta_text_y
+):
+    rendered = render_preview(
+        {
+            "template_key": template_key,
+            "headline": "Inglés para ti",
+            "body": "Aprende hoy.",
+            "cta": "Conoce más",
+        }
+    )
+
+    assert _svg_positions(rendered.svg) == (body_y, cta_rect_y, cta_text_y)
+    assert "{{ body_y }}" not in rendered.svg
+    assert "{{ cta_rect_y }}" not in rendered.svg
+    assert "{{ cta_text_y }}" not in rendered.svg
 
 
 def test_fit_text_keeps_base_size_for_short_text():
