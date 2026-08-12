@@ -65,7 +65,11 @@ La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROP
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
 `pending` con `integration_status=needs_confirmation`; una falla del proveedor deja
 `integration_status=provider_error` y tampoco revierte la versión generada. El timeout es
-configurable y la clave nunca se persiste en el reporte.
+configurable y la clave nunca se persiste en el reporte. Para la validación inicial se recomienda
+configurar `ANTHROPIC_MODEL=claude-sonnet-5`, ID vigente documentado por Anthropic para un equilibrio
+entre velocidad e inteligencia; sigue siendo una variable de entorno y no una constante del
+código. Antes de cambiarlo en el futuro, confirmar el ID disponible en la cuenta mediante la
+documentación o Models API oficial.
 
 ## Comandos del servicio web
 

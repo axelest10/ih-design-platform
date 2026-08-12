@@ -132,7 +132,11 @@ def test_provider_failure_keeps_generated_version_and_records_pending_error():
     run_automatic_design_review(version, provider=FailingProvider())
 
     assert DesignVersion.objects.filter(pk=version.pk).exists()
+    assert Design.objects.filter(pk=design.pk).exists()
+    design.refresh_from_db()
     version.refresh_from_db()
+    assert design.approved_version is None
+    assert design.status != Design.Status.APPROVED
     assert version.claude_review_status == DesignVersion.ClaudeReviewStatus.PENDING
     assert version.claude_review["integration_status"] == "provider_error"
     assert version.claude_review["provider"] == "anthropic-test"
