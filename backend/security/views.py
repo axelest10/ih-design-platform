@@ -12,6 +12,8 @@ from rest_framework.decorators import (
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from common.observability import operation_event
+
 from .permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
@@ -44,11 +46,23 @@ def password_login(request):
     password = str(request.data.get("password") or "")
     user = authenticate(request=request, username=username, password=password)
     if user is None or not is_allowed_corporate_email(user.email):
+        operation_event(
+            "authentication.login",
+            status="failed",
+            reason="invalid_credentials_or_domain",
+            http_status=401,
+        )
         return Response(
             {"detail": "Usuario o contraseña incorrectos."},
             status=401,
         )
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    operation_event(
+        "authentication.login",
+        status="success",
+        user_id=user.pk,
+        http_status=200,
+    )
     return Response({"authenticated": True, "username": user.get_username()})
 
 

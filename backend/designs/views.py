@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from ai.services import persist_design_review, run_automatic_design_review
+from common.observability import operation_event
 from materials.models import MaterialType
 from security.permissions import (
     ROLE_DESIGNER,
@@ -122,6 +123,14 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             return Response({"detail": "La versión solicitada no existe."}, status=404)
 
         output_format = str(request.query_params.get("output") or "svg").strip().lower()
+        operation_event(
+            "design.version_export",
+            design_id=design.pk,
+            version_id=version.pk,
+            version_number=version.number,
+            output=output_format,
+            user_id=getattr(request.user, "pk", None),
+        )
         filename = f"design-{design.pk}-version-{version.number}.{output_format}"
         inline_artifacts = {
             "svg": ("svg", "image/svg+xml; charset=utf-8"),

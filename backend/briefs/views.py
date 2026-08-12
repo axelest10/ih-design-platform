@@ -2,6 +2,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from common.observability import operation_event
 from designs.serializers import DesignSerializer
 from security.permissions import (
     ROLE_DESIGNER,
@@ -38,7 +39,13 @@ class DesignBriefViewSet(RoleAwareViewSet, ModelViewSet):
 
     def perform_create(self, serializer):
         creator = self.request.user if self.request.user.is_authenticated else None
-        serializer.save(created_by=creator)
+        brief = serializer.save(created_by=creator)
+        operation_event(
+            "brief.created",
+            brief_id=brief.pk,
+            user_id=getattr(creator, "pk", None),
+            status=brief.status,
+        )
 
     @action(detail=True, methods=["post"], url_path="generate-prompt")
     def generate_prompt(self, request, pk=None):

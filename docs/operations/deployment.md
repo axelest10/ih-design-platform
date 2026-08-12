@@ -189,3 +189,23 @@ HTML nuevo con JavaScript anterior:
 
 La versión se calcula desde el contenido durante el render del HTML; no requiere actualizar una
 constante manual ni configurar una variable adicional en Railway.
+
+## Diagnóstico por correlation ID
+
+Cada respuesta incluye `X-Request-ID`. Si el cliente envía un UUID válido en ese encabezado se
+conserva; cualquier otro valor se reemplaza por un UUID generado por la aplicación. Los eventos se
+escriben como JSON compacto en el logger `ih_design.operations` y pueden localizarse en los logs
+del servicio web de Railway buscando ese `correlation_id`.
+
+Eventos disponibles:
+
+- `authentication.login` y `authentication.rate_limited`;
+- `brief.created`;
+- `design.version_created` y `design.version_export`;
+- `visual_review.started` y `visual_review.completed`.
+
+Solo se registran IDs, estado, proveedor, formato, template y duración. No se aceptan como campos
+de logging contraseñas, API keys, tokens, cookies, contenido de prompts, archivos ni datos base64.
+Para investigar un incidente: copia `X-Request-ID` desde Network en el navegador, busca ese UUID en
+Railway y sigue los eventos cronológicamente; si hubo proveedor externo, revisa `provider`,
+`duration_ms` y `status` sin necesitar inspeccionar el contenido privado de la pieza.

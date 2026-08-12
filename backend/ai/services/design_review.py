@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from time import perf_counter
 from typing import Any, Protocol
 
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from common.observability import operation_event
 from designs.models import Design, DesignVersion
 
 
@@ -112,10 +114,18 @@ def run_automatic_design_review(
 ) -> DesignVersion:
     """Ejecuta Anthropic cuando está configurado o registra un pendiente trazable."""
     selected_provider = provider or configured_visual_review_provider()
+    started_at = perf_counter()
+    operation_event(
+        "visual_review.started",
+        design_id=version.design_id,
+        version_id=version.pk,
+        provider=selected_provider.name,
+        automated=True,
+    )
     try:
         result = selected_provider.review(_review_request(version))
     except VisualReviewProviderError as exc:
-        return persist_design_review(
+        reviewed = persist_design_review(
             version,
             decision=DesignVersion.ClaudeReviewStatus.PENDING,
             report={
@@ -125,14 +135,34 @@ def run_automatic_design_review(
             provider=selected_provider.name,
             automated=True,
         )
+        operation_event(
+            "visual_review.completed",
+            design_id=version.design_id,
+            version_id=version.pk,
+            provider=selected_provider.name,
+            automated=True,
+            status="provider_error",
+            duration_ms=round((perf_counter() - started_at) * 1000, 2),
+        )
+        return reviewed
 
-    return persist_design_review(
+    reviewed = persist_design_review(
         version,
         decision=result.decision,
         report=result.report,
         provider=selected_provider.name,
         automated=True,
     )
+    operation_event(
+        "visual_review.completed",
+        design_id=version.design_id,
+        version_id=version.pk,
+        provider=selected_provider.name,
+        automated=True,
+        status=result.decision,
+        duration_ms=round((perf_counter() - started_at) * 1000, 2),
+    )
+    return reviewed
 
 
 def configured_visual_review_provider() -> VisualReviewProvider:

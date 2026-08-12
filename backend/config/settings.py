@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     "catalog",
     "campaigns",
     "briefs",
-    "designs",
+    "designs.apps.DesignsConfig",
     "ai",
     "assets",
     "validations",
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "common.middleware.CorrelationIdMiddleware",
     "csp.middleware.CSPMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
