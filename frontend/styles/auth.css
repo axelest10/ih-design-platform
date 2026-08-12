@@ -73,6 +73,7 @@ a { color: inherit; }
 .auth-intro { margin: 0 0 26px; color: var(--auth-muted); font-size: 17px; }
 .auth-intro--error { color: #b42318; }
 .auth-form { display: grid; gap: 10px; }
+.auth-form[hidden] { display: none; }
 .auth-form label { font-size: 13px; font-weight: 800; }
 
 .auth-form input {

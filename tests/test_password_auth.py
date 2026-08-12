@@ -388,6 +388,9 @@ def test_password_forms_include_confirmation_and_shared_visibility_control():
 
 def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
     login_html = (REPO_ROOT / "frontend" / "login.html").read_text(encoding="utf-8")
+    login_styles = (
+        REPO_ROOT / "frontend" / "styles" / "auth.css"
+    ).read_text(encoding="utf-8")
     login_script = (
         REPO_ROOT / "frontend" / "scripts" / "login.js"
     ).read_text(encoding="utf-8")
@@ -406,3 +409,4 @@ def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
     assert "password-reset/request/" in login_script
     assert "password-reset/confirm/" in login_script
     assert "#reset=" not in login_script
+    assert ".auth-form[hidden] { display: none; }" in login_styles
