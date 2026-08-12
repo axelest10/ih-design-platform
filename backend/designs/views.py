@@ -3,6 +3,8 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Max
+from django.http import FileResponse, HttpResponse
+from django.utils.cache import patch_cache_control
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
@@ -107,6 +109,65 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         return Response(
             DesignSerializer(design, context=self.get_serializer_context()).data,
             status=201,
+        )
+
+    def export_version(self, request, pk=None, version_number=None):
+        """Descarga un artefacto persistido de una versión sin regenerarlo."""
+        design = self.filter_queryset(self.get_queryset()).filter(pk=pk).first()
+        if design is None:
+            return Response({"detail": "El diseño solicitado no existe."}, status=404)
+        self.check_object_permissions(request, design)
+        version = design.versions.filter(number=version_number).first()
+        if version is None:
+            return Response({"detail": "La versión solicitada no existe."}, status=404)
+
+        output_format = str(request.query_params.get("output") or "svg").strip().lower()
+        filename = f"design-{design.pk}-version-{version.number}.{output_format}"
+        inline_artifacts = {
+            "svg": ("svg", "image/svg+xml; charset=utf-8"),
+            "html": ("html", "text/html; charset=utf-8"),
+        }
+        stored_artifacts = {
+            "pdf": ("pdf_path", "application/pdf"),
+            "pptx": (
+                "pptx_path",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            ),
+        }
+
+        if output_format in inline_artifacts:
+            data_key, content_type = inline_artifacts[output_format]
+            content = version.render_data.get(data_key)
+            if not content:
+                return Response(
+                    {"detail": f"Esta versión no tiene un archivo {output_format.upper()}."},
+                    status=404,
+                )
+            response = HttpResponse(content, content_type=content_type)
+            response["Content-Disposition"] = f'attachment; filename="{filename}"'
+            patch_cache_control(response, private=True, no_store=True)
+            return response
+
+        if output_format in stored_artifacts:
+            data_key, content_type = stored_artifacts[output_format]
+            path = version.render_data.get(data_key)
+            if not path or not default_storage.exists(path):
+                return Response(
+                    {"detail": f"Esta versión no tiene un archivo {output_format.upper()}."},
+                    status=404,
+                )
+            response = FileResponse(
+                default_storage.open(path, "rb"),
+                as_attachment=True,
+                filename=filename,
+                content_type=content_type,
+            )
+            patch_cache_control(response, private=True, no_store=True)
+            return response
+
+        return Response(
+            {"detail": "Formato no disponible. Usa svg, html, pdf o pptx."},
+            status=400,
         )
 
     def _preview_document(self, design, render_payload, material_type):

@@ -46,6 +46,11 @@ router.register("material-bundles", MaterialBundleViewSet, basename="material-bu
 router.register("marketing-assets", MarketingAssetViewSet, basename="marketing-asset")
 
 urlpatterns = [
+    path(
+        "designs/<int:pk>/versions/<int:version_number>/export/",
+        DesignViewSet.as_view({"get": "export_version"}),
+        name="design-version-export",
+    ),
     path("materials/quick-design/", quick_design, name="materials-quick-design"),
     path(
         "materials/marketing-assets/bulk/",

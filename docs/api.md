@@ -22,6 +22,9 @@ hasta desactivar el modo.
   modificar el catálogo oficial.
 - `POST /brief-reference-uploads/` — adjunta una referencia visual a un brief.
 - `GET|POST /designs/` — diseños y versiones.
+- `GET /designs/{id}/versions/{number}/export/?output=svg|html|pdf|pptx` — descarga el
+  artefacto persistido de una versión, sin regenerarla ni alterar su historial. La pantalla de
+  revisión también permite convertir el SVG a PNG localmente en el navegador.
 - `POST /designs/{id}/preview/` — genera HTML/SVG con `square-v1`, `story-v1` o `portrait-v1`,
   crea una versión y pasa el diseño al estado correspondiente al modo de pruebas.
 - `POST /designs/{id}/claude-review/` — registra `pass|needs_changes` y mueve el diseño a
