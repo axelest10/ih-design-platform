@@ -9,6 +9,7 @@ from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Max
 
+from ai.services import run_automatic_design_review
 from briefs.models import DesignBrief
 from briefs.services.options import (
     PRIMARY_PRODUCT_SLUGS,
@@ -180,6 +181,8 @@ def create_quick_design(payload: dict[str, Any], *, user=None) -> dict[str, Any]
         asset_refs=asset_refs,
         validation_summary=rendered.validation_summary,
     )
+    run_automatic_design_review(version)
+    design.refresh_from_db(fields=["status", "updated_at"])
     return {
         "design_id": str(design.pk),
         "brief_id": str(brief.pk),

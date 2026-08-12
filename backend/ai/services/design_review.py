@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -39,7 +40,7 @@ class VisualReviewProvider(Protocol):
 
 
 class NeedsConfirmationClaudeReviewProvider:
-    """Stub explícito hasta que Axel confirme API, credenciales y modelo de Claude."""
+    """Fallback explícito cuando la integración de Anthropic no está configurada."""
 
     name = "claude-stub"
 
@@ -49,8 +50,8 @@ class NeedsConfirmationClaudeReviewProvider:
             report={
                 "integration_status": "needs_confirmation",
                 "summary": (
-                    "La pieza está lista para revisión, pero la integración real con Claude "
-                    "requiere confirmar proveedor, credenciales y modelo."
+                    "La pieza está lista para revisión, pero faltan ANTHROPIC_API_KEY o "
+                    "ANTHROPIC_MODEL en el entorno."
                 ),
                 "template_key": request.template_key,
             },
@@ -109,8 +110,8 @@ def run_automatic_design_review(
     *,
     provider: VisualReviewProvider | None = None,
 ) -> DesignVersion:
-    """Ejecuta el proveedor configurado; por defecto registra el stub pendiente de decisión."""
-    selected_provider = provider or NeedsConfirmationClaudeReviewProvider()
+    """Ejecuta Anthropic cuando está configurado o registra un pendiente trazable."""
+    selected_provider = provider or configured_visual_review_provider()
     try:
         result = selected_provider.review(_review_request(version))
     except VisualReviewProviderError as exc:
@@ -132,3 +133,13 @@ def run_automatic_design_review(
         provider=selected_provider.name,
         automated=True,
     )
+
+
+def configured_visual_review_provider() -> VisualReviewProvider:
+    if getattr(settings, "ANTHROPIC_API_KEY", "") and getattr(
+        settings, "ANTHROPIC_MODEL", ""
+    ):
+        from ai.providers.anthropic_review import AnthropicVisualReviewProvider
+
+        return AnthropicVisualReviewProvider()
+    return NeedsConfirmationClaudeReviewProvider()

@@ -82,10 +82,10 @@ usan el renderer PDF y también están disponibles individualmente en el editor 
 El endpoint `POST /api/v1/material-bundles/{id}/generate/` persiste el HTML y el SVG en la
 `DesignVersion` y dispara `ai.services.run_automatic_design_review` para cada pieza. La revisión
 usa exclusivamente `DesignVersion.claude_review_status` y `Design.claude-review`; no existe un
-estado paralelo para los paquetes. Mientras Axel no confirme proveedor, API key y modelo de
-Claude, el proveedor explícito `claude-stub` conserva el estado `pending` y registra
-`integration_status=needs_confirmation` en `claude_review`. Un proveedor real puede inyectarse en
-la misma interfaz y devolver `pass` o `needs_changes`. Cambridge, IELTS, MET, QC y
+estado paralelo para los paquetes. Si Railway tiene `ANTHROPIC_API_KEY` y `ANTHROPIC_MODEL`, el
+proveedor Anthropic evalúa la versión y devuelve un reporte estructurado; sin configuración, el
+fallback `claude-stub` conserva `pending` y registra `integration_status=needs_confirmation`.
+Cambridge, IELTS, MET, QC y
 otros logos se conservan como logos secundarios mediante `additional_logo_keys`, no como productos
 principales del brief. Los productos sin pilar/color confirmado quedan marcados como
 `needs_confirmation` en la validación de la pieza.

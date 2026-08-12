@@ -42,6 +42,9 @@ AWS_ACCESS_KEY_ID=<credencial fuera de Git>
 AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
 OPENAI_API_KEY=<secreto fuera de Git>
 OPENAI_MODEL=gpt-4.1-mini
+ANTHROPIC_API_KEY=<secreto creado en Claude Console>
+ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el código>
+ANTHROPIC_TIMEOUT_SECONDS=45
 LOGIN_THROTTLE_RATE=10/hour
 DESIGN_TEST_MODE=1
 DESIGN_TEST_LIMIT=50
@@ -54,6 +57,12 @@ staging se debe configurar S3-compatible mediante `django-storages` antes de car
 La autenticación actual no depende de un proveedor externo: cada integrante usa su cuenta y una
 contraseña almacenada con el hasher de Django. Los administradores crean cuentas y restablecen
 contraseñas desde el panel.
+
+La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
+`ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
+`pending` con `integration_status=needs_confirmation`; una falla del proveedor deja
+`integration_status=provider_error` y tampoco revierte la versión generada. El timeout es
+configurable y la clave nunca se persiste en el reporte.
 
 ## Comandos del servicio web
 

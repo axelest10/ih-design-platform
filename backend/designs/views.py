@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from ai.services import persist_design_review
+from ai.services import persist_design_review, run_automatic_design_review
 from materials.models import MaterialType
 from security.permissions import (
     ROLE_DESIGNER,
@@ -75,6 +75,8 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             return Response({"detail": str(exc)}, status=400)
 
         design, version = create_next_version(design, rendered)
+        run_automatic_design_review(version)
+        design.refresh_from_db(fields=["status", "updated_at"])
 
         return Response(
             {
@@ -148,6 +150,8 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 design.status = Design.Status.IN_REVIEW
             design.save(update_fields=update_fields)
 
+        run_automatic_design_review(version)
+        design.refresh_from_db(fields=["status", "updated_at"])
         return Response(
             {
                 "design_id": str(design.pk),
@@ -207,6 +211,8 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 design.status = Design.Status.IN_REVIEW
             design.save(update_fields=update_fields)
 
+        run_automatic_design_review(version)
+        design.refresh_from_db(fields=["status", "updated_at"])
         return Response(
             {
                 "design_id": str(design.pk),

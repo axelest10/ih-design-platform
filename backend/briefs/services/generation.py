@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from django.db import transaction
 
+from ai.services import run_automatic_design_review
 from designs.models import Design
 from designs.services.renderer import RenderValidationError, render_preview
 from designs.services.versioning import create_next_version
@@ -53,7 +54,9 @@ def generate_initial_design(brief: DesignBrief, copy_fields: dict[str, str]) -> 
     with transaction.atomic():
         rendered = render_preview(render_payload)
         design = Design.objects.create(brief=brief)
-        design, _version = create_next_version(design, rendered)
+        design, version = create_next_version(design, rendered)
         brief.status = DesignBrief.Status.IN_REVIEW
         brief.save(update_fields=["status", "updated_at"])
-        return design
+    run_automatic_design_review(version)
+    design.refresh_from_db(fields=["status", "updated_at"])
+    return design

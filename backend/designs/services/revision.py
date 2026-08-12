@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from ai.providers import GenerationRequest, OpenAIProvider
+from ai.services import run_automatic_design_review
 from designs.models import Design
 
 from .copy_generation import StructuredCopyError, generate_structured_copy
@@ -61,5 +62,7 @@ def revise_design(design: Design, instruction: str) -> Design:
     except (StructuredCopyError, RenderValidationError) as exc:
         raise DesignRevisionError(str(exc)) from exc
 
-    design, _version = create_next_version(design, rendered)
+    design, version = create_next_version(design, rendered)
+    run_automatic_design_review(version)
+    design.refresh_from_db(fields=["status", "updated_at"])
     return design
