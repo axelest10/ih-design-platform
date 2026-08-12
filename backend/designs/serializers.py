@@ -32,6 +32,8 @@ class DesignSerializer(serializers.ModelSerializer):
     versions = DesignVersionSerializer(many=True, read_only=True)
     brief_title = serializers.CharField(source="brief.title", read_only=True)
     brief_product_slug = serializers.CharField(source="brief.product_slug", read_only=True)
+    brief_country = serializers.CharField(source="brief.country", read_only=True)
+    brief_format = serializers.CharField(source="brief.format", read_only=True)
 
     class Meta:
         model = Design
@@ -40,6 +42,8 @@ class DesignSerializer(serializers.ModelSerializer):
             "brief",
             "brief_title",
             "brief_product_slug",
+            "brief_country",
+            "brief_format",
             "status",
             "approved_version",
             "test_number",

@@ -229,6 +229,7 @@ def test_stored_document_export_streams_persisted_file(settings, tmp_path):
 
 
 def test_review_ui_exposes_version_history_and_downloads():
+    page = (REPO_ROOT / "frontend" / "review.html").read_text(encoding="utf-8")
     script = (REPO_ROOT / "frontend" / "scripts" / "review.js").read_text(encoding="utf-8")
 
     assert "Historial de versiones" in script
@@ -238,3 +239,28 @@ def test_review_ui_exposes_version_history_and_downloads():
     assert '"test_ready", "revision_requested"' in script
     assert 'data.get("version_id")' in script
     assert 'data.get("version_number")' in script
+    for field in (
+        "review-search",
+        "review-status-filter",
+        "review-country-filter",
+        "review-product-filter",
+        "review-format-filter",
+        "review-automatic-filter",
+    ):
+        assert f'id="{field}"' in page
+    assert "brief_country" in script
+    assert "brief_format" in script
+    assert "validationSummary" in script
+    assert "review-loading" in script
+
+
+@pytest.mark.django_db
+def test_design_serializer_exposes_review_filter_fields():
+    design, _ = _design_with_version()
+    design.brief.country = "MX"
+    design.brief.save(update_fields=["country"])
+
+    payload = APIClient().get(f"/api/v1/designs/{design.pk}/").json()
+
+    assert payload["brief_country"] == "MX"
+    assert payload["brief_format"] == "square"

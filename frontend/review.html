@@ -19,6 +19,22 @@
         <section class="intro-block"><p class="eyebrow">Flujo de revisión</p><h1>Diseños listos para revisar.</h1><p>Consulta la pieza más reciente y conserva la retroalimentación dentro del mismo hilo.</p></section>
         <div id="review-notice" class="notice" role="status"></div>
         <section id="review-access-denied" class="card" hidden><h2>Acceso restringido</h2><p>Necesitas capacidad de revisión para consultar esta página.</p></section>
+        <section id="review-filters" class="card review-filters" aria-labelledby="review-filters-title" hidden>
+          <div class="review-filters__heading">
+            <div><p class="eyebrow">Explorar</p><h2 id="review-filters-title">Filtrar diseños</h2></div>
+            <span id="review-result-count" aria-live="polite"></span>
+          </div>
+          <div class="review-filters__grid">
+            <label>Buscar por título<input id="review-search" type="search" placeholder="Escribe parte del título" /></label>
+            <label>Estado<select id="review-status-filter"><option value="">Todos</option></select></label>
+            <label>País<select id="review-country-filter"><option value="">Todos</option></select></label>
+            <label>Producto<select id="review-product-filter"><option value="">Todos</option></select></label>
+            <label>Formato<select id="review-format-filter"><option value="">Todos</option></select></label>
+            <label>Revisión automática<select id="review-automatic-filter"><option value="">Todas</option></select></label>
+          </div>
+          <button id="review-clear-filters" class="button button--secondary" type="button">Limpiar filtros</button>
+        </section>
+        <div id="review-loading" class="review-loading" role="status">Cargando diseños y versiones…</div>
         <section id="review-list" class="review-list" aria-live="polite"></section>
       </main>
     </div>
