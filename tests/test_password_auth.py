@@ -4,7 +4,8 @@ from urllib.parse import unquote
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import override_settings
+from django.middleware.csrf import get_token
+from django.test import RequestFactory, override_settings
 from rest_framework.test import APIClient
 
 from security.models import PasswordResetToken
@@ -62,6 +63,30 @@ def test_authenticated_user_can_submit_login_again_without_csrf_error():
 
     assert response.status_code == 200
     assert response.json() == {"authenticated": True, "username": user.username}
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_authenticated_user_can_log_out_with_csrf_and_session_is_removed():
+    user = get_user_model().objects.create_user(
+        username="logout-person",
+        email="logout-person@ihmexico.com",
+        password="safe-password-123",
+    )
+    client = APIClient(enforce_csrf_checks=True)
+    assert client.login(username=user.username, password="safe-password-123")
+    request = RequestFactory().get("/")
+    token = get_token(request)
+    client.cookies["csrftoken"] = request.META["CSRF_COOKIE"]
+
+    rejected = client.post("/api/v1/auth/logout/")
+    assert rejected.status_code == 403
+
+    response = client.post("/api/v1/auth/logout/", HTTP_X_CSRFTOKEN=token)
+
+    assert response.status_code == 200
+    assert response.json() == {"authenticated": False}
+    assert "_auth_user_id" not in client.session
 
 
 @pytest.mark.django_db
@@ -410,3 +435,15 @@ def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
     assert "password-reset/confirm/" in login_script
     assert "#reset=" not in login_script
     assert ".auth-form[hidden] { display: none; }" in login_styles
+
+
+def test_panel_exposes_logout_action_and_uses_authenticated_post():
+    panel_html = (REPO_ROOT / "frontend" / "panel.html").read_text(encoding="utf-8")
+    panel_script = (
+        REPO_ROOT / "frontend" / "scripts" / "panel.js"
+    ).read_text(encoding="utf-8")
+
+    assert 'id="auth-action"' in panel_html
+    assert 'textContent = "Cerrar sesión"' in panel_script
+    assert 'authenticatedFetch("/api/v1/auth/logout/", { method: "POST" })' in panel_script
+    assert 'window.location.href = "/login.html"' in panel_script

@@ -27,6 +27,7 @@ from security.views import (
     current_user,
     password_login,
     request_password_reset,
+    session_logout,
 )
 from validations.views import ValidationRunViewSet
 
@@ -86,6 +87,7 @@ urlpatterns = [
         name="security-user-password",
     ),
     path("auth/login/", password_login, name="password-login"),
+    path("auth/logout/", session_logout, name="session-logout"),
     path(
         "auth/password-reset/request/",
         request_password_reset,

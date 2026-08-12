@@ -39,6 +39,8 @@
     $("role-label").textContent = "Acceso restringido";
     setBriefFormDisabled(true);
     $("my-account").hidden = true;
+    $("auth-action").textContent = "Iniciar sesión";
+    $("auth-action").href = "login.html";
     notice("Ingresa con la contraseña de acceso para crear diseños.", "error");
     const loginLink = document.createElement("a");
     loginLink.href = "login.html";
@@ -335,10 +337,17 @@
   };
 
   const loadUser = () => fetch("/api/v1/me/").then(json).then((user) => {
+    if (!user.authenticated) {
+      const error = new Error("La sesión no está activa.");
+      error.status = 401;
+      throw error;
+    }
     state.user = user;
     setBriefFormDisabled(false);
     $("user-label").textContent = user.email || "Sesión local";
     $("role-label").textContent = user.is_admin ? "Administrador" : (user.roles[0] || "Usuario");
+    $("auth-action").textContent = "Cerrar sesión";
+    $("auth-action").href = "#";
     $("my-account").hidden = false;
     if (user.can_review) $("review-panel").hidden = false;
     if (user.is_admin) $("admin-panel").hidden = false;
@@ -357,6 +366,20 @@
   });
 
   const loadAdminStats = () => fetch("/api/v1/uploaded-logos/").then(json).then((logos) => { $("logo-count").textContent = logos.count ?? logos.length ?? "—"; }).catch(() => {});
+
+  const logoutCurrentUser = (event) => {
+    if (!state.user?.authenticated) return;
+    event.preventDefault();
+    const action = $("auth-action");
+    action.textContent = "Cerrando sesión…";
+    window.authenticatedFetch("/api/v1/auth/logout/", { method: "POST" })
+      .then(json)
+      .then(() => { window.location.href = "/login.html"; })
+      .catch((error) => {
+        action.textContent = "Cerrar sesión";
+        notice(error.message || "No pudimos cerrar la sesión.", "error");
+      });
+  };
 
   const changeOwnPassword = (event) => {
     event.preventDefault();
@@ -400,6 +423,7 @@
   $("design-revision-form").addEventListener("submit", requestDesignRevision);
   $("design-save").addEventListener("click", saveDesign);
   $("change-password-form").addEventListener("submit", changeOwnPassword);
+  $("auth-action").addEventListener("click", logoutCurrentUser);
   $("refresh-admin").addEventListener("click", () => {
     loadUser().then((authenticated) => {
       if (!authenticated) return;

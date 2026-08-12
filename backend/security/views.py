@@ -2,7 +2,13 @@ from html import escape
 from urllib.parse import quote
 
 from django.conf import settings
-from django.contrib.auth import authenticate, get_user_model, login, update_session_auth_hash
+from django.contrib.auth import (
+    authenticate,
+    get_user_model,
+    login,
+    logout,
+    update_session_auth_hash,
+)
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -64,6 +70,20 @@ def password_login(request):
         http_status=200,
     )
     return Response({"authenticated": True, "username": user.get_username()})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def session_logout(request):
+    user_id = request.user.pk
+    logout(request)
+    operation_event(
+        "authentication.logout",
+        status="success",
+        user_id=user_id,
+        http_status=200,
+    )
+    return Response({"authenticated": False})
 
 
 PASSWORD_RESET_RESPONSE = {

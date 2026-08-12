@@ -43,7 +43,7 @@ def test_authenticated_mutations_use_shared_fetch_helper():
     assert 'window.authenticatedFetch(url, options)' in scripts["admin.js"]
     assert 'window.authenticatedFetch(url, options)' in scripts["review.js"]
     assert 'window.authenticatedFetch("/api/v1/auth/login/"' in scripts["login.js"]
-    assert scripts["panel.js"].count("window.authenticatedFetch") == 8
+    assert scripts["panel.js"].count("window.authenticatedFetch") == 9
     assert 'window.authenticatedFetch("/api/v1/materials/quick-design/"' in scripts[
         "templates-gallery.js"
     ]
