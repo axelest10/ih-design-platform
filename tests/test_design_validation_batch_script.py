@@ -52,3 +52,28 @@ def test_every_case_uses_an_official_primary_logo_mapping():
     allowed = {logo for _country, logos in MODULE.COUNTRIES for logo in logos}
 
     assert {case.brand_logo_key for case in MODULE.build_cases()} <= allowed
+
+
+def test_batch_report_row_exposes_design_version_and_status():
+    case = MODULE.build_cases()[0]
+    row = MODULE._result(
+        case,
+        state="created",
+        design={
+            "id": 42,
+            "status": "self_review",
+            "test_number": 7,
+            "versions": [
+                {
+                    "number": 2,
+                    "validation_summary": {"status": "passed"},
+                    "claude_review_status": "pending",
+                }
+            ],
+        },
+    )
+
+    assert row["design_id"] == 42
+    assert row["design_status"] == "self_review"
+    assert row["latest_version"] == 2
+    assert row["renderer_result"] == "passed"
