@@ -1,10 +1,13 @@
 from pathlib import Path
+from urllib.parse import unquote
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.test import override_settings
 from rest_framework.test import APIClient
 
+from security.models import PasswordResetToken
 from security.throttles import LoginIPThrottle
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -102,6 +105,31 @@ def test_valid_password_with_unauthorized_domain_is_rejected():
 
 
 @pytest.mark.django_db
+def test_inactive_account_is_rejected_without_creating_a_session():
+    get_user_model().objects.create_user(
+        username="inactive-person",
+        email="inactive-person@ihmexico.com",
+        password="safe-password-123",
+        is_active=False,
+    )
+    client = APIClient()
+
+    response = client.post(
+        "/api/v1/auth/login/",
+        {"username": "inactive-person", "password": "safe-password-123"},
+        format="json",
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Usuario o contraseña incorrectos."}
+    assert "_auth_user_id" not in client.session
+
+
+def test_default_login_throttle_remains_ten_attempts_per_hour(settings):
+    assert settings.LOGIN_THROTTLE_RATE == "10/hour"
+
+
+@pytest.mark.django_db
 def test_login_is_throttled_by_ip(monkeypatch):
     monkeypatch.setattr(LoginIPThrottle, "rate", "2/hour", raising=False)
     client = APIClient()
@@ -134,7 +162,105 @@ def test_initial_admin_exists_and_shared_access_is_disabled():
     assert admin.is_active is True
     assert admin.has_usable_password()
     assert admin.groups.filter(name="platform_admin").exists()
+    assert admin.email.rsplit("@", 1)[1] in {
+        "ihmexico.com",
+        "ihbogota.com",
+        "ihsantiago.cl",
+        "ihlima.com",
+    }
     assert shared.is_active is False
+
+
+@pytest.mark.django_db
+@override_settings(
+    RESEND_API_KEY="resend-test-key",
+    RESEND_FROM_EMAIL="Design Platform <access@example.com>",
+    PASSWORD_RESET_MAX_AGE_SECONDS=900,
+)
+def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(monkeypatch):
+    user = get_user_model().objects.create_user(
+        username="recoverable",
+        email="recoverable@ihmexico.com",
+        password="old-password-123",
+    )
+    captured = []
+
+    class FakeEmailClient:
+        def send(self, message):
+            captured.append(message)
+            return "email-test-id"
+
+    monkeypatch.setattr("security.views.get_email_client", lambda: FakeEmailClient())
+    client = APIClient()
+
+    requested = client.post(
+        "/api/v1/auth/password-reset/request/",
+        {"email": user.email},
+        format="json",
+    )
+
+    assert requested.status_code == 202
+    assert len(captured) == 1
+    assert captured[0].recipients == (user.email,)
+    assert "/login.html#reset=" in captured[0].text
+    record = PasswordResetToken.objects.get(user=user)
+    assert record.token_hash not in captured[0].text
+    token = unquote(captured[0].text.split("#reset=", 1)[1].strip())
+
+    confirmed = client.post(
+        "/api/v1/auth/password-reset/confirm/",
+        {"token": token, "new_password": "new-password-456"},
+        format="json",
+    )
+    replayed = client.post(
+        "/api/v1/auth/password-reset/confirm/",
+        {"token": token, "new_password": "another-password-789"},
+        format="json",
+    )
+
+    assert confirmed.status_code == 200
+    assert replayed.status_code == 400
+    user.refresh_from_db()
+    assert user.check_password("new-password-456")
+
+
+@pytest.mark.django_db
+@override_settings(RESEND_API_KEY="", RESEND_FROM_EMAIL="")
+@pytest.mark.parametrize(
+    "email",
+    ["unknown@ihmexico.com", "person@example.com", "inactive@ihmexico.com"],
+)
+def test_password_reset_request_does_not_enumerate_accounts(email):
+    get_user_model().objects.create_user(
+        username="inactive",
+        email="inactive@ihmexico.com",
+        password="old-password-123",
+        is_active=False,
+    )
+
+    response = APIClient().post(
+        "/api/v1/auth/password-reset/request/",
+        {"email": email},
+        format="json",
+    )
+
+    assert response.status_code == 202
+    assert response.json() == {
+        "detail": "Si la cuenta puede recuperar su acceso, recibirá un correo con instrucciones."
+    }
+    assert PasswordResetToken.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_password_reset_confirm_enforces_minimum_length():
+    response = APIClient().post(
+        "/api/v1/auth/password-reset/confirm/",
+        {"token": "not-a-token", "new_password": "short"},
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "new_password" in response.json()
 
 
 @pytest.mark.corporate_auth
@@ -277,3 +403,6 @@ def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
     assert 'headers.set("X-CSRFToken"' in csrf_script
     assert 'fetch("/api/v1/me/")' in login_script
     assert 'window.location.replace("/panel.html")' in login_script
+    assert "password-reset/request/" in login_script
+    assert "password-reset/confirm/" in login_script
+    assert "#reset=" not in login_script

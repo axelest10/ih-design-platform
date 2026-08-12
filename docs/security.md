@@ -27,6 +27,12 @@ predeterminada; la tasa se puede cambiar con `LOGIN_THROTTLE_RATE`.
 `GET /api/v1/health/` y el endpoint de login permanecen públicos; el resto de las superficies
 protegidas conserva `CorporateDomainPermission` cuando `DJANGO_REQUIRE_CORPORATE_AUTH=1`.
 
+La recuperación de acceso usa `POST /api/v1/auth/password-reset/request/` y
+`POST /api/v1/auth/password-reset/confirm/`. El correo se envía con Resend; el token firmado
+expira en 15 minutos por defecto, solo se puede consumir una vez y la base guarda únicamente su
+hash SHA-256. El token viaja en el fragmento de `login.html`, por lo que no forma parte de la
+solicitud HTTP ni de los logs del servidor web.
+
 ## Roles corporativos
 
 Los roles se modelan con grupos nativos de Django y se crean con:

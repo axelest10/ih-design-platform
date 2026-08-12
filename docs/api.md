@@ -40,6 +40,9 @@ hasta desactivar el modo.
 - `POST /auth/login/` — autentica un usuario individual con contraseña Django y limita intentos
   por IP; el error no distingue entre usuario y contraseña incorrectos.
 - `POST /auth/change-password/` — permite que una persona autenticada cambie su propia contraseña
+- `POST /auth/password-reset/request/` — solicita recuperación sin revelar si existe la cuenta.
+- `POST /auth/password-reset/confirm/` — consume una vez el token firmado y establece una
+  contraseña de al menos 12 caracteres.
   verificando la actual; conserva la sesión activa después del cambio.
 - `GET|POST /security/users/` — lista o crea usuarios corporativos (`platform_admin`).
 - `POST /security/users/{id}/password/` — establece una contraseña nueva (`platform_admin`).

@@ -107,6 +107,8 @@ a { color: inherit; }
 .auth-notice--success { display: block; background: #ebf7f0; color: #146c38; }
 .auth-notice--error { display: block; background: #fff0f0; color: #b42318; }
 .auth-help { margin: 18px 0 0; color: var(--auth-muted); font-size: 12px; }
+.auth-link-button { margin: 14px 0 0; padding: 0; border: 0; background: transparent; color: var(--ih-knowledge); cursor: pointer; font: 700 13px/1.4 var(--ih-font-body); text-decoration: underline; }
+.auth-secondary-form { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--auth-line); }
 
 @media (max-width: 560px) {
   .auth-header { align-items: flex-start; }

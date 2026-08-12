@@ -31,11 +31,27 @@
           <button id="submit-button" type="submit">Entrar</button>
         </form>
 
+        <button id="forgot-password-toggle" class="auth-link-button" type="button">Olvidé mi contraseña</button>
+        <form id="password-reset-request-form" class="auth-form auth-secondary-form" hidden>
+          <label for="reset-email">Correo corporativo</label>
+          <input id="reset-email" name="email" type="email" autocomplete="email" required />
+          <button type="submit">Enviar enlace de recuperación</button>
+        </form>
+
+        <form id="password-reset-confirm-form" class="auth-form auth-secondary-form" hidden>
+          <label for="reset-new-password">Contraseña nueva</label>
+          <input id="reset-new-password" name="new_password" type="password" minlength="12" autocomplete="new-password" required />
+          <label for="reset-new-password-confirmation">Confirmar contraseña nueva</label>
+          <input id="reset-new-password-confirmation" name="new_password_confirmation" type="password" minlength="12" autocomplete="new-password" required />
+          <button type="submit">Guardar contraseña nueva</button>
+        </form>
+
         <div id="auth-notice" class="auth-notice" role="status" aria-live="polite"></div>
         <p class="auth-help">Si aún no tienes una cuenta, solicítala al administrador de la plataforma.</p>
       </section>
     </main>
     <script src="{% asset_url 'scripts/csrf.js' %}"></script>
+    <script src="{% asset_url 'scripts/password-fields.js' %}"></script>
     <script src="{% asset_url 'scripts/login.js' %}"></script>
   </body>
 </html>
