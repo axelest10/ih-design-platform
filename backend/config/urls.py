@@ -22,6 +22,11 @@ urlpatterns = [
 urlpatterns += [
     path("", RevalidatedTemplateView.as_view(template_name="index.html"), name="frontend-home"),
     path(
+        "index.html",
+        RevalidatedTemplateView.as_view(template_name="index.html"),
+        name="frontend-home-index",
+    ),
+    path(
         "login.html",
         RevalidatedTemplateView.as_view(template_name="login.html"),
         name="frontend-login",

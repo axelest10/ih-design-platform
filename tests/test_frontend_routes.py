@@ -4,7 +4,14 @@ import pytest
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("path, marker", [("/", "Design Platform"), ("/panel.html", "brief-form")])
+@pytest.mark.parametrize(
+    "path, marker",
+    [
+        ("/", "Design Platform"),
+        ("/index.html", "Design Platform"),
+        ("/panel.html", "brief-form"),
+    ],
+)
 def test_frontend_pages_are_served(client, path, marker):
     response = client.get(path)
 
