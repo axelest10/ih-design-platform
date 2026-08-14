@@ -1,4 +1,5 @@
 """Permisos de acceso corporativo para la API."""
+
 from __future__ import annotations
 
 from collections.abc import Iterable
@@ -64,6 +65,25 @@ def can_create_briefs_user(user) -> bool:
     )
 
 
+def is_verified_hub_session(request, user) -> bool:
+    """Verify server-side that an OIDC session still has its subject link."""
+    from security.models import HubIdentity
+    from security.session_contract import (
+        AUTH_METHOD_SESSION_KEY,
+        HUB_AUTH_METHOD,
+        HUB_SUBJECT_SESSION_KEY,
+    )
+
+    if not user or not user.is_authenticated:
+        return False
+    if request.session.get(AUTH_METHOD_SESSION_KEY) != HUB_AUTH_METHOD:
+        return False
+    subject = request.session.get(HUB_SUBJECT_SESSION_KEY)
+    if not isinstance(subject, str) or not subject:
+        return False
+    return HubIdentity.objects.filter(user=user, hub_subject=subject).exists()
+
+
 class CorporateDomainPermission(BasePermission):
     """Permite acceso solo a usuarios autenticados con dominio corporativo autorizado."""
 
@@ -77,6 +97,8 @@ class CorporateDomainPermission(BasePermission):
         if user is None or not user.is_authenticated:
             self.message = "Debes iniciar sesión con una cuenta corporativa."
             return False
+        if is_verified_hub_session(request, user):
+            return True
         if not is_allowed_corporate_email(getattr(user, "email", "")):
             self.message = "El dominio de tu cuenta no está autorizado para esta plataforma."
             return False

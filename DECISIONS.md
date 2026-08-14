@@ -257,3 +257,26 @@ cargaron y aprobaron las variantes `classic`, `black` y `white` en
 encontrarse en ninguna de las dos fuentes. Otras subcarpetas de ese Drive (p. ej. "Cambridge")
 contienen activos de un dominio distinto (insignias de certificación Cambridge English
 Qualifications) y no deben confundirse con el logotipo institucional de IH México.
+## 2026-08-14 — Hub como proveedor OIDC; Design conserva autorización local
+
+IH LATAM Hub es la autoridad de autenticación para el SSO central y Design Platform es un
+cliente OIDC confidencial independiente. El contrato v1 usa Authorization Code + PKCE S256,
+issuer y callback exactos de Staging, firma RS256, `sub` estable del Hub y solo los claims
+`sub`, `email`, `email_verified` y `name`.
+
+Design Platform no acepta roles, centros, países, organizaciones ni tenants desde el token.
+Conserva sus grupos y permisos locales. El primer acceso enlaza por email normalizado exacto o
+crea un usuario con contraseña inutilizable y rol `viewer`; después, `sub` es la identidad
+principal aunque cambie el email. Ambigüedades, colisiones, usuarios inactivos y claims no
+permitidos fallan cerrados y quedan auditados sin tokens, códigos, cookies ni secretos.
+
+La integración empieza deshabilitada (`HUB_OIDC_ENABLED=0`), requiere aprobación adicional en
+Production y conserva el login local como contingencia de Staging. Las migraciones e historial
+Git de Design siguen siendo independientes de los del Hub.
+
+## 2026-08-14 — Pillow 12.3 por hallazgos del audit de dependencias
+
+El audit completo de `requirements.txt` encontró vulnerabilidades conocidas en el límite
+histórico `Pillow<12`. Se elevó el rango a `Pillow>=12.3,<13.0`, la primera versión que cierra
+todos los avisos reportados en el entorno de verificación. `pip check`, `pip-audit` y las 399
+pruebas quedaron en verde con Pillow 12.3.0.

@@ -2,6 +2,9 @@
 
 ## Completadas
 
+- [x] Implementar el contrato v1 de SSO con IH LATAM Hub como proveedor OIDC para Staging:
+      Authorization Code + PKCE S256, enlace/provisión por identidad estable, rol local
+      `viewer` por defecto, auditoría sin secretos y rollback por feature flag (2026-08-14).
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
@@ -86,7 +89,7 @@
       pilar Inglés General, usa el logo institucional de IH México ya cargado — no aplica
       cargar un logo distinto salvo que el cliente decida adoptar la identidad visual propia
       del deck más adelante.
-- [ ] Definir roles, permisos y proveedor de identidad corporativa.
+- [x] Definir roles, permisos y proveedor de identidad corporativa.
 - [ ] Diseñar y versionar las primeras plantillas HTML/SVG (consumiendo `brand/generated/` y
       `brand/assets/`).
 - [ ] Acordar checklist de aprobación con Marketing.

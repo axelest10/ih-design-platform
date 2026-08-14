@@ -40,6 +40,11 @@ from .services import (
     get_email_client,
     invalidate_other_password_resets,
 )
+from .session_contract import (
+    AUTH_METHOD_SESSION_KEY,
+    HUB_SUBJECT_SESSION_KEY,
+    LEGACY_PASSWORD_AUTH_METHOD,
+)
 from .throttles import LoginIPThrottle
 
 
@@ -63,6 +68,8 @@ def password_login(request):
             status=401,
         )
     login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+    request.session[AUTH_METHOD_SESSION_KEY] = LEGACY_PASSWORD_AUTH_METHOD
+    request.session.pop(HUB_SUBJECT_SESSION_KEY, None)
     operation_event(
         "authentication.login",
         status="success",
@@ -114,7 +121,7 @@ def request_password_reset(request):
         html=(
             f"<p>Usa este enlace para crear una contraseña nueva. Expira en {minutes} minutos "
             "y solo puede utilizarse una vez.</p>"
-            f"<p><a href=\"{safe_url}\">Recuperar acceso</a></p>"
+            f'<p><a href="{safe_url}">Recuperar acceso</a></p>'
         ),
         text=(
             f"Usa este enlace para crear una contraseña nueva. Expira en {minutes} minutos y "
@@ -172,6 +179,9 @@ def current_user(request):
     return Response(
         {
             "authenticated": user.is_authenticated,
+            "authentication_method": (
+                request.session.get(AUTH_METHOD_SESSION_KEY) if user.is_authenticated else None
+            ),
             "username": user.get_username() if user.is_authenticated else None,
             "email": user.email if user.is_authenticated else None,
             "roles": roles,
