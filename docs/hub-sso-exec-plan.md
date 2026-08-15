@@ -26,7 +26,7 @@ Hub uses Auth.js passwordless sessions in Next.js, NestJS/Prisma APIs, PostgreSQ
 
 ## Shared contract
 
-`docs/identity-contract.v1.json` is the byte-identical contract stored in both repositories. Staging uses issuer `https://dev-hub.ihlatam.com/oidc`, client ID `ih-design-platform-staging`, exact callback `https://ih-design-platform-staging.up.railway.app/api/v1/auth/hub/callback/`, scopes `openid profile email`, `RS256`, a 60-second single-use code, five-minute tokens, no refresh token, and a 15-minute local Design session.
+`docs/identity-contract.v1.json` is the byte-identical contract stored in both repositories. Staging uses issuer `https://dev-hub.ihlatam.com/oidc`, client ID `ih-design-platform-staging`, exact callback `https://mydesign-staging.ihlatam.com/api/v1/auth/hub/callback/`, scopes `openid profile email`, `RS256`, a 60-second single-use code, five-minute tokens, no refresh token, and a 15-minute local Design session.
 
 Only `sub`, `email`, truthful Boolean `email_verified`, and optional `name` cross the boundary. Hub roles and organisation data never do.
 
