@@ -67,9 +67,10 @@
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
-- [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
-      persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
-      están listas, falta aprovisionar el proveedor (Railway o Render).
+- [x] **Crear y aislar el entorno de Staging real** — Railway tiene PostgreSQL y Redis propios,
+      bucket de objetos exclusivo, autenticación corporativa, correo suprimido y despliegue
+      automático con espera por CI. Production quedó sin autodeploy y con promoción manual
+      documentada en `docs/operations/release-topology.md` (2026-08-15).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver

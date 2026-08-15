@@ -1,5 +1,10 @@
 # Preparación de despliegue
 
+La topología operativa autoritativa, el mapeo de ramas, la promoción manual de Production, el
+aislamiento, el correo seguro y el rollback están en
+[`release-topology.md`](release-topology.md). Este documento conserva los detalles de construcción
+y diagnóstico del servicio.
+
 Estado actual: el staging de Railway está desplegado y su endpoint de salud fue confirmado el
 2026-08-09. El repositorio conserva SQLite para desarrollo local;
 `infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para pruebas locales de la

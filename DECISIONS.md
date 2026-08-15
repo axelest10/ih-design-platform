@@ -280,3 +280,17 @@ El audit completo de `requirements.txt` encontró vulnerabilidades conocidas en 
 histórico `Pillow<12`. Se elevó el rango a `Pillow>=12.3,<13.0`, la primera versión que cierra
 todos los avisos reportados en el entorno de verificación. `pip check`, `pip-audit` y las 399
 pruebas quedaron en verde con Pillow 12.3.0.
+
+## 2026-08-15 — Releases separados: Staging automático, Production manual
+
+Se corrigió la topología para que una rama de feature no pueda desplegar Production. Durante el
+trabajo de SSO, solo Staging sigue `codex/hub-sso`, con autodeploy y espera por CI. Production
+conserva el repositorio conectado pero no tiene deployment trigger ni autodeploy; una persona
+responsable debe promocionar deliberadamente el SHA exacto y aprobado de `main`.
+
+La auditoría demostró instancias físicas distintas de PostgreSQL y Redis, pero encontró que ambos
+entornos compartían el secreto de Django, el bucket/credenciales R2 y Resend. Se rotó solo el
+secreto de Staging, se le asignó un bucket Railway exclusivo y se suprimió su correo eliminando las
+variables de Resend. Production no fue reiniciado ni redesplegado. La corrección
+`DJANGO_ENV=production` quedó guardada sin deploy para materializarse en la siguiente promoción
+aprobada. El contrato completo queda en `docs/operations/release-topology.md`.
