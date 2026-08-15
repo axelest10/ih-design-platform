@@ -280,3 +280,12 @@ Production no se migra automáticamente. Mientras ejecute el SHA anterior se con
 Resend para no romper recuperaciones. Un PR provider-only basado en `main` debe preparar la
 migración sin SSO; después de comprobar Postmark se eliminan las variables antiguas y el propietario
 revoca la clave Resend expuesta.
+
+## 2026-08-15 — Pillow 12.3 cierra el audit del hotfix de correo
+
+El PR provider-only parte de `main`, cuyo rango histórico `Pillow>=10.0,<12.0` resolvía Pillow
+11.3.0 y producía hallazgos vigentes en `pip-audit`. Se eleva el rango a
+`Pillow>=12.3,<13.0`, primera versión que satisface todas las correcciones reportadas en la
+verificación de este release. Este cambio de dependencia no introduce SSO ni modifica la lógica de
+correo; es el gate de seguridad explícitamente autorizado para que el hotfix pueda validarse antes
+de una promoción manual.

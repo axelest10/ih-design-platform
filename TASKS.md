@@ -2,6 +2,8 @@
 
 ## Completadas
 
+- [x] Elevar Pillow a `>=12.3,<13.0` para cerrar los hallazgos vigentes de `pip-audit`
+      heredados de `main` antes de promover el hotfix de correo (2026-08-15).
 - [x] Sustituir el adaptador runtime de Resend por Postmark, con remitente aprobado, Reply-To
       opcional, `MessageID` seguro y política `disabled|allowlist|live` que falla cerrada
       (2026-08-15).
