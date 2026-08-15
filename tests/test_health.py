@@ -27,4 +27,5 @@ def test_dockerfile_uses_railway_port_and_emits_sanitized_gunicorn_logs():
     assert "%(q)s" not in dockerfile
     assert "%(r)s" not in dockerfile
     assert "%(f)s" not in dockerfile
+    assert "%(u)s" not in dockerfile
     assert "--error-logfile -" in dockerfile
