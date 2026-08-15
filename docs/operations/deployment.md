@@ -57,6 +57,40 @@ CORS_ALLOWED_ORIGINS=
 
 El almacenamiento local de logos y referencias no debe considerarse persistente en un PaaS. Para
 staging se debe configurar S3-compatible mediante `django-storages` antes de cargar activos reales.
+
+### Verificación de escritura en Cloudflare R2
+
+El repositorio incluye un comando reproducible que valida configuración, escritura, lectura y
+borrado de un objeto temporal. Ejecutarlo dentro del servicio de staging, después de configurar
+las cinco variables `AWS_*` y sin imprimir sus valores:
+
+```text
+python manage.py verify_storage_backend
+```
+
+Resultado esperado:
+
+```text
+storage_backend=storages.backends.s3.S3Storage
+endpoint_host=<account>.r2.cloudflarestorage.com
+bucket_configured=yes
+write=passed
+read=passed
+delete=passed
+result=passed
+```
+
+Para validar solo la configuración sin una escritura de red:
+
+```text
+python manage.py verify_storage_backend --dry-run
+```
+
+La ejecución local de este repositorio no se considera una verificación R2 porque no tiene bucket,
+endpoint ni credenciales configurados. El comando debe ejecutarse en staging; nunca se deben
+cometer credenciales ni usar el `--keep` salvo que se quiera inspeccionar manualmente el objeto.
+En esta revisión, `python manage.py verify_storage_backend --dry-run` terminó con
+`CommandError: R2 storage no está activo`, que es el resultado esperado hasta configurar staging.
 La autenticación actual no depende de un proveedor externo: cada integrante usa su cuenta y una
 contraseña almacenada con el hasher de Django. Los administradores crean cuentas y restablecen
 contraseñas desde el panel.

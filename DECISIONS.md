@@ -1,5 +1,15 @@
 # Decisiones técnicas
 
+## 2026-08-15 — La verificación R2 se ejecuta en staging, no en local
+
+Como este entorno no tiene bucket, endpoint ni credenciales R2 disponibles, no se simula una
+verificación de red ni se agregan secretos al repositorio. Se añade el comando
+`python manage.py verify_storage_backend`, que exige `storages.backends.s3.S3Storage`, un bucket y
+un endpoint `*.r2.cloudflarestorage.com`; en ejecución normal guarda un objeto temporal, confirma
+existencia y contenido leído, lo elimina y reporta `result=passed`. `--dry-run` solo valida la
+configuración. La evidencia real queda pendiente de ejecutar en staging con credenciales fuera de
+Git.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,
