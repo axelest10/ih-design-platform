@@ -17,6 +17,7 @@ class DesignBrief(models.Model):
         BANNER = "banner", "Banner"
         HTML = "html", "HTML"
         SVG = "svg", "SVG"
+        PRESENTATION = "presentation", "Presentación"
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Borrador"

@@ -1,5 +1,20 @@
 # Decisiones técnicas
 
+## 2026-08-15 — `sales-kit` depende de campañas comerciales autorizadas
+
+La paquetería de ventas no crea un catálogo de precios ni una entidad paralela de ofertas.
+Reutiliza `catalog.Product` para seleccionar el producto y `campaigns.Campaign` como fuente de
+verdad para nombre, copy aprobado, vigencia y `offer_data`. La generación queda bloqueada si la
+campaña está inactiva, fuera de vigencia, no tiene copy aprobado o no incluye `source_status`,
+`source_url`, `benefit` y `cta` con estado confirmado.
+
+El paquete genera piezas cuadrada, story, vertical, brochure A4 y presentación 16:9 reutilizando
+los templates/renderers existentes. La campaña se copia como snapshot dentro de cada brief para
+que una pieza no cambie retrospectivamente si se edita la campaña después. No se sembraron
+precios, descuentos ni promociones reales: falta que Marketing entregue la primera `Campaign`
+confirmada antes de usar el flujo fuera de pruebas. La implementación permanece separada de
+`backend/security/`.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,

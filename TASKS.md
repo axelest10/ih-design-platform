@@ -62,12 +62,19 @@
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Diseño e implementación de `sales-kit`** — la paquetería reutiliza los productos
+      activos y los renderers social, A4 y presentación existentes. Cada generación exige una
+      `Campaign` activa, vigente, con copy aprobado y `offer_data.source_status=confirmed`;
+      no se sembró ninguna oferta comercial real.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
 - [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Recibir la primera `Campaign` comercial confirmada** (fuente, beneficio, CTA y vigencia)
+      antes de usar `sales-kit` con datos reales; los tests usan datos sintéticos marcados como
+      `source_status=confirmed`.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".
