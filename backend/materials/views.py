@@ -28,6 +28,7 @@ from .serializers import (
 )
 from .services.quick_design import QuickDesignError, create_quick_design
 from .services.school_kit import SchoolKitGenerationError, generate_school_kit
+from .services.venue_kit import VenueKitGenerationError, generate_venue_kit
 
 MAX_MARKETING_ASSET_BULK_FILES = 30
 
@@ -229,11 +230,19 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
     def generate(self, request, pk=None):
         bundle = self.get_object()
         try:
-            generate_school_kit(
-                bundle,
-                user=request.user if request.user.is_authenticated else None,
-            )
+            user = request.user if request.user.is_authenticated else None
+            if bundle.material_type.slug == "school-kit":
+                generate_school_kit(bundle, user=user)
+            elif bundle.material_type.slug == "venue-kit":
+                generate_venue_kit(bundle, user=user)
+            else:
+                return Response(
+                    {"detail": "Este tipo de material no admite generación de paquetes."},
+                    status=400,
+                )
         except SchoolKitGenerationError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        except VenueKitGenerationError as exc:
             return Response({"detail": str(exc)}, status=400)
         bundle.refresh_from_db()
         return Response(self.get_serializer(bundle).data, status=201)

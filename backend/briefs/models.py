@@ -15,6 +15,7 @@ class DesignBrief(models.Model):
         REEL = "reel", "Reel"
         CAROUSEL = "carousel", "Carrusel"
         BANNER = "banner", "Banner"
+        PRESENTATION = "presentation", "Presentación"
         HTML = "html", "HTML"
         SVG = "svg", "SVG"
 
