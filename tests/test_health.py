@@ -22,4 +22,6 @@ def test_dockerfile_uses_railway_port_and_emits_gunicorn_logs():
 
     assert "${PORT:-8000}" in dockerfile
     assert "--access-logfile -" in dockerfile
+    assert "--access-logformat" in dockerfile
+    assert "%(u)s" not in dockerfile
     assert "--error-logfile -" in dockerfile

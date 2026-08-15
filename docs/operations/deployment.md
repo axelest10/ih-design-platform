@@ -102,6 +102,8 @@ gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}
 
 Railway inyecta `PORT`; `8000` es únicamente el fallback local. El comando completo del
 Dockerfile también fija un worker, timeout de 120 segundos y envía access/error logs a stdout.
+El formato de access log omite deliberadamente el campo `remote_user`, porque con HTTP Basic ese
+campo contendría el usuario secreto del webhook Postmark. Nunca se debe reintroducir `%(u)s`.
 
 Antes del primer arranque se debe ejecutar, como pre-deploy o job controlado:
 
