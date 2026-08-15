@@ -2,6 +2,8 @@
 
 ## Completadas
 
+- [x] Implementar storage user-scoped para uploads y archivos generados en `feature/user-scoped-storage`; las claves históricas quedan documentadas sin migración automática.
+
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.

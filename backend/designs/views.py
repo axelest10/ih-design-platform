@@ -26,6 +26,7 @@ from .services.renderer import RenderValidationError, render_preview
 from .services.renderer_document import render_document_preview
 from .services.renderer_presentation import render_presentation_preview
 from .services.revision import DesignRevisionError, revise_design
+from .services.storage_paths import generated_design_path
 from .services.versioning import create_next_version
 
 
@@ -193,7 +194,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
             ) + 1
             pdf_path = default_storage.save(
-                f"generated-designs/{design.pk}/version-{next_number}.pdf",
+                generated_design_path(design, f"version-{next_number}.pdf"),
                 ContentFile(rendered.pdf),
             )
             version = DesignVersion.objects.create(
@@ -254,7 +255,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
             ) + 1
             pptx_path = default_storage.save(
-                f"generated-designs/{design.pk}/version-{next_number}.pptx",
+                generated_design_path(design, f"version-{next_number}.pptx"),
                 ContentFile(rendered.pptx),
             )
             version = DesignVersion.objects.create(

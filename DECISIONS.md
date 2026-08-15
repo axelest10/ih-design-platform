@@ -1,5 +1,12 @@
 # Decisiones técnicas
 
+## 2026-08-15 — Nuevas escrituras de archivos quedan aisladas por usuario
+
+- Los uploads de logos, referencias de brief y activos de marketing usan rutas `users/{user_id}/...` mediante funciones `upload_to`.
+- Los PDF/PPTX generados usan el propietario del brief en `users/{user_id}/generated-designs/{design_id}/...`.
+- Registros sin propietario explícito se escriben bajo `users/unassigned/`; esto evita volver a crear claves planas.
+- Los objetos existentes con claves históricas planas no se renombran automáticamente. La migración física queda como operación explícita posterior para no romper URLs, referencias o procesos activos.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,
