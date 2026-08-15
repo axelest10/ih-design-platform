@@ -1,5 +1,12 @@
 # Decisiones técnicas
 
+## 2026-08-15 — `venue-kit` se detiene en diseño hasta confirmar datos de sedes
+
+- Se propone reutilizar `MaterialBundle`, `MaterialBundleItem`, briefs hijos, templates y renderers existentes de `school-kit`.
+- No se inventan programas, contactos, direcciones, mapas, horarios ni deliverables por defecto para una sede.
+- La implementación queda bloqueada hasta confirmar la sede inicial, la fuente de datos oficiales, la allowlist de programas y el paquete/CTA inicial.
+- El diseño y las tres preguntas agrupadas están en `docs/operations/venue-marketing-kit-plan.md`.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,

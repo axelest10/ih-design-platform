@@ -58,6 +58,10 @@
 
 ## Siguientes
 
+- [ ] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
+      `docs/operations/venue-marketing-kit-plan.md`; la implementación queda bloqueada hasta la
+      respuesta de Axel.
+
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
