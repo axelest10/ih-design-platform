@@ -8,6 +8,8 @@
 - [x] Sustituir el adaptador runtime de Resend por Postmark, con remitente aprobado, Reply-To
       opcional, `MessageID` seguro y política `disabled|allowlist|live` que falla cerrada
       (2026-08-15).
+- [x] Persistir el estado transaccional de Postmark y recibir Delivery, Bounce, SpamComplaint y
+      SubscriptionChange mediante webhook autenticado, acotado e idempotente (2026-08-15).
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.

@@ -318,3 +318,17 @@ Production no se migra automáticamente. Mientras ejecute el SHA anterior se con
 Resend para no romper recuperaciones. Un PR provider-only basado en `main` debe preparar la
 migración sin SSO; después de comprobar Postmark se eliminan las variables antiguas y el propietario
 revoca la clave Resend expuesta.
+
+## 2026-08-15 — Webhooks Postmark autenticados e idempotentes
+
+La aceptación de la API Postmark ya no se interpreta como entrega final. Cada intento crea primero
+un audit `TransactionalEmailDelivery` sin asunto, cuerpo, enlace ni token. Delivery, Bounce,
+SpamComplaint y SubscriptionChange llegan a un endpoint exclusivo autenticado con HTTP Basic,
+porque Postmark soporta `HttpAuth` pero no firma HMAC sus webhooks. Staging y Production usan
+credenciales independientes; Open y Click quedan fuera de alcance.
+
+Los eventos se deduplican de forma durable mediante una clave SHA-256 estable con restricción
+`unique`. Un hard bounce o complaint suprime futuros envíos locales sin desactivar ni modificar la
+cuenta; un transient bounce solo se registra; una reactivación explícita de Postmark levanta la
+supresión. No hay reintentos automáticos. Se persiste detalle saneado y se ignoran campos de
+contenido para que URLs y tokens de recuperación no entren al audit o a logs.

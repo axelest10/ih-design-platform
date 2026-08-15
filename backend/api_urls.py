@@ -30,6 +30,7 @@ from security.views import (
     request_password_reset,
     session_logout,
 )
+from security.webhook_views import postmark_webhook
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -102,6 +103,7 @@ urlpatterns = [
         name="password-reset-confirm",
     ),
     path("auth/change-password/", change_password, name="change-password"),
+    path("webhooks/postmark/", postmark_webhook, name="postmark-webhook"),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.

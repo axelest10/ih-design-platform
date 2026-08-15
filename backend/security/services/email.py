@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from email.utils import formataddr, parseaddr
 from typing import Protocol
@@ -10,6 +11,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+
+from security.models import EmailRecipientState
 
 POSTMARK_EMAIL_URL = "https://api.postmarkapp.com/email"
 
@@ -34,6 +37,7 @@ class EmailMessage:
     text: str
     reply_to: str | None = None
     tag: str | None = None
+    metadata: Mapping[str, str] | None = None
 
 
 class TransactionalEmailClient(Protocol):
@@ -45,6 +49,12 @@ def _address(value: str) -> str:
 
 
 def _enforce_delivery_policy(recipients: tuple[str, ...]) -> None:
+    normalized = {_address(value) for value in recipients}
+    if EmailRecipientState.objects.filter(
+        recipient__in=normalized,
+        suppressed=True,
+    ).exists():
+        raise EmailDeliverySuppressed("recipient_provider_suppressed")
     mode = settings.EMAIL_DELIVERY_MODE
     if mode == "disabled":
         raise EmailDeliverySuppressed("delivery_disabled")
@@ -101,6 +111,8 @@ class PostmarkEmailClient:
             payload["ReplyTo"] = reply_to
         if message.tag:
             payload["Tag"] = message.tag
+        if message.metadata:
+            payload["Metadata"] = dict(message.metadata)
 
         request = Request(
             POSTMARK_EMAIL_URL,
@@ -154,6 +166,7 @@ def send_transactional_email(
     html_body: str,
     reply_to: str | None = None,
     tag: str | None = None,
+    metadata: Mapping[str, str] | None = None,
 ) -> str:
     """Envía un correo sin exponer autenticación o política del proveedor al llamador."""
     return get_email_client().send(
@@ -164,5 +177,6 @@ def send_transactional_email(
             text=text_body,
             reply_to=reply_to,
             tag=tag,
+            metadata=metadata,
         )
     )
