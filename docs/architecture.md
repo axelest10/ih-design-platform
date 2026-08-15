@@ -16,6 +16,20 @@ Django REST API ---- briefs ---- catálogo/campañas/sedes
  PostgreSQL + pgvector (preparado) / Redis + Celery / S3
 ```
 
+## Identidad central y autorización local
+
+En Staging, IH LATAM Hub autentica al usuario y Design Platform actúa como cliente OIDC
+confidencial. Design valida Authorization Code + PKCE S256, discovery/JWKS, issuer, audience,
+nonce, expiración y firma RS256; después crea una sesión Django normal de hasta 15 minutos.
+`security.HubIdentity` enlaza el `sub` inmutable con un usuario local y
+`security.HubIdentityEvent` conserva la auditoría append-only.
+
+El límite es deliberado: el Hub entrega identidad mínima, mientras Design conserva grupos,
+permisos y políticas de objetos. Ningún rol viaja en el token. El primer acceso enlaza un email
+verificado solo si la coincidencia local es única; si no existe crea `viewer`, y cualquier
+ambigüedad falla cerrada. Las migraciones, CI, despliegues e historial Git siguen siendo propios
+de este repositorio.
+
 El backend organiza el dominio en aplicaciones Django independientes. Los briefs apuntan a entidades autorizadas y los diseños conservan versiones inmutables por número. El renderizado aún no está implementado: el campo `render_data` es el contrato de entrada para la futura capa HTML/SVG.
 
 ## Sistema de marca (`brand/` + `branding.services`)

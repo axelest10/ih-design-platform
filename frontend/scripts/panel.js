@@ -343,7 +343,7 @@
       throw error;
     }
     state.user = user;
-    setBriefFormDisabled(false);
+    setBriefFormDisabled(!user.can_create_briefs);
     $("user-label").textContent = user.email || "Sesión local";
     $("role-label").textContent = user.is_admin ? "Administrador" : (user.roles[0] || "Usuario");
     $("auth-action").textContent = "Cerrar sesión";

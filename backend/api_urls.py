@@ -21,6 +21,7 @@ from security.admin_views import (
     corporate_user_password,
     corporate_user_roles,
 )
+from security.hub_views import hub_oidc_callback, hub_oidc_login
 from security.views import (
     change_password,
     confirm_password_reset,
@@ -29,6 +30,7 @@ from security.views import (
     request_password_reset,
     session_logout,
 )
+from security.webhook_views import postmark_webhook
 from validations.views import ValidationRunViewSet
 
 router = DefaultRouter()
@@ -87,6 +89,8 @@ urlpatterns = [
         name="security-user-password",
     ),
     path("auth/login/", password_login, name="password-login"),
+    path("auth/hub/login/", hub_oidc_login, name="hub-oidc-login"),
+    path("auth/hub/callback/", hub_oidc_callback, name="hub-oidc-callback"),
     path("auth/logout/", session_logout, name="session-logout"),
     path(
         "auth/password-reset/request/",
@@ -99,6 +103,7 @@ urlpatterns = [
         name="password-reset-confirm",
     ),
     path("auth/change-password/", change_password, name="change-password"),
+    path("webhooks/postmark/", postmark_webhook, name="postmark-webhook"),
     path("me/", current_user),
     # Rutas explícitas de branding basadas en archivos (brand/) — deben ir antes del router
     # para no chocar con el patrón branding/<pk>/ del ModelViewSet.

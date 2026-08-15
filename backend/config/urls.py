@@ -2,6 +2,7 @@ from django.conf import settings
 from django.urls import include, path
 
 from common.frontend_views import (
+    HubAuthenticatedTemplateView,
     RevalidatedTemplateView,
     serve_brand_asset,
     serve_revalidated_file,
@@ -28,7 +29,10 @@ urlpatterns += [
     ),
     path(
         "login.html",
-        RevalidatedTemplateView.as_view(template_name="login.html"),
+        RevalidatedTemplateView.as_view(
+            template_name="login.html",
+            extra_context={"hub_oidc_enabled": settings.HUB_OIDC_ENABLED},
+        ),
         name="frontend-login",
     ),
     path(
@@ -43,7 +47,7 @@ urlpatterns += [
     ),
     path(
         "marketing-materials.html",
-        RevalidatedTemplateView.as_view(template_name="marketing-materials.html"),
+        HubAuthenticatedTemplateView.as_view(template_name="marketing-materials.html"),
         name="frontend-marketing-materials",
     ),
     path(
@@ -53,22 +57,22 @@ urlpatterns += [
     ),
     path(
         "panel.html",
-        RevalidatedTemplateView.as_view(template_name="panel.html"),
+        HubAuthenticatedTemplateView.as_view(template_name="panel.html"),
         name="frontend-panel",
     ),
     path(
         "review.html",
-        RevalidatedTemplateView.as_view(template_name="review.html"),
+        HubAuthenticatedTemplateView.as_view(template_name="review.html"),
         name="frontend-review",
     ),
     path(
         "school-kit.html",
-        RevalidatedTemplateView.as_view(template_name="school-kit.html"),
+        HubAuthenticatedTemplateView.as_view(template_name="school-kit.html"),
         name="frontend-school-kit",
     ),
     path(
         "admin.html",
-        RevalidatedTemplateView.as_view(template_name="admin.html"),
+        HubAuthenticatedTemplateView.as_view(template_name="admin.html"),
         name="frontend-admin",
     ),
     path(

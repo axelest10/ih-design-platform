@@ -1,5 +1,10 @@
 # Preparación de despliegue
 
+La topología operativa autoritativa, el mapeo de ramas, la promoción manual de Production, el
+aislamiento, el correo seguro y el rollback están en
+[`release-topology.md`](release-topology.md). Este documento conserva los detalles de construcción
+y diagnóstico del servicio.
+
 Estado actual: el staging de Railway está desplegado y su endpoint de salud fue confirmado el
 2026-08-09. El repositorio conserva SQLite para desarrollo local;
 `infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para pruebas locales de la
@@ -45,10 +50,27 @@ OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
 ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el código>
 ANTHROPIC_TIMEOUT_SECONDS=45
-RESEND_API_KEY=<API key secreta de Resend>
-RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
+EMAIL_DELIVERY_MODE=allowlist
+EMAIL_ALLOWED_RECIPIENTS=<destinatarios de prueba aprobados, separados por coma>
+POSTMARK_SERVER_TOKEN=<token del servidor IH Design — Staging, ingresado directamente en Railway>
+POSTMARK_FROM_EMAIL=mydesign@ihlatam.com
+POSTMARK_FROM_NAME=IH Design
+POSTMARK_MESSAGE_STREAM=outbound
+POSTMARK_REPLY_TO=
+POSTMARK_WEBHOOK_USERNAME=<usuario Basic exclusivo de Staging, ingresado directamente>
+POSTMARK_WEBHOOK_PASSWORD=<contraseña Basic exclusiva de Staging, ingresada directamente>
+POSTMARK_WEBHOOK_MAX_BYTES=65536
 PASSWORD_RESET_MAX_AGE_SECONDS=900
 LOGIN_THROTTLE_RATE=10/hour
+HUB_OIDC_ENABLED=1
+HUB_OIDC_PRODUCTION_APPROVED=0
+HUB_OIDC_ISSUER=https://dev-hub.ihlatam.com/oidc
+HUB_OIDC_CLIENT_ID=ih-design-platform-staging
+HUB_OIDC_CLIENT_SECRET=<secreto compartido generado fuera de Git>
+HUB_OIDC_REDIRECT_URI=https://mydesign-staging.ihlatam.com/api/v1/auth/hub/callback/
+HUB_OIDC_SESSION_MAX_AGE_SECONDS=900
+HUB_OIDC_STATE_MAX_AGE_SECONDS=600
+HUB_OIDC_CLOCK_SKEW_SECONDS=30
 DESIGN_TEST_MODE=1
 DESIGN_TEST_LIMIT=50
 CELERY_TASK_ALWAYS_EAGER=0
@@ -57,9 +79,28 @@ CORS_ALLOWED_ORIGINS=
 
 El almacenamiento local de logos y referencias no debe considerarse persistente en un PaaS. Para
 staging se debe configurar S3-compatible mediante `django-storages` antes de cargar activos reales.
-La autenticación actual no depende de un proveedor externo: cada integrante usa su cuenta y una
-contraseña almacenada con el hasher de Django. Los administradores crean cuentas y restablecen
-contraseñas desde el panel.
+El SSO de Staging depende del proveedor OIDC del IH LATAM Hub. El `client_secret` debe coincidir
+en ambos servicios y permanecer fuera de Git. El callback es exacto y no admite comodines. La
+migración `security.0005_hubidentityevent_hubidentity` debe ejecutarse antes de activar el flag.
+El login local permanece visible como contingencia de Staging; no debe presentarse como la ruta
+principal cuando el SSO está habilitado.
+
+El correo usa el servidor Postmark dedicado **IH Design — Staging**. El dominio verificado es
+`ihlatam.com` y el remitente aprobado es `IH Design <mydesign@ihlatam.com>`; no se configura
+`mydesign.ihlatam.com` como dominio de envío. `EMAIL_DELIVERY_MODE=allowlist` es obligatorio para
+una integración real en Staging. Una lista vacía o un destinatario no permitido impiden contactar
+a Postmark. `EMAIL_DELIVERY_MODE=live` se rechaza al arrancar fuera de Production. Ver
+[`email.md`](email.md) para pruebas, errores, rotación y rollback.
+El webhook Staging es
+`https://mydesign-staging.ihlatam.com/api/v1/webhooks/postmark/`; solo se activan Delivery, Bounce,
+Spam complaint y Subscription change con `HttpAuth`. Open/Click quedan apagados. Production usa
+credenciales diferentes y no se activa hasta el cutover autorizado. Toda variable de Production
+preparada sin despliegue debe aplicarse con `skipDeploys: true` o el equivalente vigente comprobado,
+no con una operación ordinaria que pueda redeplegar el servicio.
+
+Rollback de Design: poner `HUB_OIDC_ENABLED=0` y redeployar solo el servicio de Staging. Esto
+detiene nuevas redirecciones OIDC sin borrar usuarios, enlaces ni eventos. No eliminar la
+migración ni reescribir el historial; la autenticación local permanece disponible.
 
 La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
@@ -81,6 +122,10 @@ gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}
 
 Railway inyecta `PORT`; `8000` es únicamente el fallback local. El comando completo del
 Dockerfile también fija un worker, timeout de 120 segundos y envía access/error logs a stdout.
+El formato de access log usa únicamente el path (`%(U)s`): omite query strings y `Referer` para
+que el callback OIDC no registre el authorization code ni el state. También omite deliberadamente
+`remote_user`, porque con HTTP Basic contendría el usuario secreto del webhook Postmark. Nunca se
+deben reintroducir `%(q)s`, `%(r)s`, `%(f)s` o `%(u)s`.
 
 Antes del primer arranque se debe ejecutar, como pre-deploy o job controlado:
 
@@ -172,8 +217,10 @@ OK 200 https://<dominio>/api/v1/health/ {'status': 'ok', 'service': 'ih-design-p
 4. Configurar almacenamiento S3-compatible para logos, referencias y futuras exportaciones.
 5. Ejecutar migraciones, `check --deploy` y `tests/smoke_deployment.py` contra el dominio real
    antes de iniciar o reanudar el lote de pruebas.
-6. Probar que la cuenta administradora puede abrir el panel y crear una cuenta de equipo.
-7. Recién entonces iniciar el lote de 50 pruebas.
+6. Verificar discovery/JWKS, callback exacto, PKCE, rechazo de replay/claims/usuarios inactivos,
+   provisión `viewer`, preservación de roles locales, deep links y logout con usuarios sintéticos.
+7. Probar que la cuenta administradora puede abrir el panel y crear una cuenta de equipo.
+8. Recién entonces iniciar el lote de 50 pruebas.
 
 ## Invalidación de caché del frontend
 

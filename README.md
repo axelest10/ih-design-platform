@@ -49,4 +49,8 @@ pytest
 
 Para PostgreSQL, establece `DB_ENGINE=postgresql` y las variables `POSTGRES_*` descritas en `.env.example`. `docker compose -f infrastructure/docker-compose.yml up -d` levanta PostgreSQL y Redis.
 
+El correo transaccional usa Postmark detrás de un servicio central y queda deshabilitado por
+defecto. Staging requiere una allowlist explícita; solo Production puede usar entrega `live`. Ver
+[`docs/operations/email.md`](docs/operations/email.md).
+
 Consulta [PROJECT.md](PROJECT.md), [docs/architecture.md](docs/architecture.md) y [ROADMAP.md](ROADMAP.md) para el alcance y las decisiones del MVP.

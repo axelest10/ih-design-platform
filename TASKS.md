@@ -2,6 +2,14 @@
 
 ## Completadas
 
+- [x] Implementar el contrato v1 de SSO con IH LATAM Hub como proveedor OIDC para Staging:
+      Authorization Code + PKCE S256, enlace/provisión por identidad estable, rol local
+      `viewer` por defecto, auditoría sin secretos y rollback por feature flag (2026-08-14).
+- [x] Sustituir el adaptador runtime de Resend por Postmark, con remitente aprobado, Reply-To
+      opcional, `MessageID` seguro y política `disabled|allowlist|live` que falla cerrada
+      (2026-08-15).
+- [x] Persistir el estado transaccional de Postmark y recibir Delivery, Bounce, SpamComplaint y
+      SubscriptionChange mediante webhook autenticado, acotado e idempotente (2026-08-15).
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
@@ -58,15 +66,21 @@
 
 ## Siguientes
 
+- [ ] Instalar directamente en Railway el token del servidor **IH Design — Staging**, configurar
+      la allowlist de prueba aprobada y ejecutar una verificación sin destinatarios reales.
+- [ ] Promover mediante PR separado el hotfix provider-only a Production, comprobar correo con
+      SSO apagado y después revocar la clave Resend expuesta en el workspace propietario.
+
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
-- [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
-      persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
-      están listas, falta aprovisionar el proveedor (Railway o Render).
+- [x] **Crear y aislar el entorno de Staging real** — Railway tiene PostgreSQL y Redis propios,
+      bucket de objetos exclusivo, autenticación corporativa, correo suprimido y despliegue
+      automático con espera por CI. Production quedó sin autodeploy y con promoción manual
+      documentada en `docs/operations/release-topology.md` (2026-08-15).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
@@ -86,7 +100,7 @@
       pilar Inglés General, usa el logo institucional de IH México ya cargado — no aplica
       cargar un logo distinto salvo que el cliente decida adoptar la identidad visual propia
       del deck más adelante.
-- [ ] Definir roles, permisos y proveedor de identidad corporativa.
+- [x] Definir roles, permisos y proveedor de identidad corporativa.
 - [ ] Diseñar y versionar las primeras plantillas HTML/SVG (consumiendo `brand/generated/` y
       `brand/assets/`).
 - [ ] Acordar checklist de aprobación con Marketing.

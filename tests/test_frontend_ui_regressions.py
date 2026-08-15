@@ -89,6 +89,13 @@ def test_brief_form_has_a_bounded_loading_state():
         assert color in css
 
 
+def test_brief_form_is_disabled_for_authenticated_read_only_roles():
+    script = (FRONTEND / "scripts" / "panel.js").read_text(encoding="utf-8")
+
+    assert "setBriefFormDisabled(!user.can_create_briefs)" in script
+    assert "setBriefFormDisabled(false)" not in script
+
+
 def test_prompt_review_step_is_present_and_hidden_by_default():
     html = (FRONTEND / "panel.html").read_text(encoding="utf-8")
     section = html.split('id="prompt-review-step"', 1)[1].split(">", 1)[0]
