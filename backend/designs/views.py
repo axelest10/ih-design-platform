@@ -215,25 +215,31 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         )
 
     def _preview_document(self, design, render_payload, material_type):
-        job = enqueue_generation_task(
-            generate_document_preview_task,
-            owner=self.request.user,
-            kind="design-pdf-render",
-            resource_type="design",
-            resource_id=design.pk,
-            args=(design.pk, dict(render_payload), material_type.pk),
-        )
+        try:
+            job = enqueue_generation_task(
+                generate_document_preview_task,
+                owner=self.request.user,
+                kind="design-pdf-render",
+                resource_type="design",
+                resource_id=design.pk,
+                args=(design.pk, dict(render_payload), material_type.pk),
+            )
+        except RenderValidationError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return task_response(self.request, job)
 
     def _preview_presentation(self, design, render_payload, material_type):
-        job = enqueue_generation_task(
-            generate_presentation_preview_task,
-            owner=self.request.user,
-            kind="design-pptx-render",
-            resource_type="design",
-            resource_id=design.pk,
-            args=(design.pk, dict(render_payload), material_type.pk),
-        )
+        try:
+            job = enqueue_generation_task(
+                generate_presentation_preview_task,
+                owner=self.request.user,
+                kind="design-pptx-render",
+                resource_type="design",
+                resource_id=design.pk,
+                args=(design.pk, dict(render_payload), material_type.pk),
+            )
+        except RenderValidationError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return task_response(self.request, job)
 
     @action(detail=True, methods=["post"], url_path="review")
