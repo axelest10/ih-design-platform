@@ -1,11 +1,8 @@
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.db import transaction
-from django.db.models import Max
 from django.http import FileResponse, HttpResponse
 from django.utils.cache import patch_cache_control
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -17,16 +14,50 @@ from security.permissions import (
     ROLE_MARKETING,
     ROLE_PLATFORM_ADMIN,
     ROLE_REVIEWER,
+    CorporateDomainPermission,
     RoleAwareViewSet,
+    is_platform_admin_user,
 )
 
-from .models import Design, DesignReviewComment, DesignVersion
+from .models import AsyncGenerationJob, Design, DesignReviewComment
 from .serializers import DesignReviewCommentSerializer, DesignSerializer
+from .services.async_jobs import enqueue_generation_task, task_response
 from .services.renderer import RenderValidationError, render_preview
-from .services.renderer_document import render_document_preview
-from .services.renderer_presentation import render_presentation_preview
-from .services.revision import DesignRevisionError, revise_design
+from .services.revision import DesignRevisionError
 from .services.versioning import create_next_version
+from .tasks import (
+    generate_document_preview_task,
+    generate_presentation_preview_task,
+    revise_design_task,
+)
+
+
+@api_view(["GET"])
+@permission_classes([CorporateDomainPermission])
+def generation_task_status(request, task_id):
+    """Devuelve el estado de una generación sin exponer jobs de otra persona."""
+    job = AsyncGenerationJob.objects.filter(task_id=task_id).select_related("owner").first()
+    if job is None:
+        return Response({"detail": "La tarea solicitada no existe."}, status=404)
+    if (
+        job.owner_id
+        and job.owner_id != getattr(request.user, "pk", None)
+        and not is_platform_admin_user(request.user)
+    ):
+        return Response({"detail": "La tarea solicitada no existe."}, status=404)
+    return Response(
+        {
+            "task_id": job.task_id,
+            "kind": job.kind,
+            "resource_type": job.resource_type,
+            "resource_id": job.resource_id or None,
+            "status": job.status,
+            "result": job.result if job.status == AsyncGenerationJob.Status.SUCCEEDED else None,
+            "error": job.error if job.status == AsyncGenerationJob.Status.FAILED else None,
+            "created_at": job.created_at,
+            "updated_at": job.updated_at,
+        }
+    )
 
 
 class DesignViewSet(RoleAwareViewSet, ModelViewSet):
@@ -104,13 +135,17 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         """Refina el copy vigente mediante una instrucción independiente."""
         design = self.get_object()
         try:
-            design = revise_design(design, request.data.get("instruction"))
+            job = enqueue_generation_task(
+                revise_design_task,
+                owner=request.user,
+                kind="design-revision-copy",
+                resource_type="design",
+                resource_id=design.pk,
+                args=(design.pk, request.data.get("instruction")),
+            )
         except DesignRevisionError as exc:
             return Response({"detail": str(exc)}, status=400)
-        return Response(
-            DesignSerializer(design, context=self.get_serializer_context()).data,
-            status=201,
-        )
+        return task_response(request, job)
 
     def export_version(self, request, pk=None, version_number=None):
         """Descarga un artefacto persistido de una versión sin regenerarlo."""
@@ -180,126 +215,26 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         )
 
     def _preview_document(self, design, render_payload, material_type):
-        try:
-            rendered = render_document_preview(
-                render_payload,
-                material_type=material_type,
-            )
-        except RenderValidationError as exc:
-            return Response({"detail": str(exc)}, status=400)
-
-        with transaction.atomic():
-            next_number = (
-                design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
-            ) + 1
-            pdf_path = default_storage.save(
-                f"generated-designs/{design.pk}/version-{next_number}.pdf",
-                ContentFile(rendered.pdf),
-            )
-            version = DesignVersion.objects.create(
-                design=design,
-                number=next_number,
-                template_key=rendered.template_key,
-                render_data={**rendered.data, "pdf_path": pdf_path},
-                asset_refs=[*rendered.asset_refs, pdf_path],
-                validation_summary=rendered.validation_summary,
-            )
-            update_fields = ["status", "updated_at"]
-            if design.brief.product_slug and settings.DESIGN_TEST_MODE:
-                if design.test_number is None:
-                    latest_test = (
-                        Design.objects.filter(test_number__isnull=False).aggregate(
-                            max_number=Max("test_number")
-                        )["max_number"]
-                        or 0
-                    )
-                    design.test_number = latest_test + 1
-                    update_fields.append("test_number")
-                design.status = Design.Status.SELF_REVIEW
-            else:
-                design.status = Design.Status.IN_REVIEW
-            design.save(update_fields=update_fields)
-
-        run_automatic_design_review(version)
-        design.refresh_from_db(fields=["status", "updated_at"])
-        return Response(
-            {
-                "design_id": str(design.pk),
-                "status": design.status,
-                "version": version.number,
-                "test_number": design.test_number,
-                "template_key": rendered.template_key,
-                "template_version": rendered.template_version,
-                "validation": rendered.validation_summary,
-                "test_batch_limit": settings.DESIGN_TEST_LIMIT,
-                "test_batch_complete": bool(
-                    design.test_number and design.test_number >= settings.DESIGN_TEST_LIMIT
-                ),
-                "preview": {"pdf_url": default_storage.url(pdf_path)},
-            },
-            status=201,
+        job = enqueue_generation_task(
+            generate_document_preview_task,
+            owner=self.request.user,
+            kind="design-pdf-render",
+            resource_type="design",
+            resource_id=design.pk,
+            args=(design.pk, dict(render_payload), material_type.pk),
         )
+        return task_response(self.request, job)
 
     def _preview_presentation(self, design, render_payload, material_type):
-        try:
-            rendered = render_presentation_preview(
-                render_payload,
-                material_type=material_type,
-            )
-        except RenderValidationError as exc:
-            return Response({"detail": str(exc)}, status=400)
-
-        with transaction.atomic():
-            next_number = (
-                design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
-            ) + 1
-            pptx_path = default_storage.save(
-                f"generated-designs/{design.pk}/version-{next_number}.pptx",
-                ContentFile(rendered.pptx),
-            )
-            version = DesignVersion.objects.create(
-                design=design,
-                number=next_number,
-                template_key=rendered.template_key,
-                render_data={**rendered.data, "pptx_path": pptx_path},
-                asset_refs=[*rendered.asset_refs, pptx_path],
-                validation_summary=rendered.validation_summary,
-            )
-            update_fields = ["status", "updated_at"]
-            if design.brief.product_slug and settings.DESIGN_TEST_MODE:
-                if design.test_number is None:
-                    latest_test = (
-                        Design.objects.filter(test_number__isnull=False).aggregate(
-                            max_number=Max("test_number")
-                        )["max_number"]
-                        or 0
-                    )
-                    design.test_number = latest_test + 1
-                    update_fields.append("test_number")
-                design.status = Design.Status.SELF_REVIEW
-            else:
-                design.status = Design.Status.IN_REVIEW
-            design.save(update_fields=update_fields)
-
-        run_automatic_design_review(version)
-        design.refresh_from_db(fields=["status", "updated_at"])
-        return Response(
-            {
-                "design_id": str(design.pk),
-                "status": design.status,
-                "version": version.number,
-                "test_number": design.test_number,
-                "template_key": rendered.template_key,
-                "template_version": rendered.template_version,
-                "validation": rendered.validation_summary,
-                "test_batch_limit": settings.DESIGN_TEST_LIMIT,
-                "test_batch_complete": bool(
-                    design.test_number and design.test_number >= settings.DESIGN_TEST_LIMIT
-                ),
-                "preview": {"pptx_url": default_storage.url(pptx_path)},
-            },
-            status=201,
+        job = enqueue_generation_task(
+            generate_presentation_preview_task,
+            owner=self.request.user,
+            kind="design-pptx-render",
+            resource_type="design",
+            resource_id=design.pk,
+            args=(design.pk, dict(render_payload), material_type.pk),
         )
+        return task_response(self.request, job)
 
     @action(detail=True, methods=["post"], url_path="review")
     def review(self, request, pk=None):

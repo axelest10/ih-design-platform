@@ -2,6 +2,11 @@
 
 ## Completadas
 
+- [x] Mover las generaciones de PDF, PPTX y copy de IA a Celery (`feature/celery-worker-railway`):
+      las vistas devuelven `202` con `task_id`/`status_url`, y el estado queda persistido en
+      `AsyncGenerationJob`. Railway requiere un segundo servicio con
+      `celery -A config worker -l info --concurrency=2`.
+
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
