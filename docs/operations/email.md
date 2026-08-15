@@ -19,6 +19,12 @@ transaccional configurado. Reply-To se omite cuando no está definido. Una respu
 incluir `ErrorCode=0` y `MessageID`; el identificador se registra en un evento operativo seguro.
 No se registran token del servidor, destinatario, contenido ni URL de recuperación.
 
+Antes de llamar al proveedor se crea `TransactionalEmailDelivery`, sin asunto ni contenido, y su
+ID interno viaja como metadata para poder asociar un webhook que llegue antes que la respuesta de
+la API. `EmailRecipientState` conserva la supresión vigente y bloquea nuevos envíos locales a una
+dirección suprimida. `PostmarkWebhookEvent` conserva una versión segura de Delivery, Bounce,
+SpamComplaint y SubscriptionChange. Nunca se reenvía automáticamente un correo rebotado.
+
 No hay reintentos automáticos. Un timeout puede ocurrir después de que el proveedor acepte el
 mensaje; repetir sin idempotencia podría generar dos correos. Los fallos se reducen a categorías
 seguras (`configuration`, `provider_rejected`, `provider_unavailable` o `invalid_response`) y el
@@ -33,6 +39,9 @@ endpoint mantiene HTTP 202 genérico.
 | `POSTMARK_FROM_NAME` | `IH Design`. |
 | `POSTMARK_MESSAGE_STREAM` | Stream transaccional; valor esperado `outbound`. |
 | `POSTMARK_REPLY_TO` | Buzón Reply-To opcional; vacío mientras no exista uno aprobado. |
+| `POSTMARK_WEBHOOK_USERNAME` | Usuario secreto de HTTP Basic, exclusivo del entorno. |
+| `POSTMARK_WEBHOOK_PASSWORD` | Contraseña secreta de HTTP Basic, exclusiva del entorno. |
+| `POSTMARK_WEBHOOK_MAX_BYTES` | Límite del request del webhook; `65536` por defecto. |
 | `EMAIL_DELIVERY_MODE` | `disabled`, `allowlist` o `live`. |
 | `EMAIL_ALLOWED_RECIPIENTS` | Lista exacta separada por comas, usada solo por `allowlist`. |
 
@@ -53,6 +62,31 @@ pero no demuestra que el servidor dedicado de Staging, su remitente o su reputac
 La aceptación real necesita el token de **IH Design — Staging** y un destinatario de prueba
 explícitamente aprobado; nunca se elige una dirección de empleado por conveniencia.
 
+## Webhooks de estado del proveedor
+
+El endpoint dedicado es `POST /api/v1/webhooks/postmark/`. Solo ese endpoint está exento de CSRF
+y exige HTTP Basic antes de leer o procesar JSON. Si faltan credenciales devuelve 503; si la
+autenticación no coincide devuelve 403; si el cuerpo excede el límite devuelve 413. Postmark no
+ofrece firma HMAC de webhooks, por lo que se usa su `HttpAuth` soportado con credenciales distintas
+por entorno:
+
+- Staging: `https://mydesign-staging.ihlatam.com/api/v1/webhooks/postmark/`
+- Production: `https://mydesign.ihlatam.com/api/v1/webhooks/postmark/`
+
+En el servidor y stream `outbound` correspondiente se habilitan exclusivamente **Delivery**,
+**Bounce**, **Spam complaint** y **Subscription change**. **Open** y **Click** permanecen apagados.
+En Postmark se configura la URL HTTPS y `HttpAuth` con el usuario/contraseña que el propietario
+ingresó directamente como `POSTMARK_WEBHOOK_USERNAME` y `POSTMARK_WEBHOOK_PASSWORD` en Railway del
+mismo entorno. Las credenciales no se incluyen en la URL ni se copian entre Staging y Production.
+
+Cada evento conocido se vincula por `MessageID` o, para la carrera inicial, por el ID interno de la
+metadata. SubscriptionChange sin `MessageID` solo se acepta para un destinatario que ya tenga un
+correo local. Un SHA-256 estable de la identidad del evento tiene restricción `unique`, por lo que
+un retry recibe 200 sin duplicar el audit ni volver a mutar estado. Eventos desconocidos o de un
+mensaje ajeno reciben 200 y se ignoran; payloads conocidos incompletos reciben 400. Se persisten
+destinatario, timestamp, stream, clasificación y detalle saneado, pero se descartan asunto, HTML,
+texto, `Content`, enlaces y tokens.
+
 ## Configuración y prueba segura de Staging
 
 El propietario ingresa el token directamente en las variables Railway de Staging, junto con:
@@ -64,6 +98,9 @@ POSTMARK_FROM_EMAIL=mydesign@ihlatam.com
 POSTMARK_FROM_NAME=IH Design
 POSTMARK_MESSAGE_STREAM=outbound
 POSTMARK_REPLY_TO=
+POSTMARK_WEBHOOK_USERNAME=<ingresado directamente en Railway y Postmark Staging>
+POSTMARK_WEBHOOK_PASSWORD=<ingresado directamente en Railway y Postmark Staging>
+POSTMARK_WEBHOOK_MAX_BYTES=65536
 ```
 
 Tras el redeploy de Staging, se solicita recuperación solo para una identidad sintética cuya
@@ -78,7 +115,9 @@ desplegar código Postmark. La secuencia segura es:
 
 1. Aprobar un PR provider-only basado en `main`, sin cambios SSO.
 2. Ingresar directamente en Railway Production el token de **IH Design — Production**, remitente,
-   nombre, stream y `EMAIL_DELIVERY_MODE=live`, manteniendo `HUB_OIDC_ENABLED` apagado.
+   nombre, stream, credenciales webhook separadas y `EMAIL_DELIVERY_MODE=live`, manteniendo
+   `HUB_OIDC_ENABLED` apagado. Si todavía no se pretende desplegar, la mutación debe usar
+   explícitamente `skipDeploys: true` (o el equivalente documentado verificado en ese momento).
 3. Promover manualmente el SHA provider-only exacto; confirmar que no existe trigger automático.
 4. Verificar salud, login legacy y una recuperación controlada aprobada; reconciliar `MessageID`.
 5. Eliminar `RESEND_API_KEY` y `RESEND_FROM_EMAIL` de Railway porque el nuevo código ya no los usa.
@@ -90,5 +129,6 @@ variables. Después de revocar Resend, el rollback seguro es a un SHA Postmark c
 no se restaura la clave comprometida. Toda rotación Postmark crea primero un token nuevo en el
 servidor correcto, actualiza Railway, verifica aceptación y solo después elimina el anterior.
 
-Referencias oficiales: [Email API](https://postmarkapp.com/developer/api/email-api) y
-[API overview/error handling](https://postmarkapp.com/developer/api/overview).
+Referencias oficiales: [Email API](https://postmarkapp.com/developer/api/email-api),
+[webhooks](https://postmarkapp.com/developer/webhooks/webhooks-overview) y
+[Webhook API/HttpAuth](https://postmarkapp.com/developer/api/webhooks-api).

@@ -185,6 +185,11 @@ POSTMARK_FROM_EMAIL = os.getenv("POSTMARK_FROM_EMAIL", "mydesign@ihlatam.com").s
 POSTMARK_FROM_NAME = os.getenv("POSTMARK_FROM_NAME", "IH Design").strip()
 POSTMARK_MESSAGE_STREAM = os.getenv("POSTMARK_MESSAGE_STREAM", "outbound").strip()
 POSTMARK_REPLY_TO = os.getenv("POSTMARK_REPLY_TO", "").strip()
+POSTMARK_WEBHOOK_USERNAME = os.getenv("POSTMARK_WEBHOOK_USERNAME", "").strip()
+POSTMARK_WEBHOOK_PASSWORD = os.getenv("POSTMARK_WEBHOOK_PASSWORD", "").strip()
+POSTMARK_WEBHOOK_MAX_BYTES = int(os.getenv("POSTMARK_WEBHOOK_MAX_BYTES", "65536"))
+if POSTMARK_WEBHOOK_MAX_BYTES <= 0:
+    raise ImproperlyConfigured("POSTMARK_WEBHOOK_MAX_BYTES debe ser mayor que cero.")
 EMAIL_DELIVERY_MODE = os.getenv("EMAIL_DELIVERY_MODE", "disabled").strip().casefold()
 EMAIL_ALLOWED_RECIPIENTS = tuple(
     value.strip().casefold()

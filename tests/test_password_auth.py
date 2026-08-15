@@ -9,7 +9,7 @@ from django.middleware.csrf import get_token
 from django.test import RequestFactory, override_settings
 from rest_framework.test import APIClient
 
-from security.models import PasswordResetToken
+from security.models import PasswordResetToken, TransactionalEmailDelivery
 from security.throttles import LoginIPThrottle
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -235,6 +235,11 @@ def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(
     assert captured[0]["tag"] == "password-reset"
     assert "/login.html#reset=" in captured[0]["text_body"]
     record = PasswordResetToken.objects.get(user=user)
+    delivery = TransactionalEmailDelivery.objects.get(user=user)
+    assert delivery.password_reset_token == record
+    assert delivery.provider_message_id == "postmark-message-safe-id"
+    assert delivery.status == TransactionalEmailDelivery.Status.ACCEPTED
+    assert captured[0]["metadata"] == {"email_delivery_id": str(delivery.pk)}
     assert record.token_hash not in captured[0]["text_body"]
     token = unquote(captured[0]["text_body"].split("#reset=", 1)[1].strip())
     events = [record.message for record in caplog.records if record.name == "ih_design.operations"]

@@ -289,3 +289,17 @@ El PR provider-only parte de `main`, cuyo rango histórico `Pillow>=10.0,<12.0` 
 verificación de este release. Este cambio de dependencia no introduce SSO ni modifica la lógica de
 correo; es el gate de seguridad explícitamente autorizado para que el hotfix pueda validarse antes
 de una promoción manual.
+
+## 2026-08-15 — Webhooks Postmark autenticados e idempotentes
+
+La aceptación de la API Postmark ya no se interpreta como entrega final. Cada intento crea primero
+un audit `TransactionalEmailDelivery` sin asunto, cuerpo, enlace ni token. Delivery, Bounce,
+SpamComplaint y SubscriptionChange llegan a un endpoint exclusivo autenticado con HTTP Basic,
+porque Postmark soporta `HttpAuth` pero no firma HMAC sus webhooks. Staging y Production usan
+credenciales independientes; Open y Click quedan fuera de alcance.
+
+Los eventos se deduplican de forma durable mediante una clave SHA-256 estable con restricción
+`unique`. Un hard bounce o complaint suprime futuros envíos locales sin desactivar ni modificar la
+cuenta; un transient bounce solo se registra; una reactivación explícita de Postmark levanta la
+supresión. No hay reintentos automáticos. Se persiste detalle saneado y se ignoran campos de
+contenido para que URLs y tokens de recuperación no entren al audit o a logs.

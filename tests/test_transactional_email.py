@@ -12,12 +12,14 @@ from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 from rest_framework.test import APIClient
 
-from security.models import PasswordResetToken
+from security.models import EmailRecipientState, PasswordResetToken
 from security.services.email import (
     EmailDeliveryError,
     EmailDeliverySuppressed,
     send_transactional_email,
 )
+
+pytestmark = pytest.mark.django_db
 
 
 class FakeResponse:
@@ -88,6 +90,41 @@ def test_postmark_request_uses_expected_transactional_contract(monkeypatch):
         "Tag": "password-reset",
     }
     assert message_id == "postmark-message-safe-id"
+
+
+@override_settings(
+    DJANGO_ENV="staging",
+    EMAIL_DELIVERY_MODE="allowlist",
+    EMAIL_ALLOWED_RECIPIENTS=("approved-test@example.test",),
+    POSTMARK_SERVER_TOKEN="postmark-test-server-token",
+    POSTMARK_FROM_EMAIL="mydesign@ihlatam.com",
+    POSTMARK_FROM_NAME="IH Design",
+    POSTMARK_MESSAGE_STREAM="outbound",
+    POSTMARK_REPLY_TO="",
+)
+def test_locally_suppressed_recipient_is_not_sent(monkeypatch):
+    EmailRecipientState.objects.create(
+        recipient="approved-test@example.test",
+        suppressed=True,
+        suppression_reason="SpamComplaint",
+    )
+    called = False
+
+    def unexpected_urlopen(*args, **kwargs):
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr("security.services.email.urlopen", unexpected_urlopen)
+    with pytest.raises(EmailDeliverySuppressed) as exc_info:
+        send_transactional_email(
+            to="approved-test@example.test",
+            subject="Subject",
+            text_body="Text",
+            html_body="<p>Text</p>",
+        )
+
+    assert exc_info.value.category == "recipient_provider_suppressed"
+    assert called is False
 
 
 @override_settings(

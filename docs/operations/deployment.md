@@ -52,6 +52,9 @@ POSTMARK_FROM_EMAIL=mydesign@ihlatam.com
 POSTMARK_FROM_NAME=IH Design
 POSTMARK_MESSAGE_STREAM=outbound
 POSTMARK_REPLY_TO=
+POSTMARK_WEBHOOK_USERNAME=<usuario Basic exclusivo de Staging, ingresado directamente>
+POSTMARK_WEBHOOK_PASSWORD=<contraseña Basic exclusiva de Staging, ingresada directamente>
+POSTMARK_WEBHOOK_MAX_BYTES=65536
 PASSWORD_RESET_MAX_AGE_SECONDS=900
 LOGIN_THROTTLE_RATE=10/hour
 DESIGN_TEST_MODE=1
@@ -72,6 +75,12 @@ El correo usa el servidor Postmark dedicado **IH Design — Staging**. El domini
 una integración real en Staging. Una lista vacía o un destinatario no permitido impiden contactar
 a Postmark. `EMAIL_DELIVERY_MODE=live` se rechaza al arrancar fuera de Production. Ver
 [`email.md`](email.md) para pruebas, errores, rotación y rollback.
+El webhook Staging es
+`https://mydesign-staging.ihlatam.com/api/v1/webhooks/postmark/`; solo se activan Delivery, Bounce,
+Spam complaint y Subscription change con `HttpAuth`. Open/Click quedan apagados. Production usa
+credenciales diferentes y no se activa hasta el cutover autorizado. Toda variable de Production
+preparada sin despliegue debe aplicarse con `skipDeploys: true` o el equivalente vigente comprobado,
+no con una operación ordinaria que pueda redeplegar el servicio.
 
 La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
