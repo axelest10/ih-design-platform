@@ -257,3 +257,49 @@ cargaron y aprobaron las variantes `classic`, `black` y `white` en
 encontrarse en ninguna de las dos fuentes. Otras subcarpetas de ese Drive (p. ej. "Cambridge")
 contienen activos de un dominio distinto (insignias de certificación Cambridge English
 Qualifications) y no deben confundirse con el logotipo institucional de IH México.
+## 2026-08-15 — Postmark reemplaza Resend con seguridad por entorno
+
+Postmark es el único proveedor soportado por el código nuevo de IH Design. Se conserva un límite
+pequeño `send_transactional_email`; vistas y reglas de negocio no conocen el token ni el contrato
+HTTP. La integración llama directamente al endpoint transaccional `/email`, usa el stream
+`outbound`, desactiva tracking y solo expone internamente el `MessageID`. No se agrega una
+dependencia Python porque el adaptador HTTP existente ya era pequeño y sustituible.
+
+El remitente aprobado es `IH Design <mydesign@ihlatam.com>` sobre el dominio padre verificado
+`ihlatam.com`; Reply-To permanece opcional y vacío si no hay buzón definido. Los servidores
+**IH Design — Staging** e **IH Design — Production** tienen tokens separados y nunca reutilizan
+credenciales del Hub.
+
+La entrega queda deshabilitada por defecto. Staging solo admite `allowlist` y falla cerrada si la
+lista está vacía o el destinatario no está autorizado; `live` solo es válido con
+`DJANGO_ENV=production`. No hay reintento automático: tras un timeout no puede saberse con certeza
+si el proveedor aceptó el mensaje y repetir podría duplicarlo. La aplicación conserva la respuesta
+genérica anti-enumeración y elimina el token de recuperación local si la entrega se suprime o falla.
+
+Production no se migra automáticamente. Mientras ejecute el SHA anterior se conserva su variable
+Resend para no romper recuperaciones. Un PR provider-only basado en `main` debe preparar la
+migración sin SSO; después de comprobar Postmark se eliminan las variables antiguas y el propietario
+revoca la clave Resend expuesta.
+
+## 2026-08-15 — Pillow 12.3 cierra el audit del hotfix de correo
+
+El PR provider-only parte de `main`, cuyo rango histórico `Pillow>=10.0,<12.0` resolvía Pillow
+11.3.0 y producía hallazgos vigentes en `pip-audit`. Se eleva el rango a
+`Pillow>=12.3,<13.0`, primera versión que satisface todas las correcciones reportadas en la
+verificación de este release. Este cambio de dependencia no introduce SSO ni modifica la lógica de
+correo; es el gate de seguridad explícitamente autorizado para que el hotfix pueda validarse antes
+de una promoción manual.
+
+## 2026-08-15 — Webhooks Postmark autenticados e idempotentes
+
+La aceptación de la API Postmark ya no se interpreta como entrega final. Cada intento crea primero
+un audit `TransactionalEmailDelivery` sin asunto, cuerpo, enlace ni token. Delivery, Bounce,
+SpamComplaint y SubscriptionChange llegan a un endpoint exclusivo autenticado con HTTP Basic,
+porque Postmark soporta `HttpAuth` pero no firma HMAC sus webhooks. Staging y Production usan
+credenciales independientes; Open y Click quedan fuera de alcance.
+
+Los eventos se deduplican de forma durable mediante una clave SHA-256 estable con restricción
+`unique`. Un hard bounce o complaint suprime futuros envíos locales sin desactivar ni modificar la
+cuenta; un transient bounce solo se registra; una reactivación explícita de Postmark levanta la
+supresión. No hay reintentos automáticos. Se persiste detalle saneado y se ignoran campos de
+contenido para que URLs y tokens de recuperación no entren al audit o a logs.

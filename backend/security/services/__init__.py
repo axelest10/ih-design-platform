@@ -1,4 +1,4 @@
-from .email import EmailDeliveryError, EmailMessage, get_email_client
+from .email import EmailDeliveryError, EmailDeliverySuppressed, send_transactional_email
 from .password_reset import (
     PasswordResetError,
     consume_password_reset,
@@ -8,10 +8,10 @@ from .password_reset import (
 
 __all__ = [
     "EmailDeliveryError",
-    "EmailMessage",
+    "EmailDeliverySuppressed",
     "PasswordResetError",
     "consume_password_reset",
     "create_password_reset",
-    "get_email_client",
     "invalidate_other_password_resets",
+    "send_transactional_email",
 ]
