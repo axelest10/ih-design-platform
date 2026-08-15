@@ -240,8 +240,23 @@ OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "")
 ANTHROPIC_TIMEOUT_SECONDS = float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "45"))
-RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
-RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
+POSTMARK_SERVER_TOKEN = os.getenv("POSTMARK_SERVER_TOKEN", "").strip()
+POSTMARK_FROM_EMAIL = os.getenv("POSTMARK_FROM_EMAIL", "mydesign@ihlatam.com").strip()
+POSTMARK_FROM_NAME = os.getenv("POSTMARK_FROM_NAME", "IH Design").strip()
+POSTMARK_MESSAGE_STREAM = os.getenv("POSTMARK_MESSAGE_STREAM", "outbound").strip()
+POSTMARK_REPLY_TO = os.getenv("POSTMARK_REPLY_TO", "").strip()
+EMAIL_DELIVERY_MODE = os.getenv("EMAIL_DELIVERY_MODE", "disabled").strip().casefold()
+EMAIL_ALLOWED_RECIPIENTS = tuple(
+    value.strip().casefold()
+    for value in os.getenv("EMAIL_ALLOWED_RECIPIENTS", "").split(",")
+    if value.strip()
+)
+if EMAIL_DELIVERY_MODE not in {"disabled", "allowlist", "live"}:
+    raise ImproperlyConfigured("EMAIL_DELIVERY_MODE debe ser disabled, allowlist o live.")
+if EMAIL_DELIVERY_MODE == "live" and DJANGO_ENV != "production":
+    raise ImproperlyConfigured(
+        "EMAIL_DELIVERY_MODE=live solo está permitido con DJANGO_ENV=production."
+    )
 PASSWORD_RESET_MAX_AGE_SECONDS = int(os.getenv("PASSWORD_RESET_MAX_AGE_SECONDS", "900"))
 DESIGN_TEST_MODE = os.getenv("DESIGN_TEST_MODE", "1") == "1"
 DESIGN_TEST_LIMIT = int(os.getenv("DESIGN_TEST_LIMIT", "50"))

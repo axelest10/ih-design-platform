@@ -50,8 +50,13 @@ OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
 ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el código>
 ANTHROPIC_TIMEOUT_SECONDS=45
-RESEND_API_KEY=<API key secreta de Resend>
-RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
+EMAIL_DELIVERY_MODE=allowlist
+EMAIL_ALLOWED_RECIPIENTS=<destinatarios de prueba aprobados, separados por coma>
+POSTMARK_SERVER_TOKEN=<token del servidor IH Design — Staging, ingresado directamente en Railway>
+POSTMARK_FROM_EMAIL=mydesign@ihlatam.com
+POSTMARK_FROM_NAME=IH Design
+POSTMARK_MESSAGE_STREAM=outbound
+POSTMARK_REPLY_TO=
 PASSWORD_RESET_MAX_AGE_SECONDS=900
 LOGIN_THROTTLE_RATE=10/hour
 HUB_OIDC_ENABLED=1
@@ -76,6 +81,13 @@ en ambos servicios y permanecer fuera de Git. El callback es exacto y no admite 
 migración `security.0005_hubidentityevent_hubidentity` debe ejecutarse antes de activar el flag.
 El login local permanece visible como contingencia de Staging; no debe presentarse como la ruta
 principal cuando el SSO está habilitado.
+
+El correo usa el servidor Postmark dedicado **IH Design — Staging**. El dominio verificado es
+`ihlatam.com` y el remitente aprobado es `IH Design <mydesign@ihlatam.com>`; no se configura
+`mydesign.ihlatam.com` como dominio de envío. `EMAIL_DELIVERY_MODE=allowlist` es obligatorio para
+una integración real en Staging. Una lista vacía o un destinatario no permitido impiden contactar
+a Postmark. `EMAIL_DELIVERY_MODE=live` se rechaza al arrancar fuera de Production. Ver
+[`email.md`](email.md) para pruebas, errores, rotación y rollback.
 
 Rollback de Design: poner `HUB_OIDC_ENABLED=0` y redeployar solo el servicio de Staging. Esto
 detiene nuevas redirecciones OIDC sin borrar usuarios, enlaces ni eventos. No eliminar la

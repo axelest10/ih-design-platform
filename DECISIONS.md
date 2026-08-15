@@ -294,3 +294,27 @@ secreto de Staging, se le asignó un bucket Railway exclusivo y se suprimió su 
 variables de Resend. Production no fue reiniciado ni redesplegado. La corrección
 `DJANGO_ENV=production` quedó guardada sin deploy para materializarse en la siguiente promoción
 aprobada. El contrato completo queda en `docs/operations/release-topology.md`.
+
+## 2026-08-15 — Postmark reemplaza Resend con seguridad por entorno
+
+Postmark es el único proveedor soportado por el código nuevo de IH Design. Se conserva un límite
+pequeño `send_transactional_email`; vistas y reglas de negocio no conocen el token ni el contrato
+HTTP. La integración llama directamente al endpoint transaccional `/email`, usa el stream
+`outbound`, desactiva tracking y solo expone internamente el `MessageID`. No se agrega una
+dependencia Python porque el adaptador HTTP existente ya era pequeño y sustituible.
+
+El remitente aprobado es `IH Design <mydesign@ihlatam.com>` sobre el dominio padre verificado
+`ihlatam.com`; Reply-To permanece opcional y vacío si no hay buzón definido. Los servidores
+**IH Design — Staging** e **IH Design — Production** tienen tokens separados y nunca reutilizan
+credenciales del Hub.
+
+La entrega queda deshabilitada por defecto. Staging solo admite `allowlist` y falla cerrada si la
+lista está vacía o el destinatario no está autorizado; `live` solo es válido con
+`DJANGO_ENV=production`. No hay reintento automático: tras un timeout no puede saberse con certeza
+si el proveedor aceptó el mensaje y repetir podría duplicarlo. La aplicación conserva la respuesta
+genérica anti-enumeración y elimina el token de recuperación local si la entrega se suprime o falla.
+
+Production no se migra automáticamente. Mientras ejecute el SHA anterior se conserva su variable
+Resend para no romper recuperaciones. Un PR provider-only basado en `main` debe preparar la
+migración sin SSO; después de comprobar Postmark se eliminan las variables antiguas y el propietario
+revoca la clave Resend expuesta.

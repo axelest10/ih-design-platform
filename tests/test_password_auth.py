@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from urllib.parse import unquote
 
@@ -198,11 +199,11 @@ def test_initial_admin_exists_and_shared_access_is_disabled():
 
 @pytest.mark.django_db
 @override_settings(
-    RESEND_API_KEY="resend-test-key",
-    RESEND_FROM_EMAIL="Design Platform <access@example.com>",
     PASSWORD_RESET_MAX_AGE_SECONDS=900,
 )
-def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(monkeypatch):
+def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(
+    monkeypatch, caplog
+):
     user = get_user_model().objects.create_user(
         username="recoverable",
         email="recoverable@ihmexico.com",
@@ -210,12 +211,15 @@ def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(monkey
     )
     captured = []
 
-    class FakeEmailClient:
-        def send(self, message):
-            captured.append(message)
-            return "email-test-id"
+    def fake_send_transactional_email(**message):
+        captured.append(message)
+        return "postmark-message-safe-id"
 
-    monkeypatch.setattr("security.views.get_email_client", lambda: FakeEmailClient())
+    monkeypatch.setattr(
+        "security.views.send_transactional_email",
+        fake_send_transactional_email,
+    )
+    caplog.set_level(logging.INFO, logger="ih_design.operations")
     client = APIClient()
 
     requested = client.post(
@@ -226,11 +230,16 @@ def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(monkey
 
     assert requested.status_code == 202
     assert len(captured) == 1
-    assert captured[0].recipients == (user.email,)
-    assert "/login.html#reset=" in captured[0].text
+    assert captured[0]["to"] == user.email
+    assert captured[0]["subject"] == "Recupera tu acceso a IH Design Platform"
+    assert captured[0]["tag"] == "password-reset"
+    assert "/login.html#reset=" in captured[0]["text_body"]
     record = PasswordResetToken.objects.get(user=user)
-    assert record.token_hash not in captured[0].text
-    token = unquote(captured[0].text.split("#reset=", 1)[1].strip())
+    assert record.token_hash not in captured[0]["text_body"]
+    token = unquote(captured[0]["text_body"].split("#reset=", 1)[1].strip())
+    events = [record.message for record in caplog.records if record.name == "ih_design.operations"]
+    assert any("postmark-message-safe-id" in event for event in events)
+    assert all(token not in event for event in events)
 
     confirmed = client.post(
         "/api/v1/auth/password-reset/confirm/",
@@ -250,7 +259,6 @@ def test_password_reset_is_generic_sends_fragment_token_and_is_single_use(monkey
 
 
 @pytest.mark.django_db
-@override_settings(RESEND_API_KEY="", RESEND_FROM_EMAIL="")
 @pytest.mark.parametrize(
     "email",
     ["unknown@ihmexico.com", "person@example.com", "inactive@ihmexico.com"],

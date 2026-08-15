@@ -5,6 +5,9 @@
 - [x] Implementar el contrato v1 de SSO con IH LATAM Hub como proveedor OIDC para Staging:
       Authorization Code + PKCE S256, enlace/provisión por identidad estable, rol local
       `viewer` por defecto, auditoría sin secretos y rollback por feature flag (2026-08-14).
+- [x] Sustituir el adaptador runtime de Resend por Postmark, con remitente aprobado, Reply-To
+      opcional, `MessageID` seguro y política `disabled|allowlist|live` que falla cerrada
+      (2026-08-15).
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
@@ -60,6 +63,11 @@
       103 pruebas, ruff y `manage.py check` en verde.
 
 ## Siguientes
+
+- [ ] Instalar directamente en Railway el token del servidor **IH Design — Staging**, configurar
+      la allowlist de prueba aprobada y ejecutar una verificación sin destinatarios reales.
+- [ ] Promover mediante PR separado el hotfix provider-only a Production, comprobar correo con
+      SSO apagado y después revocar la clave Resend expuesta en el workspace propietario.
 
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La

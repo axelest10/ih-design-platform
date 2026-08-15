@@ -69,10 +69,18 @@ trigger de Production como atajo.
 
 ## Correo
 
-Staging opera en modo de **supresión**: `RESEND_API_KEY` y `RESEND_FROM_EMAIL` no existen. El
-endpoint de recuperación conserva su respuesta genérica, pero no puede enviar correo. No se hacen
-pruebas con direcciones de empleados. Production conserva su proveedor/remitente actual y no se
-modifica como parte del trabajo de SSO.
+El código nuevo usa exclusivamente Postmark. Staging empieza en `EMAIL_DELIVERY_MODE=disabled` y,
+cuando el propietario instale directamente el token del servidor **IH Design — Staging**, solo
+puede pasar a `allowlist` con destinatarios de prueba aprobados. Una lista vacía falla cerrada y
+`live` se rechaza fuera de Production. El remitente es
+`IH Design <mydesign@ihlatam.com>` desde el dominio padre ya verificado `ihlatam.com`; las
+credenciales nunca se comparten con Hub.
+
+Production continúa ejecutando el SHA anterior dependiente de Resend hasta una migración manual
+separada. No se elimina `RESEND_API_KEY` mientras ese contenedor siga activo. La secuencia segura
+es preparar variables del servidor **IH Design — Production**, promover un SHA provider-only
+revisado con SSO apagado, verificar salud/login/recuperación controlada y solo entonces retirar
+las variables Resend y revocar la clave expuesta en su workspace real.
 
 ## Variables y cambios pendientes
 

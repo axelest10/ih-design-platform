@@ -16,6 +16,7 @@ ALLOWED_FIELDS = {
     "http_status",
     "output",
     "provider",
+    "provider_message_id",
     "reason",
     "status",
     "template_key",
