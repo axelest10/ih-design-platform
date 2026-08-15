@@ -1,5 +1,18 @@
 # Decisiones técnicas
 
+## 2026-08-15 — `email-kit` es export-only hasta definir el envío
+
+La primera versión de `email-kit` genera un preview y un archivo HTML autocontenido para revisión
+o exportación manual. Usa una familia de renderer distinta a HTML/SVG porque necesita tablas,
+CSS inline, ancho máximo de 640 px, tipografías seguras y ausencia de JavaScript, iframes, video,
+fuentes externas y otros embeds. Reutiliza el pipeline Brief → Design → DesignVersion, los logos
+aprobados, `Campaign`, almacenamiento y revisión automática.
+
+No se integra SMTP/API, proveedor de email, listas, tracking ni envío real. La generación exige
+campaña activa/vigente con datos comerciales confirmados y `unsubscribe_url` en el contexto. Una
+fase posterior deberá recibir luz verde para decidir proveedor, consentimiento, rebotes, tracking,
+unsubscribe operativo y secretos. La implementación no toca `backend/security/`.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,

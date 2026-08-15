@@ -26,6 +26,7 @@ from .serializers import (
     MaterialTemplateSerializer,
     MaterialTypeSerializer,
 )
+from .services.email_kit import EmailKitGenerationError, generate_email_kit
 from .services.quick_design import QuickDesignError, create_quick_design
 from .services.school_kit import SchoolKitGenerationError, generate_school_kit
 
@@ -229,11 +230,17 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
     def generate(self, request, pk=None):
         bundle = self.get_object()
         try:
-            generate_school_kit(
-                bundle,
-                user=request.user if request.user.is_authenticated else None,
+            generator = (
+                generate_email_kit
+                if bundle.material_type.slug == "email-kit"
+                else generate_school_kit
+            )
+            generator(
+                bundle, user=request.user if request.user.is_authenticated else None
             )
         except SchoolKitGenerationError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        except EmailKitGenerationError as exc:
             return Response({"detail": str(exc)}, status=400)
         bundle.refresh_from_db()
         return Response(self.get_serializer(bundle).data, status=201)

@@ -62,12 +62,18 @@
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Diseño e implementación de `email-kit`** — exporta/visualiza HTML compatible con
+      clientes de correo mediante tablas, CSS inline y un ancho máximo de 640 px. No envía
+      mensajes ni integra proveedores; requiere Campaign confirmada y URL de baja.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
 - [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Definir el envío real de emails en una fase aparte** — falta decidir proveedor, listas y
+      consentimiento, tracking, rebotes, unsubscribe operativo y gestión de secretos. El flujo
+      actual es export-only y no debe usarse como sender.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".
