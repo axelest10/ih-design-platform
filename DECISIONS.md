@@ -1,5 +1,19 @@
 # Decisiones técnicas
 
+## 2026-08-15 — safe-zone/legibilidad se persiste en `DesignVersion`
+
+La comprobación se conecta al signal común de creación de `DesignVersion`, por lo que cubre las
+versiones generadas por los flujos actuales y futuros que usen el modelo. Se guardan porcentajes,
+límites, regiones, violaciones y contraste en `validation_summary.safe_zone_check`; no se añade un
+modelo ni un estado paralelo.
+
+La política inicial usa 6.67% lateral y los márgenes equivalentes a 72 px de los templates social
+actuales: square 6.67% vertical, portrait 5.33% y story 3.75%. La legibilidad reutiliza la matriz
+oficial documentada y exige 4.5:1 para texto normal. Un fallo conserva la versión para trazabilidad
+y marca el resumen como `needs_changes`, pero no muta `claude_review_status` ni fuerza el estado
+de `Design`; esos estados siguen perteneciendo a revisión automática/humana. Documentos, PPTX y
+email reciben `skipped` porque no se inventa una zona social para ellos.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,

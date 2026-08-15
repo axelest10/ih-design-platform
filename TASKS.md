@@ -62,12 +62,17 @@
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Safe-zone y legibilidad por `DesignVersion`** — cada versión registra un resultado
+      determinista en `validation_summary.safe_zone_check`, con política porcentual por formato
+      social y contraste AA 4.5:1 basado en `brand/documentation/accessibility-rules.md`.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
 - [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Confirmar overlays específicos por plataforma social** para sustituir o complementar la
+      reserva base de los templates cuando Marketing entregue dimensiones oficiales.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".
