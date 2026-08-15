@@ -33,12 +33,12 @@ from .permissions import (
 from .serializers import PasswordChangeSerializer, PasswordResetConfirmSerializer
 from .services import (
     EmailDeliveryError,
-    EmailMessage,
+    EmailDeliverySuppressed,
     PasswordResetError,
     consume_password_reset,
     create_password_reset,
-    get_email_client,
     invalidate_other_password_resets,
+    send_transactional_email,
 )
 from .throttles import LoginIPThrottle
 
@@ -100,34 +100,57 @@ def request_password_reset(request):
     user = get_user_model().objects.filter(email__iexact=email, is_active=True).first()
     if not user or not is_allowed_corporate_email(user.email):
         return Response(PASSWORD_RESET_RESPONSE, status=202)
-    if not settings.RESEND_API_KEY or not settings.RESEND_FROM_EMAIL:
-        return Response(PASSWORD_RESET_RESPONSE, status=202)
-
     token, record = create_password_reset(user)
     reset_url = request.build_absolute_uri("/login.html") + f"#reset={quote(token, safe='')}"
     safe_url = escape(reset_url, quote=True)
     minutes = max(1, settings.PASSWORD_RESET_MAX_AGE_SECONDS // 60)
-    message = EmailMessage(
-        sender=settings.RESEND_FROM_EMAIL,
-        recipients=(user.email,),
-        subject="Recupera tu acceso a IH Design Platform",
-        html=(
-            f"<p>Usa este enlace para crear una contraseña nueva. Expira en {minutes} minutos "
-            "y solo puede utilizarse una vez.</p>"
-            f"<p><a href=\"{safe_url}\">Recuperar acceso</a></p>"
-        ),
-        text=(
-            f"Usa este enlace para crear una contraseña nueva. Expira en {minutes} minutos y "
-            f"solo puede utilizarse una vez.\n\n{reset_url}"
-        ),
-    )
     try:
-        get_email_client().send(message)
-    except EmailDeliveryError:
+        provider_message_id = send_transactional_email(
+            to=user.email,
+            subject="Recupera tu acceso a IH Design Platform",
+            html_body=(
+                f"<p>Usa este enlace para crear una contraseña nueva. "
+                f"Expira en {minutes} minutos y solo puede utilizarse una vez.</p>"
+                f'<p><a href="{safe_url}">Recuperar acceso</a></p>'
+            ),
+            text_body=(
+                f"Usa este enlace para crear una contraseña nueva. "
+                f"Expira en {minutes} minutos y solo puede utilizarse una vez.\n\n{reset_url}"
+            ),
+            tag="password-reset",
+        )
+    except EmailDeliverySuppressed as exc:
         record.delete()
+        operation_event(
+            "authentication.password_reset_email",
+            status="suppressed",
+            provider="postmark",
+            reason=exc.category,
+            user_id=user.pk,
+            http_status=202,
+        )
+        return Response(PASSWORD_RESET_RESPONSE, status=202)
+    except EmailDeliveryError as exc:
+        record.delete()
+        operation_event(
+            "authentication.password_reset_email",
+            status="failed",
+            provider="postmark",
+            reason=exc.category,
+            user_id=user.pk,
+            http_status=202,
+        )
         return Response(PASSWORD_RESET_RESPONSE, status=202)
 
     invalidate_other_password_resets(record)
+    operation_event(
+        "authentication.password_reset_email",
+        status="accepted",
+        provider="postmark",
+        provider_message_id=provider_message_id,
+        user_id=user.pk,
+        http_status=202,
+    )
     return Response(PASSWORD_RESET_RESPONSE, status=202)
 
 

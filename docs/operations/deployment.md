@@ -45,8 +45,13 @@ OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
 ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el código>
 ANTHROPIC_TIMEOUT_SECONDS=45
-RESEND_API_KEY=<API key secreta de Resend>
-RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
+EMAIL_DELIVERY_MODE=allowlist
+EMAIL_ALLOWED_RECIPIENTS=<destinatarios de prueba aprobados, separados por coma>
+POSTMARK_SERVER_TOKEN=<token del servidor IH Design — Staging, ingresado directamente en Railway>
+POSTMARK_FROM_EMAIL=mydesign@ihlatam.com
+POSTMARK_FROM_NAME=IH Design
+POSTMARK_MESSAGE_STREAM=outbound
+POSTMARK_REPLY_TO=
 PASSWORD_RESET_MAX_AGE_SECONDS=900
 LOGIN_THROTTLE_RATE=10/hour
 DESIGN_TEST_MODE=1
@@ -60,6 +65,13 @@ staging se debe configurar S3-compatible mediante `django-storages` antes de car
 La autenticación actual no depende de un proveedor externo: cada integrante usa su cuenta y una
 contraseña almacenada con el hasher de Django. Los administradores crean cuentas y restablecen
 contraseñas desde el panel.
+
+El correo usa el servidor Postmark dedicado **IH Design — Staging**. El dominio verificado es
+`ihlatam.com` y el remitente aprobado es `IH Design <mydesign@ihlatam.com>`; no se configura
+`mydesign.ihlatam.com` como dominio de envío. `EMAIL_DELIVERY_MODE=allowlist` es obligatorio para
+una integración real en Staging. Una lista vacía o un destinatario no permitido impiden contactar
+a Postmark. `EMAIL_DELIVERY_MODE=live` se rechaza al arrancar fuera de Production. Ver
+[`email.md`](email.md) para pruebas, errores, rotación y rollback.
 
 La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
