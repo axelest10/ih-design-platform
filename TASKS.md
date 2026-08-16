@@ -2,6 +2,8 @@
 
 ## Completadas
 
+- [x] Documentar el workflow de ramas y pull requests en `AGENTS.md` mediante `docs/branching-workflow`.
+
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
