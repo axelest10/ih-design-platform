@@ -1,5 +1,14 @@
 # Decisiones técnicas
 
+## 2026-08-15 — Generaciones pesadas pasan a Celery
+
+Las generaciones de PDF, PPTX y copy que requieren proveedor de IA se ejecutan mediante tareas
+Celery, no dentro del ciclo síncrono de una vista. Cada solicitud crea un `AsyncGenerationJob`
+propio, devuelve `202 Accepted` con `task_id` y `status_url`, y el frontend consulta
+`GET /api/v1/tasks/<task_id>/` hasta obtener `succeeded` o `failed`. El job guarda propietario,
+recurso, resultado y error para no exponer resultados de otra persona. El modo eager sólo se usa
+en tests; staging y producción requieren un worker real conectado a Redis.
+
 ## 2026-08-15 — Nuevas escrituras de archivos quedan aisladas por usuario
 
 - Los uploads de logos, referencias de brief y activos de marketing usan rutas `users/{user_id}/...` mediante funciones `upload_to`.
