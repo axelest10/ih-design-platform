@@ -5,6 +5,38 @@ Estado actual: el staging de Railway está desplegado y su endpoint de salud fue
 `infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para pruebas locales de la
 arquitectura de servicios.
 
+## Estado verificado de staging (2026-08-16)
+
+El servicio web de staging está publicado en el dominio custom:
+
+```text
+https://mydesign.ihlatam.com
+```
+
+La URL cruda de Railway (`ih-design-platform-production.up.railway.app`) se conserva como
+referencia técnica y fallback de diagnóstico, pero no es la URL pública principal. La evidencia
+verificada desde fuera de Railway es:
+
+- `GET /api/v1/health/` responde `200` con `{"status": "ok", "service": "ih-design-platform"}`.
+- `GET /` responde `200` y sirve el frontend de la plataforma.
+- `GET /api/v1/branding/logos/` responde `200` y devuelve el catálogo público activo.
+
+Configuración esperada en Railway para el servicio `web`:
+
+1. En **Settings > Networking > Custom Domains**, el dominio custom es
+   `mydesign.ihlatam.com`.
+2. El DNS del dominio apunta al target que Railway muestra para ese custom domain. Ese target es
+   específico del proyecto y no se copia al repositorio; debe conservarse en el proveedor DNS.
+3. `DJANGO_ALLOWED_HOSTS` debe incluir `mydesign.ihlatam.com`,
+   `ih-design-platform-production.up.railway.app` y `healthcheck.railway.app`.
+4. `CSRF_TRUSTED_ORIGINS` debe incluir `https://mydesign.ihlatam.com` y
+   `https://ih-design-platform-production.up.railway.app`.
+
+La aceptación del custom domain por el endpoint de salud confirma el comportamiento efectivo de
+`DJANGO_ALLOWED_HOSTS`. En esta auditoría no hubo acceso al dashboard ni a un shell de Railway, por
+lo que los valores literales de las variables y el target DNS configurado en Railway no se pueden
+confirmar directamente; deben revisarse allí antes de considerar cerrado ese punto operativo.
+
 ## Base técnica actual
 
 - `backend/config/settings.py` acepta `DATABASE_URL` con PostgreSQL y conserva SQLite para local.
@@ -208,14 +240,14 @@ JSON exacto esperado.
 PowerShell:
 
 ```powershell
-$env:SMOKE_TEST_BASE_URL="https://ih-design-platform-production.up.railway.app"
+$env:SMOKE_TEST_BASE_URL="https://mydesign.ihlatam.com"
 python tests/smoke_deployment.py
 ```
 
 Shell compatible con POSIX:
 
 ```bash
-SMOKE_TEST_BASE_URL=https://ih-design-platform-production.up.railway.app \
+SMOKE_TEST_BASE_URL=https://mydesign.ihlatam.com \
   python tests/smoke_deployment.py
 ```
 
