@@ -16,6 +16,7 @@ from designs.models import Design, DesignVersion
 from designs.services.renderer import RenderValidationError, render_preview
 from designs.services.renderer_document import render_document_preview
 from designs.services.renderer_presentation import render_presentation_preview
+from designs.services.storage_paths import generated_design_path
 
 from ..models import MaterialBundleItem, MaterialTemplate
 from .catalog import VENUE_KIT_DEFAULT_PRODUCT_SLUGS, venue_kit_products
@@ -361,7 +362,7 @@ def generate_venue_kit(
                     material_type=template.material_type,
                 )
                 output_path = default_storage.save(
-                    f"generated-designs/{design.pk}/version-1.pdf",
+                    generated_design_path(design, "version-1.pdf"),
                     ContentFile(rendered.pdf),
                 )
                 render_data = {**rendered.data, "pdf_path": output_path}
@@ -373,7 +374,7 @@ def generate_venue_kit(
                     material_type=template.material_type,
                 )
                 output_path = default_storage.save(
-                    f"generated-designs/{design.pk}/version-1.pptx",
+                    generated_design_path(design, "version-1.pptx"),
                     ContentFile(rendered.pptx),
                 )
                 render_data = {**rendered.data, "pptx_path": output_path}

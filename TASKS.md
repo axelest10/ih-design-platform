@@ -13,6 +13,14 @@
 
 ## Completadas
 
+- [x] Mover las generaciones de PDF, PPTX y copy de IA a Celery (`feature/celery-worker-railway`):
+      las vistas devuelven `202` con `task_id`/`status_url`, y el estado queda persistido en
+      `AsyncGenerationJob`. Railway requiere un segundo servicio con
+      `celery -A config worker -l info --concurrency=2`.
+- [x] Implementar storage user-scoped para uploads y archivos generados en `feature/user-scoped-storage`; las claves históricas quedan documentadas sin migración automática.
+- [x] Documentar el plan de integración SSO con IH Hub en `docs/operations/ihlatam-sso-plan.md`; la implementación queda bloqueada hasta recibir el secreto real y la autorización explícita de Axel.
+- [x] Documentar el workflow de ramas y pull requests en `AGENTS.md` mediante `docs/branching-workflow`.
+
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
@@ -77,12 +85,16 @@
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Comando de verificación R2** — añadido `python manage.py verify_storage_backend` para
+      staging; comprueba escritura, lectura y borrado contra Cloudflare R2 sin persistir secretos.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
 - [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Ejecutar verificación R2 en staging real** — falta disponer del bucket, endpoint y
+      credenciales del entorno de staging; local no se considera evidencia de escritura R2.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".

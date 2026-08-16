@@ -20,6 +20,7 @@ from designs.models import Design, DesignVersion
 from designs.services.renderer import RenderValidationError, render_preview
 from designs.services.renderer_document import render_document_preview
 from designs.services.renderer_presentation import render_presentation_preview
+from designs.services.storage_paths import generated_design_path
 
 from ..models import MaterialTemplate, MaterialType
 
@@ -158,7 +159,7 @@ def create_quick_design(payload: dict[str, Any], *, user=None) -> dict[str, Any]
         preview = {"html": rendered.html, "svg": rendered.svg}
     elif family == MaterialType.RendererFamily.DOCUMENT:
         path = default_storage.save(
-            f"generated-designs/{design.pk}/version-1.pdf",
+            generated_design_path(design, "version-1.pdf"),
             ContentFile(rendered.pdf),
         )
         render_data["pdf_path"] = path
@@ -166,7 +167,7 @@ def create_quick_design(payload: dict[str, Any], *, user=None) -> dict[str, Any]
         preview = {"pdf_url": default_storage.url(path)}
     else:
         path = default_storage.save(
-            f"generated-designs/{design.pk}/version-1.pptx",
+            generated_design_path(design, "version-1.pptx"),
             ContentFile(rendered.pptx),
         )
         render_data["pptx_path"] = path

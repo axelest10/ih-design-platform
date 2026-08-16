@@ -9,6 +9,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from designs.services.async_jobs import enqueue_generation_task, task_response
+from designs.tasks import generate_quick_design_task, generate_school_kit_task
 from security.permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
@@ -26,8 +28,8 @@ from .serializers import (
     MaterialTemplateSerializer,
     MaterialTypeSerializer,
 )
-from .services.quick_design import QuickDesignError, create_quick_design
-from .services.school_kit import SchoolKitGenerationError, generate_school_kit
+from .services.quick_design import QuickDesignError
+from .services.school_kit import SchoolKitGenerationError
 from .services.venue_kit import VenueKitGenerationError, generate_venue_kit
 
 MAX_MARKETING_ASSET_BULK_FILES = 30
@@ -57,11 +59,26 @@ def _serializer_error_message(errors):
 @permission_classes([CorporateDomainPermission, CanCreateBriefPermission])
 def quick_design(request):
     """Crea y versiona una pieza real desde los campos editables de un template."""
+    payload = request.data.copy()
+    if hasattr(payload, "lists"):
+        payload = {
+            key: values if len(values) > 1 else values[0]
+            for key, values in payload.lists()
+        }
+    else:
+        payload = dict(payload)
     try:
-        result = create_quick_design(request.data, user=request.user)
+        job = enqueue_generation_task(
+            generate_quick_design_task,
+            owner=request.user,
+            kind="quick-design-generation",
+            resource_type="quick-design",
+            args=(payload,),
+            kwargs={"user_id": request.user.pk if request.user.is_authenticated else None},
+        )
     except QuickDesignError as exc:
         return Response({"detail": str(exc)}, status=400)
-    return Response(result, status=201)
+    return task_response(request, job)
 
 
 class PublicCatalogReadMixin:
@@ -229,20 +246,24 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
     @action(detail=True, methods=["post"], url_path="generate")
     def generate(self, request, pk=None):
         bundle = self.get_object()
-        try:
-            user = request.user if request.user.is_authenticated else None
-            if bundle.material_type.slug == "school-kit":
-                generate_school_kit(bundle, user=user)
-            elif bundle.material_type.slug == "venue-kit":
+        if bundle.material_type.slug == "venue-kit":
+            try:
+                user = request.user if request.user.is_authenticated else None
                 generate_venue_kit(bundle, user=user)
-            else:
-                return Response(
-                    {"detail": "Este tipo de material no admite generación de paquetes."},
-                    status=400,
-                )
+            except VenueKitGenerationError as exc:
+                return Response({"detail": str(exc)}, status=400)
+            bundle.refresh_from_db()
+            return Response(self.get_serializer(bundle).data, status=201)
+        try:
+            job = enqueue_generation_task(
+                generate_school_kit_task,
+                owner=request.user,
+                kind="school-kit-generation",
+                resource_type="material-bundle",
+                resource_id=bundle.pk,
+                args=(bundle.pk,),
+                kwargs={"user_id": request.user.pk if request.user.is_authenticated else None},
+            )
         except SchoolKitGenerationError as exc:
             return Response({"detail": str(exc)}, status=400)
-        except VenueKitGenerationError as exc:
-            return Response({"detail": str(exc)}, status=400)
-        bundle.refresh_from_db()
-        return Response(self.get_serializer(bundle).data, status=201)
+        return task_response(request, job)

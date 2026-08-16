@@ -111,7 +111,7 @@ def remove_venue_kit(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("catalog", "0002_branch_provenance"),
-        ("materials", "0009_alter_marketingasset_file"),
+        ("materials", "0010_alter_marketingasset_file"),
     ]
 
     operations = [migrations.RunPython(seed_venue_kit, remove_venue_kit)]
