@@ -1,5 +1,16 @@
 # Tareas
 
+## Venue-kit (2026-08-15)
+
+- [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:
+      `general-english`, `cambridge-exam-preparation`, `university-programmes`,
+      `business-english`, `ielts-preparation` y `spanish-courses`.
+- [x] Implementar `venue-kit` con piezas sociales, documento A4 y presentación, reutilizando
+      los renderers existentes y dejando abierto el catálogo para futuros slugs activos.
+- [x] Cargar sedes iniciales de México, Colombia, Perú y Chile con fuente oficial, dirección y
+      contacto; conservar pendientes de horario, mapa, CTA y assets locales.
+- [ ] Revisar y fusionar el PR de `venue-kit` contra `main`.
+
 ## Completadas
 
 - [x] Mover las generaciones de PDF, PPTX y copy de IA a Celery (`feature/celery-worker-railway`):
@@ -65,6 +76,10 @@
       103 pruebas, ruff y `manage.py check` en verde.
 
 ## Siguientes
+
+- [ ] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
+      `docs/operations/venue-marketing-kit-plan.md`; la implementación queda bloqueada hasta la
+      respuesta de Axel.
 
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La

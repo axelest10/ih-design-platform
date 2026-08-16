@@ -30,6 +30,7 @@ from .serializers import (
 )
 from .services.quick_design import QuickDesignError
 from .services.school_kit import SchoolKitGenerationError
+from .services.venue_kit import VenueKitGenerationError, generate_venue_kit
 
 MAX_MARKETING_ASSET_BULK_FILES = 30
 
@@ -245,6 +246,14 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
     @action(detail=True, methods=["post"], url_path="generate")
     def generate(self, request, pk=None):
         bundle = self.get_object()
+        if bundle.material_type.slug == "venue-kit":
+            try:
+                user = request.user if request.user.is_authenticated else None
+                generate_venue_kit(bundle, user=user)
+            except VenueKitGenerationError as exc:
+                return Response({"detail": str(exc)}, status=400)
+            bundle.refresh_from_db()
+            return Response(self.get_serializer(bundle).data, status=201)
         try:
             job = enqueue_generation_task(
                 generate_school_kit_task,

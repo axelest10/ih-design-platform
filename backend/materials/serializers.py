@@ -11,8 +11,13 @@ from .models import (
     MaterialTemplate,
     MaterialType,
 )
-from .services.catalog import school_kit_products
+from .services.catalog import (
+    VENUE_KIT_DEFAULT_PRODUCT_SLUGS,
+    school_kit_products,
+    venue_kit_products,
+)
 from .services.school_kit import school_kit_deliverables
+from .services.venue_kit import venue_kit_deliverables
 
 
 class MaterialTemplateSerializer(serializers.ModelSerializer):
@@ -70,14 +75,20 @@ class MaterialTypeSerializer(serializers.ModelSerializer):
         )
 
     def get_available_products(self, obj):
-        if obj.slug != "school-kit":
-            return []
         request = self.context.get("request")
         country = request.query_params.get("country", "") if request else ""
-        return school_kit_products(country=country, priority=obj.priority_product_slugs)
+        if obj.slug == "school-kit":
+            return school_kit_products(country=country, priority=obj.priority_product_slugs)
+        if obj.slug == "venue-kit":
+            return venue_kit_products(priority=obj.priority_product_slugs)
+        return []
 
     def get_default_deliverables(self, obj):
-        return school_kit_deliverables() if obj.slug == "school-kit" else []
+        if obj.slug == "school-kit":
+            return school_kit_deliverables()
+        if obj.slug == "venue-kit":
+            return venue_kit_deliverables()
+        return []
 
 
 class MaterialBundleItemSerializer(serializers.ModelSerializer):
@@ -128,8 +139,14 @@ class MaterialBundleSerializer(serializers.ModelSerializer):
         product_slugs = attrs.get(
             "product_slugs", self.instance.product_slugs if self.instance else []
         )
-        if material_type.slug == "school-kit":
-            available = {item["product_slug"] for item in school_kit_products()}
+        if material_type.slug in {"school-kit", "venue-kit"}:
+            available_helper = (
+                school_kit_products if material_type.slug == "school-kit" else venue_kit_products
+            )
+            available = {item["product_slug"] for item in available_helper()}
+            if material_type.slug == "venue-kit" and not product_slugs:
+                product_slugs = list(VENUE_KIT_DEFAULT_PRODUCT_SLUGS)
+                attrs["product_slugs"] = product_slugs
             invalid = sorted(set(product_slugs) - available)
             if invalid:
                 raise serializers.ValidationError(

@@ -1,5 +1,28 @@
 # Decisiones técnicas
 
+## 2026-08-15 — `venue-kit` usa seis pilares y datos oficiales por sede
+
+- Axel confirmó que todas las sedes venden los seis pilares existentes: `general-english`,
+  `cambridge-exam-preparation`, `university-programmes`, `business-english`,
+  `ielts-preparation` y `spanish-courses`. Son las prioridades de `venue-kit`, pero la selección
+  acepta futuros slugs activos del catálogo.
+- El paquete cubre social, documento A4 y presentación mediante los renderers existentes; no se
+  crea un renderer nuevo. El CTA y la decisión de usar mapa, QR, fotografía o logos adicionales
+  pertenecen al brief/diseño, no a un default de sede.
+- `Branch` guarda `country` y `source_url`; `official_contact_data` normaliza ubicación, contacto,
+  `source_status` y `needs_confirmation`. La generación solo acepta sedes con fuente, dirección
+  y teléfono confirmados. Horarios, mapa, CTA y assets locales quedan pendientes.
+- Las sedes iniciales se cargan desde las páginas oficiales documentadas en
+  `docs/operations/venue-marketing-kit-plan.md`; no se inventan datos fuera de esas fuentes.
+
+## 2026-08-15 — Diseño inicial de `venue-kit` (superseded by confirmed implementation)
+
+- Se propone reutilizar `MaterialBundle`, `MaterialBundleItem`, briefs hijos, templates y renderers existentes de `school-kit`.
+- No se inventan programas, contactos, direcciones, mapas, horarios ni deliverables por defecto para una sede.
+- Esta entrada queda reemplazada por la decisión inmediatamente anterior, después de las
+  confirmaciones de Axel sobre los seis pilares, las fuentes oficiales y las tres familias de
+  formato.
+
 ## 2026-08-15 — La verificación R2 se ejecuta en staging, no en local
 
 Como este entorno no tiene bucket, endpoint ni credenciales R2 disponibles, no se simula una
