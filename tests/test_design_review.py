@@ -103,10 +103,88 @@ def test_review_decision_persists_optional_comment_when_test_mode_is_off(setting
     assert response.status_code == 200
     design.refresh_from_db()
     assert design.status == Design.Status.APPROVED
+    version.refresh_from_db()
+    assert version.review_status == DesignVersion.ReviewStatus.APPROVED
     comment = DesignReviewComment.objects.get(design=design)
     assert comment.author == reviewer
     assert comment.version == version
     assert comment.comment == "Aprobado para publicación."
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("decision", "comment", "design_status", "version_status"),
+    [
+        (
+            "reject",
+            "El mensaje no corresponde al brief.",
+            Design.Status.REJECTED,
+            DesignVersion.ReviewStatus.REJECTED,
+        ),
+        (
+            "request_changes",
+            "Ajustar el contraste del CTA.",
+            Design.Status.REVISION_REQUESTED,
+            DesignVersion.ReviewStatus.CHANGES_REQUESTED,
+        ),
+    ],
+)
+def test_review_decisions_update_version_status_and_persist_required_comment(
+    settings, decision, comment, design_status, version_status
+):
+    settings.DESIGN_TEST_MODE = False
+    design, version = _design_with_version()
+    client, reviewer = _role_client("reviewer")
+
+    response = client.post(
+        f"/api/v1/designs/{design.pk}/review/",
+        {"decision": decision, "version": version.number, "comment": comment},
+        format="json",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["review_status"] == version_status
+    assert response.json()["comment_id"]
+    design.refresh_from_db()
+    version.refresh_from_db()
+    assert design.status == design_status
+    assert version.review_status == version_status
+    saved = DesignReviewComment.objects.get(design=design, version=version)
+    assert saved.author == reviewer
+    assert saved.comment == comment
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_review_reject_and_request_changes_require_comment(settings):
+    settings.DESIGN_TEST_MODE = False
+    design, version = _design_with_version()
+    client, _ = _role_client("reviewer")
+
+    for decision in ("reject", "request_changes"):
+        response = client.post(
+            f"/api/v1/designs/{design.pk}/review/",
+            {"decision": decision, "version": version.number},
+            format="json",
+        )
+        assert response.status_code == 400
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_review_requires_an_explicit_version(settings):
+    settings.DESIGN_TEST_MODE = False
+    design, _ = _design_with_version()
+    client, _ = _role_client("reviewer")
+
+    response = client.post(
+        f"/api/v1/designs/{design.pk}/review/",
+        {"decision": "approve"},
+        format="json",
+    )
+
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db
