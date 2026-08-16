@@ -1,5 +1,9 @@
 # Tareas
 
+- [x] **Historial visible y exportación WhatsApp** — el endpoint `history` expone la línea de
+      tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
+      compartir; no integra la API de WhatsApp.
+
 ## Venue-kit (2026-08-15)
 
 - [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:

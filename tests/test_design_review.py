@@ -177,6 +177,50 @@ def test_authenticated_user_exports_an_exact_persisted_svg_version():
 
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
+def test_whatsapp_export_returns_shareable_svg_for_social_version():
+    design, version = _design_with_version()
+    client, _ = _role_client("viewer")
+
+    response = client.get(
+        f"/api/v1/designs/{design.pk}/versions/{version.number}/export/?output=whatsapp"
+    )
+
+    assert response.status_code == 200
+    assert response.content == b"<svg></svg>"
+    assert response["Content-Type"] == "image/svg+xml"
+    assert f"design-{design.pk}-version-1-whatsapp.svg" in response["Content-Disposition"]
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_design_history_returns_version_timeline_with_review_and_validation_statuses():
+    design, version = _design_with_version()
+    version.validation_summary = {
+        "status": "needs_changes",
+        "safe_zone_check": {"status": "skipped"},
+    }
+    version.save(update_fields=["validation_summary"])
+    client, _ = _role_client("viewer")
+
+    response = client.get(f"/api/v1/designs/{design.pk}/history/")
+
+    assert response.status_code == 200
+    assert response.json()["current_status"] == design.status
+    assert response.json()["timeline"] == [
+        {
+            "id": version.pk,
+            "number": 1,
+            "template_key": "square-v1",
+            "created_at": response.json()["timeline"][0]["created_at"],
+            "claude_review_status": "pending",
+            "validation_status": "needs_changes",
+            "safe_zone_status": "skipped",
+        }
+    ]
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
 def test_version_export_rejects_missing_artifact_and_unknown_format():
     design, _ = _design_with_version()
     client, _ = _role_client("viewer")
@@ -236,6 +280,8 @@ def test_review_ui_exposes_version_history_and_downloads():
     assert "Descargar SVG" in script
     assert "Descargar PNG" in script
     assert "Descargar HTML" in script
+    assert "Exportar WhatsApp" in script
+    assert "Validación:" in script
     assert '"test_ready", "revision_requested"' in script
     assert 'data.get("version_id")' in script
     assert 'data.get("version_number")' in script
