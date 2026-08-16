@@ -1,5 +1,13 @@
 # Decisiones técnicas
 
+## 2026-08-15 — IH Hub SSO queda definido como integración futura, no activa
+
+- IH Hub entrega un `apiToken` JWT HS256 con `sub`, `tenantId`, `email` y `exp`; design-platform lo validará más adelante con el secreto compartido `IHLATAM_SSO_SECRET`.
+- Se decide transportar el token inicialmente en el enlace de entrada (`?sso=`) y canjearlo una sola vez por `POST` sobre HTTPS; no se implementa endpoint, middleware ni vista en esta fase.
+- El SSO será una vía adicional: token ausente, inválido o expirado devuelve al magic-link existente sin tocarlo ni reemplazarlo.
+- `tenantId` se conservará en una identidad externa futura asociada al usuario local para seleccionar país/marca LATAM; no se confiará en valores enviados por el navegador.
+- La implementación está bloqueada hasta recibir el secreto real, confirmar expiración/claims y coordinar con quien mantiene el Hub el enlace hacia design-platform. Requiere luz verde explícita de Axel.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,
