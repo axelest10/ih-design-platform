@@ -7,6 +7,7 @@ from django.db import models
 from briefs.models import DesignBrief
 from campaigns.models import Campaign
 from catalog.models import Branch
+from materials.storage_paths import marketing_asset_path
 
 
 class MaterialType(models.Model):
@@ -113,7 +114,7 @@ class MarketingAsset(models.Model):
     category = models.CharField(max_length=40, choices=Category.choices)
     label = models.CharField(max_length=180)
     file = models.FileField(
-        upload_to="marketing-assets/",
+        upload_to=marketing_asset_path,
         validators=[
             FileExtensionValidator(
                 ["png", "jpg", "jpeg", "webp", "pdf", "ppt", "pptx", "docx"]

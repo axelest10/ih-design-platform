@@ -18,7 +18,9 @@ class Product(models.Model):
 class Branch(models.Model):
     code = models.CharField(max_length=80, unique=True)
     name = models.CharField(max_length=180)
+    country = models.CharField(max_length=8, blank=True)
     city = models.CharField(max_length=120, blank=True)
+    source_url = models.URLField(max_length=500, blank=True)
     official_contact_data = models.JSONField(default=dict)
     is_active = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)

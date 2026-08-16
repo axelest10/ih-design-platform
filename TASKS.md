@@ -1,6 +1,27 @@
 # Tareas
 
+## Venue-kit (2026-08-15)
+
+- [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:
+      `general-english`, `cambridge-exam-preparation`, `university-programmes`,
+      `business-english`, `ielts-preparation` y `spanish-courses`.
+- [x] Reconciliar `spanish-courses` en el catálogo con esa confirmación: aplica a las sedes activas
+      de MX, CO, PE y CL, sin quedar pendiente de confirmación.
+- [x] Implementar `venue-kit` con piezas sociales, documento A4 y presentación, reutilizando
+      los renderers existentes y dejando abierto el catálogo para futuros slugs activos.
+- [x] Cargar sedes iniciales de México, Colombia, Perú y Chile con fuente oficial, dirección y
+      contacto; conservar pendientes de horario, mapa, CTA y assets locales.
+- [x] Revisar y fusionar el PR de `venue-kit` contra `main`.
+
 ## Completadas
+
+- [x] Mover las generaciones de PDF, PPTX y copy de IA a Celery (`feature/celery-worker-railway`):
+      las vistas devuelven `202` con `task_id`/`status_url`, y el estado queda persistido en
+      `AsyncGenerationJob`. Railway requiere un segundo servicio con
+      `celery -A config worker -l info --concurrency=2`.
+- [x] Implementar storage user-scoped para uploads y archivos generados en `feature/user-scoped-storage`; las claves históricas quedan documentadas sin migración automática.
+- [x] Documentar el plan de integración SSO con IH Hub en `docs/operations/ihlatam-sso-plan.md`; la implementación queda bloqueada hasta recibir el secreto real y la autorización explícita de Axel.
+- [x] Documentar el workflow de ramas y pull requests en `AGENTS.md` mediante `docs/branching-workflow`.
 
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
@@ -58,6 +79,10 @@
 
 ## Siguientes
 
+- [x] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
+      `docs/operations/venue-marketing-kit-plan.md`; Axel confirmó los seis pilares y el PR de
+      implementación ya está fusionado.
+
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
@@ -65,6 +90,15 @@
 - [x] **Safe-zone y legibilidad por `DesignVersion`** — cada versión registra un resultado
       determinista en `validation_summary.safe_zone_check`, con política porcentual por formato
       social y contraste AA 4.5:1 basado en `brand/documentation/accessibility-rules.md`.
+- [x] **Diseño e implementación de `email-kit`** — exporta/visualiza HTML compatible con
+      clientes de correo mediante tablas, CSS inline y un ancho máximo de 640 px. No envía
+      mensajes ni integra proveedores; requiere Campaign confirmada y URL de baja.
+- [x] **Diseño e implementación de `sales-kit`** — la paquetería reutiliza los productos
+      activos y los renderers social, A4 y presentación existentes. Cada generación exige una
+      `Campaign` activa, vigente, con copy aprobado y `offer_data.source_status=confirmed`;
+      no se sembró ninguna oferta comercial real.
+- [x] **Comando de verificación R2** — añadido `python manage.py verify_storage_backend` para
+      staging; comprueba escritura, lectura y borrado contra Cloudflare R2 sin persistir secretos.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
 - [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
@@ -73,6 +107,14 @@
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
 - [ ] **Confirmar overlays específicos por plataforma social** para sustituir o complementar la
       reserva base de los templates cuando Marketing entregue dimensiones oficiales.
+- [ ] **Definir el envío real de emails en una fase aparte** — falta decidir proveedor, listas y
+      consentimiento, tracking, rebotes, unsubscribe operativo y gestión de secretos. El flujo
+      actual es export-only y no debe usarse como sender.
+- [ ] **Recibir la primera `Campaign` comercial confirmada** (fuente, beneficio, CTA y vigencia)
+      antes de usar `sales-kit` con datos reales; los tests usan datos sintéticos marcados como
+      `source_status=confirmed`.
+- [ ] **Ejecutar verificación R2 en staging real** — falta disponer del bucket, endpoint y
+      credenciales del entorno de staging; local no se considera evidencia de escritura R2.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".
