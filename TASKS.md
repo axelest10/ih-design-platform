@@ -87,6 +87,9 @@
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Safe-zone y legibilidad por `DesignVersion`** — cada versión registra un resultado
+      determinista en `validation_summary.safe_zone_check`, con política porcentual por formato
+      social y contraste AA 4.5:1 basado en `brand/documentation/accessibility-rules.md`.
 - [x] **Diseño e implementación de `email-kit`** — exporta/visualiza HTML compatible con
       clientes de correo mediante tablas, CSS inline y un ancho máximo de 640 px. No envía
       mensajes ni integra proveedores; requiere Campaign confirmada y URL de baja.
@@ -102,6 +105,8 @@
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Confirmar overlays específicos por plataforma social** para sustituir o complementar la
+      reserva base de los templates cuando Marketing entregue dimensiones oficiales.
 - [ ] **Definir el envío real de emails en una fase aparte** — falta decidir proveedor, listas y
       consentimiento, tracking, rebotes, unsubscribe operativo y gestión de secretos. El flujo
       actual es export-only y no debe usarse como sender.

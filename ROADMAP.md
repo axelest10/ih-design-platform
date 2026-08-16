@@ -12,7 +12,7 @@
 
 - Biblioteca de plantillas HTML/SVG versionadas (primer template `square-v1` implementado).
 - Renderizador de formatos 1080 px y previsualización (primer flujo implementado).
-- Verificación automática de zona de seguridad, legibilidad y campos críticos.
+- [x] Verificación automática de zona de seguridad, legibilidad y campos críticos.
 - Templates adicionales para story y portrait.
 
 ## Fase 3 — Revisión y operación
