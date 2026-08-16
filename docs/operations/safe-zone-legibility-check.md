@@ -35,9 +35,15 @@ a AAA. En esta primera comprobación, cualquier par de texto normal por debajo d
 ## Persistencia y comportamiento ante fallos
 
 El resultado se guarda dentro de `DesignVersion.validation_summary["safe_zone_check"]`, junto con
-las regiones evaluadas, porcentajes aplicados, resultado de contraste y mensajes accionables. Es la
-misma superficie de validación que ya consume el panel; no se duplica en `Design` ni en
-`claude_review`.
+los porcentajes aplicados, el resultado de contraste y mensajes accionables. Es la misma superficie
+de validación que ya consume el panel; no se duplica en `Design` ni en `claude_review`.
+
+La parte geométrica no repite el bloqueo del renderer. `renderer._validate_template_layout` ya
+rechaza una región —incluido `logo_row`— que sale de la zona segura antes de crear la versión.
+Safe-zone conserva la evidencia como `geometry.status` con `source=renderer.safe_area` y
+`reason=renderer_enforced_before_design_version`; no existe una rama `geometry-violation` inalcanzable
+en el post-render. El caso de logo cerca del borde se prueba en la capa del renderer, donde sí
+puede dispararse al alterar las regiones declaradas del template.
 
 Una pieza se persiste para conservar trazabilidad incluso si el check falla. En ese caso el
 resumen de validación queda en `needs_changes`, pero no se muta `claude_review_status` ni se fuerza

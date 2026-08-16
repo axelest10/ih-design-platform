@@ -70,27 +70,30 @@ def check_design_version(version) -> dict[str, Any]:
         "top": height * policy["top_pct"] / 100,
         "bottom": height * (1 - policy["bottom_pct"] / 100),
     }
-    violations = []
-    regions = []
-    for name, (x, y, region_width, region_height) in spec["regions"].items():
-        region = {
-            "name": name,
-            "x": x,
-            "y": y,
-            "width": region_width,
-            "height": region_height,
-        }
-        regions.append(region)
-        if (
-            x < bounds["left"]
-            or y < bounds["top"]
-            or x + region_width > bounds["right"]
-            or y + region_height > bounds["bottom"]
-        ):
-            violations.append(region)
-
+    renderer_safe_area = next(
+        (
+            check
+            for check in (version.validation_summary or {}).get("checks", [])
+            if check.get("name") == "safe_area"
+        ),
+        None,
+    )
+    geometry = {
+        "status": (
+            renderer_safe_area.get("status", "passed")
+            if renderer_safe_area
+            else "needs_confirmation"
+        ),
+        "source": "renderer.safe_area",
+        "reason": "renderer_enforced_before_design_version",
+        "regions": renderer_safe_area.get("regions", []) if renderer_safe_area else [],
+    }
     contrast = _contrast_result(version.validation_summary or {})
-    status = "needs_changes" if violations or contrast["status"] == "needs_changes" else "passed"
+    status = (
+        "needs_changes"
+        if geometry["status"] == "needs_changes" or contrast["status"] == "needs_changes"
+        else "passed"
+    )
     result = {
         "status": status,
         "format": format_name,
@@ -98,8 +101,7 @@ def check_design_version(version) -> dict[str, Any]:
         "policy_percentages": policy,
         "canvas": {"width": int(width), "height": int(height)},
         "safe_bounds_px": {key: round(value, 2) for key, value in bounds.items()},
-        "regions": regions,
-        "violations": violations,
+        "geometry": geometry,
         "contrast": contrast,
     }
     operation_event(

@@ -42,6 +42,7 @@ def test_each_social_design_version_gets_safe_zone_and_legibility_result(templat
     result = version.validation_summary["safe_zone_check"]
     assert result["status"] == "passed"
     assert result["format"] in SOCIAL_SAFE_ZONE_POLICIES
+    assert result["geometry"]["source"] == "renderer.safe_area"
     assert result["contrast"]["status"] == "passed"
     assert version.claude_review_status == DesignVersion.ClaudeReviewStatus.PENDING
 

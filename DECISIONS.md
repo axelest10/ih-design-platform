@@ -1,5 +1,17 @@
 # Decisiones técnicas
 
+## 2026-08-15 — Visibilidad y geometría del chequeo safe-zone
+
+La revisión humana incorporará `validation_summary.safe_zone_check` en el mismo conjunto de
+verificaciones que ya muestra `frontend/scripts/review.js`; se eligió adaptar la lectura del
+frontend porque conserva el payload persistido y evita duplicar o reescribir checks en la señal.
+
+No se mantiene una rama post-render `geometry-violation`: el renderer ya rechaza una región como
+`logo_row` antes de crear `DesignVersion`, por lo que esa rama no sería alcanzable desde el flujo
+normal. Safe-zone deja trazabilidad de esa garantía en `geometry.source=renderer.safe_area`, y el
+caso de logo cerca del borde se prueba en el renderer, donde sí puede dispararse con una geometría
+inválida. No se toca `backend/security/`.
+
 ## 2026-08-15 — safe-zone/legibilidad se persiste en `DesignVersion`
 
 La comprobación se conecta al signal común de creación de `DesignVersion`, por lo que cubre las

@@ -251,6 +251,7 @@ def test_review_ui_exposes_version_history_and_downloads():
     assert "brief_country" in script
     assert "brief_format" in script
     assert "validationSummary" in script
+    assert 'summary.safe_zone_check' in script
     assert "review-loading" in script
 
 

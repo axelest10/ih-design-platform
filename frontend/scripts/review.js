@@ -19,8 +19,10 @@
   const reviewLabels = { pending: "Pendiente", pass: "Correcto", needs_changes: "Requiere cambios" };
   const canvasFor = (version) => version?.validation_summary?.checks?.find((check) => check.name === "safe_area")?.canvas;
   const validationSummary = (version) => {
-    const checks = version?.validation_summary?.checks || [];
-    const needsChanges = checks.filter((check) => check.status !== "passed" && check.status !== "pass").length;
+    const summary = version?.validation_summary || {};
+    const checks = [...(summary.checks || [])];
+    if (summary.safe_zone_check) checks.push({ name: "safe_zone_check", ...summary.safe_zone_check });
+    const needsChanges = checks.filter((check) => !["passed", "pass", "skipped"].includes(check.status)).length;
     if (!checks.length) return "Sin validación persistida.";
     return needsChanges ? `${needsChanges} verificación(es) requieren atención.` : `${checks.length} verificaciones correctas.`;
   };
