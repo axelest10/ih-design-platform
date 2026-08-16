@@ -4,6 +4,10 @@
       tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
       compartir; no integra la API de WhatsApp.
 
+- [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
+      aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`
+      persiste comentarios y deja un hook preparado para notificaciones futuras.
+
 ## Venue-kit (2026-08-15)
 
 - [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:

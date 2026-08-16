@@ -11,6 +11,18 @@ dimensiones nativas (1080 × 1080, 1080 × 1350 o 1080 × 1920) como imagen desc
 versión documental entrega el PDF persistido como documento. No se añade un renderer nuevo ni se
 integra la API de WhatsApp.
 
+## 2026-08-16 — Revisión humana por versión
+
+El endpoint `POST /api/v1/designs/{id}/review/` acepta `approve`, `reject` y `request_changes`
+con una `DesignVersion` explícita. La versión guarda `review_status` (`pending`, `approved`,
+`rejected` o `changes_requested`) y el diseño mantiene su estado agregado (`approved`, `rejected`
+o `revision_requested`). Los rechazos y solicitudes de cambios requieren comentario, que se
+persiste con `DesignReviewComment`; aprobar permite comentario opcional.
+
+La transición vive en `backend/designs/services/review.py` para que futuras vistas o paneles no
+dupliquen reglas. `notify_review_transition()` es un hook no-op: se reserva la integración de
+notificaciones para una fase posterior, sin enviar mensajes ahora. No se toca `backend/security/`.
+
 ## 2026-08-15 — Visibilidad y geometría del chequeo safe-zone
 
 La revisión humana incorporará `validation_summary.safe_zone_check` en el mismo conjunto de

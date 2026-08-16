@@ -20,10 +20,16 @@ from security.permissions import (
     is_platform_admin_user,
 )
 
-from .models import AsyncGenerationJob, Design, DesignReviewComment
+from .models import AsyncGenerationJob, Design
 from .serializers import DesignReviewCommentSerializer, DesignSerializer
 from .services.async_jobs import enqueue_generation_task, task_response
 from .services.renderer import RenderValidationError, render_preview
+from .services.review import (
+    ReviewDecisionLockedError,
+    ReviewTransitionError,
+    reopen_design_version,
+    transition_design_version,
+)
 from .services.revision import DesignRevisionError
 from .services.versioning import create_next_version
 from .tasks import (
@@ -75,6 +81,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         "revise": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "claude_review": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "reopen_review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "comments": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "history": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER, ROLE_REVIEWER, ROLE_VIEWER),
     }
@@ -310,41 +317,78 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 status=409,
             )
         decision = request.data.get("decision")
-        if decision not in {"approve", "reject"}:
+        if decision not in {"approve", "reject", "request_changes"}:
             return Response(
-                {"detail": "decision debe ser 'approve' o 'reject'."},
+                {"detail": "decision debe ser 'approve', 'reject' o 'request_changes'."},
                 status=400,
             )
 
         version_number = request.data.get("version")
-        version = (
-            design.versions.filter(number=version_number).first()
-            if version_number
-            else design.versions.first()
-        )
+        version = design.versions.filter(number=version_number).first() if version_number else None
         if version is None:
             return Response({"detail": "No existe una versión para revisar."}, status=404)
 
-        if decision == "approve":
-            design.status = Design.Status.APPROVED
-            design.approved_version = version
-        else:
-            design.status = Design.Status.REJECTED
-        design.save(update_fields=["status", "approved_version", "updated_at"])
-        comment = str(request.data.get("comment") or "").strip()
-        if comment:
-            DesignReviewComment.objects.create(
+        try:
+            design, version, comment = transition_design_version(
                 design=design,
                 version=version,
-                author=request.user,
-                comment=comment,
+                decision=decision,
+                reviewer=request.user,
+                comment=request.data.get("comment"),
             )
+        except ReviewDecisionLockedError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        except ReviewTransitionError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return Response(
             {
                 "design_id": str(design.pk),
                 "status": design.status,
+                "review_status": version.review_status,
                 "version": version.number,
                 "approved_version": design.approved_version_id,
+                "comment_id": comment.pk if comment else None,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="review/reopen")
+    def reopen_review(self, request, pk=None):
+        """Reabre una versión decidida para permitir una nueva revisión."""
+        design = self.get_object()
+        if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+            return Response(
+                {
+                    "detail": (
+                        "La aprobación formal está desactivada durante las "
+                        "primeras 50 pruebas."
+                    ),
+                    "next": "claude-review",
+                },
+                status=409,
+            )
+
+        version_number = request.data.get("version")
+        version = design.versions.filter(number=version_number).first() if version_number else None
+        if version is None:
+            return Response({"detail": "No existe una versión para reabrir."}, status=404)
+
+        try:
+            design, version, comment = reopen_design_version(
+                design=design,
+                version=version,
+                reviewer=request.user,
+                comment=request.data.get("comment"),
+            )
+        except ReviewTransitionError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response(
+            {
+                "design_id": str(design.pk),
+                "status": design.status,
+                "review_status": version.review_status,
+                "version": version.number,
+                "approved_version": design.approved_version_id,
+                "comment_id": comment.pk if comment else None,
             }
         )
 
