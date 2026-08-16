@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
 
+from assets.storage_paths import uploaded_logo_path
+
 
 class OfficialAsset(models.Model):
     class AssetType(models.TextChoices):
@@ -43,7 +45,7 @@ class UploadedLogo(models.Model):
 
     key = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     file = models.FileField(
-        upload_to="uploaded-logos/",
+        upload_to=uploaded_logo_path,
         validators=[FileExtensionValidator(["svg", "png", "jpg", "jpeg", "ai", "eps", "pdf"])],
     )
     name = models.CharField(max_length=180)
