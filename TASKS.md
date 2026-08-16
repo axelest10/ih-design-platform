@@ -1,5 +1,13 @@
 # Tareas
 
+## Venue-kit (reconciliación de catálogo, 2026-08-15)
+
+- [x] Axel confirmó que los seis pilares de venue-kit aplican como productos default para todas
+      las sedes activas, sin restricción por país: `general-english`,
+      `cambridge-exam-preparation`, `university-programmes`, `business-english`,
+      `ielts-preparation` y `spanish-courses`. La reconciliación queda reflejada en
+      `brand/knowledge/product-catalog.yaml` y su JSON generado.
+
 ## Completadas
 
 - [x] Crear base modular Django y DRF.
