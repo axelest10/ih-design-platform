@@ -5,11 +5,13 @@
 - [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:
       `general-english`, `cambridge-exam-preparation`, `university-programmes`,
       `business-english`, `ielts-preparation` y `spanish-courses`.
+- [x] Reconciliar `spanish-courses` en el catálogo con esa confirmación: aplica a las sedes activas
+      de MX, CO, PE y CL, sin quedar pendiente de confirmación.
 - [x] Implementar `venue-kit` con piezas sociales, documento A4 y presentación, reutilizando
       los renderers existentes y dejando abierto el catálogo para futuros slugs activos.
 - [x] Cargar sedes iniciales de México, Colombia, Perú y Chile con fuente oficial, dirección y
       contacto; conservar pendientes de horario, mapa, CTA y assets locales.
-- [ ] Revisar y fusionar el PR de `venue-kit` contra `main`.
+- [x] Revisar y fusionar el PR de `venue-kit` contra `main`.
 
 ## Completadas
 

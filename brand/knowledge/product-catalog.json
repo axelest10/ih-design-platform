@@ -317,12 +317,18 @@
       "aliases": [
         "Spanish Course"
       ],
-      "country": "MX",
+      "country": null,
       "countries": [
-        "MX"
+        "MX",
+        "CO",
+        "PE",
+        "CL"
       ],
       "countries_confirmed": [
-        "MX"
+        "MX",
+        "CO",
+        "PE",
+        "CL"
       ],
       "countries_inferred": [],
       "brand_scope": "core",
@@ -340,10 +346,10 @@
       "authorized_color_reference": "brand/product-colors/authorized-colors.yaml#pillars.spanish_courses",
       "associated_logo_keys": [],
       "allowed_ctas": null,
-      "source": "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05)",
+      "source": "brand/product-colors/authorized-colors.yaml (confirmado 2026-08-05); confirmación de Axel para venue-kit (2026-08-15)",
       "status": "confirmed",
-      "needs_confirmation": true,
-      "notes": "Sin evidencia en la biblioteca visual ni en logos de que Chile/Colombia/Perú ofrezcan este producto (Chile también es hispanohablante, por lo que no aplicaría de la misma forma); no se extiende `countries` por falta de evidencia, a diferencia de los demás pilares.\n"
+      "needs_confirmation": false,
+      "notes": "Axel confirmó el 2026-08-15 que los seis pilares de venue-kit, incluido Spanish Courses, son productos default para todas las sedes activas del proyecto (México, Colombia, Perú y Chile). Se mantiene abierto el catálogo para agregar futuros slugs de sede cuando exista una confirmación independiente.\n"
     },
     {
       "product_slug": "qc-2026",
