@@ -3,6 +3,7 @@
 ## Completadas
 
 - [x] Documentar el plan de integración SSO con IH Hub en `docs/operations/ihlatam-sso-plan.md`; la implementación queda bloqueada hasta recibir el secreto real y la autorización explícita de Axel.
+- [x] Documentar el workflow de ramas y pull requests en `AGENTS.md` mediante `docs/branching-workflow`.
 
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
