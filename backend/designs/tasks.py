@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 
 from celery import shared_task
 from django.conf import settings
@@ -9,10 +10,11 @@ from django.core.files.base import ContentFile
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import transaction
 from django.db.models import Max
+from django.utils import timezone
 
 from briefs.models import DesignBrief
 from briefs.services.design_confirmation import confirm_brief_design
-from designs.models import AsyncGenerationJob, Design, DesignVersion
+from designs.models import AsyncGenerationJob, Design, DesignDelivery, DesignVersion
 from designs.services.renderer_document import render_document_preview
 from designs.services.renderer_presentation import render_presentation_preview
 from designs.services.revision import revise_design
@@ -20,6 +22,7 @@ from designs.services.storage_paths import generated_design_path
 from materials.models import MaterialBundle, MaterialType
 from materials.services.quick_design import create_quick_design
 from materials.services.school_kit import generate_school_kit
+from security.services.email import EmailDeliveryError, EmailMessage, get_email_client
 
 
 def _generation_storage():
@@ -193,3 +196,60 @@ def revise_design_task(job_id, design_id, instruction):
         return DesignSerializer(design).data
 
     return _run_job(job_id, run)
+
+
+@shared_task(name="designs.deliver_approved_design")
+def deliver_approved_design_task(delivery_id):
+    """EnvÃ­a al solicitante un link de descarga de la versiÃ³n aprobada."""
+    delivery = DesignDelivery.objects.select_related(
+        "design__brief", "version", "requested_by"
+    ).get(pk=delivery_id)
+    if delivery.status == DesignDelivery.Status.DELIVERED:
+        return {"delivery_id": delivery.pk, "status": delivery.status}
+    if not delivery.recipient_email:
+        delivery.status = DesignDelivery.Status.NO_RECIPIENT
+        delivery.error = "El brief aprobado no tiene un solicitante con email."
+        delivery.save(update_fields=["status", "error", "updated_at"])
+        return {"delivery_id": delivery.pk, "status": delivery.status}
+
+    delivery.status = DesignDelivery.Status.PROCESSING
+    delivery.error = ""
+    delivery.save(update_fields=["status", "error", "updated_at"])
+    title = delivery.design.brief.title
+    subject = f"Tu diseño aprobado: {title}"
+    link = delivery.download_url
+    message = EmailMessage(
+        sender=settings.RESEND_FROM_EMAIL,
+        recipients=(delivery.recipient_email,),
+        subject=subject,
+        html=(
+            f"<p>Tu diseño <strong>{escape(title)}</strong> fue aprobado.</p>"
+            f"<p><a href=\"{escape(link, quote=True)}\">Descargar diseño aprobado</a></p>"
+            "<p>El enlace requiere iniciar sesión en IH Design Platform.</p>"
+        ),
+        text=(
+            f"Tu diseño '{title}' fue aprobado. Descárgalo aquí: {link}\n\n"
+            "El enlace requiere iniciar sesión en IH Design Platform."
+        ),
+    )
+    try:
+        if not settings.RESEND_FROM_EMAIL:
+            raise EmailDeliveryError("RESEND_FROM_EMAIL no está configurado.")
+        provider_message_id = get_email_client().send(message)
+    except EmailDeliveryError as exc:
+        delivery.status = DesignDelivery.Status.FAILED
+        delivery.error = str(exc)
+        delivery.save(update_fields=["status", "error", "updated_at"])
+        return {"delivery_id": delivery.pk, "status": delivery.status, "error": str(exc)}
+
+    delivery.status = DesignDelivery.Status.DELIVERED
+    delivery.provider_message_id = provider_message_id
+    delivery.delivered_at = timezone.now()
+    delivery.save(
+        update_fields=["status", "provider_message_id", "delivered_at", "updated_at"]
+    )
+    return {
+        "delivery_id": delivery.pk,
+        "status": delivery.status,
+        "provider_message_id": provider_message_id,
+    }

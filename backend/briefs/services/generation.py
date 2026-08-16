@@ -16,6 +16,9 @@ SUPPORTED_FORMATS = {
     DesignBrief.Format.PORTRAIT,
 }
 
+# These are the only brief formats wired to the current template renderer.
+SUPPORTED_BRIEF_FORMATS = frozenset(SUPPORTED_FORMATS)
+
 CTA_LABELS = {
     "message": "Enviar mensaje",
     "register": "Regístrate",

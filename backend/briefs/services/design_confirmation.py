@@ -9,6 +9,8 @@ from designs.services.renderer import RenderValidationError
 from ..models import DesignBrief
 from .generation import SUPPORTED_FORMATS, generate_initial_design
 
+# generated_prompt is editable advertising copy, not an image-generation prompt.
+
 
 class DesignConfirmationError(ValueError):
     """Error controlado que permite reintentar el paso 2 sin crear un diseño parcial."""

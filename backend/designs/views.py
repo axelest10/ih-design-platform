@@ -20,8 +20,9 @@ from security.permissions import (
 )
 
 from .models import AsyncGenerationJob, Design, DesignReviewComment
-from .serializers import DesignReviewCommentSerializer, DesignSerializer
+from .serializers import DesignDeliverySerializer, DesignReviewCommentSerializer, DesignSerializer
 from .services.async_jobs import enqueue_generation_task, task_response
+from .services.delivery import create_approved_design_delivery
 from .services.renderer import RenderValidationError, render_preview
 from .services.revision import DesignRevisionError
 from .services.versioning import create_next_version
@@ -246,14 +247,20 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
     def review(self, request, pk=None):
         """Aprueba o rechaza una versión renderizada del diseño."""
         design = self.get_object()
-        if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
             return Response(
                 {
                     "detail": (
-                        "La aprobaciÃ³n formal estÃ¡ desactivada durante las "
-                        "primeras 50 pruebas."
+                        "La aprobación formal está protegida durante las primeras 50 pruebas. "
+                        "Para probar el flujo en staging, configura "
+                        "DESIGN_TEST_ALLOW_HUMAN_APPROVAL=1; no lo actives en production."
                     ),
                     "next": "claude-review",
+                    "approval_enabled": False,
                 },
                 status=409,
             )
@@ -273,6 +280,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         if version is None:
             return Response({"detail": "No existe una versión para revisar."}, status=404)
 
+        delivery = None
         if decision == "approve":
             design.status = Design.Status.APPROVED
             design.approved_version = version
@@ -287,12 +295,19 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 author=request.user,
                 comment=comment,
             )
+        if decision == "approve":
+            delivery = create_approved_design_delivery(
+                design=design,
+                version=version,
+                base_url=request.build_absolute_uri("/").rstrip("/"),
+            )
         return Response(
             {
                 "design_id": str(design.pk),
                 "status": design.status,
                 "version": version.number,
                 "approved_version": design.approved_version_id,
+                "delivery": DesignDeliverySerializer(delivery).data if delivery else None,
             }
         )
 

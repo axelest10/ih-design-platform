@@ -50,15 +50,15 @@
     return actions.length ? actions.join("") : '<span class="muted">Sin archivos descargables.</span>';
   };
   const versionHistoryMarkup = (design) => `<section class="version-history" aria-label="Historial de versiones"><h3>Historial de versiones</h3><div class="version-history__list">${design.versions.map((version, index) => `<button class="version-history__item${index === 0 ? " is-active" : ""}" type="button" data-select-version="${design.id}" data-version-id="${version.id}" data-version-number="${version.number}"><strong>Versión ${version.number}</strong><span>${escapeHtml(version.claude_review_status)}</span><time>${new Date(version.created_at).toLocaleString("es-MX")}</time></button>`).join("")}</div></section>`;
-  const cardMarkup = (design, comments, testMode) => {
+  const cardMarkup = (design, comments) => {
     const version = design.versions[0];
-    const actions = testMode
-      ? '<p class="test-mode-note">Durante las primeras 50 pruebas el flujo termina en revisión, sin aprobación formal.</p>'
+    const actions = design.approval_enabled === false
+      ? '<p class="test-mode-note">La aprobación está protegida en este entorno. Para probarla en staging, configura DESIGN_TEST_ALLOW_HUMAN_APPROVAL=1.</p>'
       : `<div class="review-actions"><button class="button button--primary" data-decision="approve" data-design="${design.id}">Aprobar</button><button class="button button--secondary" data-decision="reject" data-design="${design.id}">Rechazar</button></div>`;
     return `<article class="card review-card" data-review-card="${design.id}"><div><div class="review-preview">${previewMarkup(version)}</div><div class="review-version-actions">${versionActionsMarkup(design.id, version)}</div>${versionHistoryMarkup(design)}</div><div><p class="eyebrow">${escapeHtml(statusLabels[design.status] || design.status)}</p><h2>${escapeHtml(design.brief_title)}</h2><div class="review-meta"><span>${escapeHtml(design.brief_country || "Sin país")}</span><span>${escapeHtml(design.brief_product_slug || "Sin producto")}</span><span>${escapeHtml(formatLabels[design.brief_format] || design.brief_format || "Sin formato")}</span><span data-current-version>Versión ${version?.number || "—"}</span></div><div data-version-details>${versionDetailsMarkup(version)}</div><div class="review-thread">${comments.length ? comments.map(commentMarkup).join("") : '<p class="muted">Todavía no hay comentarios.</p>'}</div><form class="review-form" data-comment-form="${design.id}"><textarea name="comment" required placeholder="Escribe retroalimentación clara y accionable"></textarea><input type="hidden" name="version_id" value="${version?.id || ""}" /><input type="hidden" name="version_number" value="${version?.number || ""}" /><button class="button button--secondary" type="submit">Agregar comentario</button></form>${actions}</div></article>`;
   };
 
-  const state = { testMode: true, designs: new Map(), entries: [] };
+  const state = { designs: new Map(), entries: [] };
   const filterElements = ["review-search", "review-status-filter", "review-country-filter", "review-product-filter", "review-format-filter", "review-automatic-filter"];
   const setFilterOptions = (id, values, labels = {}) => {
     const select = $(id);
@@ -92,7 +92,7 @@
     });
     $("review-result-count").textContent = `${matches.length} de ${state.entries.length} diseños`;
     $("review-list").innerHTML = matches.length
-      ? matches.map(({ design, comments }) => cardMarkup(design, comments, state.testMode)).join("")
+      ? matches.map(({ design, comments }) => cardMarkup(design, comments)).join("")
       : '<article class="card review-empty"><h2>Sin coincidencias.</h2><p>Prueba con otros filtros o limpia la búsqueda.</p></article>';
   };
   const load = () => request("/api/v1/me/").then((user) => {
@@ -104,7 +104,6 @@
     $("review-access-denied").hidden = true;
     $("review-loading").hidden = false;
     $("reviewer-label").textContent = user.email || "Reviewer";
-    state.testMode = user.design_test_mode;
     return request("/api/v1/designs/");
   }).then((payload) => {
     const reviewStatuses = ["in_review", "self_review", "test_ready", "revision_requested"];
