@@ -44,6 +44,21 @@ def school_kit_products(country: str = "", priority: list[str] | None = None) ->
     )
 
 
+def sales_kit_products() -> list[dict]:
+    """Devuelve todos los productos activos, sin inventar prioridades comerciales."""
+    return [
+        {
+            "product_slug": product["product_slug"],
+            "canonical_name": product.get("canonical_name", product["product_slug"]),
+            "brand_scope": product.get("brand_scope", "core"),
+            "pillar": product.get("pillar"),
+            "status": product.get("status", "needs_confirmation"),
+            "needs_confirmation": product.get("needs_confirmation", False),
+            "priority": False,
+        }
+        for product in _catalog_products()
+    ]
+
 VENUE_KIT_DEFAULT_PRODUCT_SLUGS = [
     "general-english",
     "cambridge-exam-preparation",

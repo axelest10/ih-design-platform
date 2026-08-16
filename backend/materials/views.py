@@ -29,6 +29,7 @@ from .serializers import (
     MaterialTypeSerializer,
 )
 from .services.quick_design import QuickDesignError
+from .services.sales_kit import SalesKitGenerationError, generate_sales_kit
 from .services.school_kit import SchoolKitGenerationError
 from .services.venue_kit import VenueKitGenerationError, generate_venue_kit
 
@@ -251,6 +252,16 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
                 user = request.user if request.user.is_authenticated else None
                 generate_venue_kit(bundle, user=user)
             except VenueKitGenerationError as exc:
+                return Response({"detail": str(exc)}, status=400)
+            bundle.refresh_from_db()
+            return Response(self.get_serializer(bundle).data, status=201)
+        if bundle.material_type.slug == "sales-kit":
+            try:
+                generate_sales_kit(
+                    bundle,
+                    user=request.user if request.user.is_authenticated else None,
+                )
+            except SalesKitGenerationError as exc:
                 return Response({"detail": str(exc)}, status=400)
             bundle.refresh_from_db()
             return Response(self.get_serializer(bundle).data, status=201)

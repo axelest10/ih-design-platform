@@ -13,9 +13,11 @@ from .models import (
 )
 from .services.catalog import (
     VENUE_KIT_DEFAULT_PRODUCT_SLUGS,
+    sales_kit_products,
     school_kit_products,
     venue_kit_products,
 )
+from .services.sales_kit import sales_kit_deliverables
 from .services.school_kit import school_kit_deliverables
 from .services.venue_kit import venue_kit_deliverables
 
@@ -75,6 +77,8 @@ class MaterialTypeSerializer(serializers.ModelSerializer):
         )
 
     def get_available_products(self, obj):
+        if obj.slug == "sales-kit":
+            return sales_kit_products()
         request = self.context.get("request")
         country = request.query_params.get("country", "") if request else ""
         if obj.slug == "school-kit":
@@ -84,6 +88,8 @@ class MaterialTypeSerializer(serializers.ModelSerializer):
         return []
 
     def get_default_deliverables(self, obj):
+        if obj.slug == "sales-kit":
+            return sales_kit_deliverables()
         if obj.slug == "school-kit":
             return school_kit_deliverables()
         if obj.slug == "venue-kit":
@@ -155,5 +161,34 @@ class MaterialBundleSerializer(serializers.ModelSerializer):
             if not product_slugs:
                 raise serializers.ValidationError(
                     {"product_slugs": "Selecciona al menos un producto para la paquetería."}
+                )
+        elif material_type.slug == "sales-kit":
+            campaign = attrs.get(
+                "campaign", self.instance.campaign if self.instance else None
+            )
+            if campaign is None:
+                raise serializers.ValidationError(
+                    {"campaign": "Selecciona una campaña comercial autorizada."}
+                )
+            if not product_slugs and campaign.product_id:
+                product_slugs = [campaign.product.code]
+                attrs["product_slugs"] = product_slugs
+            available = {item["product_slug"] for item in sales_kit_products()}
+            invalid = sorted(set(product_slugs) - available)
+            if invalid:
+                raise serializers.ValidationError(
+                    {"product_slugs": f"Productos fuera del catálogo activo: {', '.join(invalid)}."}
+                )
+            if not product_slugs:
+                raise serializers.ValidationError(
+                    {"product_slugs": "Selecciona al menos un producto para la paquetería."}
+                )
+            if campaign.product_id and set(product_slugs) != {campaign.product.code}:
+                raise serializers.ValidationError(
+                    {
+                        "product_slugs": (
+                            "La campaña solo puede generar el producto que tiene asociado."
+                        )
+                    }
                 )
         return attrs

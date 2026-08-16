@@ -79,14 +79,18 @@
 
 ## Siguientes
 
-- [ ] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
-      `docs/operations/venue-marketing-kit-plan.md`; la implementación queda bloqueada hasta la
-      respuesta de Axel.
+- [x] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
+      `docs/operations/venue-marketing-kit-plan.md`; Axel confirmó los seis pilares y el PR de
+      implementación ya está fusionado.
 
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Diseño e implementación de `sales-kit`** — la paquetería reutiliza los productos
+      activos y los renderers social, A4 y presentación existentes. Cada generación exige una
+      `Campaign` activa, vigente, con copy aprobado y `offer_data.source_status=confirmed`;
+      no se sembró ninguna oferta comercial real.
 - [x] **Comando de verificación R2** — añadido `python manage.py verify_storage_backend` para
       staging; comprueba escritura, lectura y borrado contra Cloudflare R2 sin persistir secretos.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
@@ -95,6 +99,9 @@
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Recibir la primera `Campaign` comercial confirmada** (fuente, beneficio, CTA y vigencia)
+      antes de usar `sales-kit` con datos reales; los tests usan datos sintéticos marcados como
+      `source_status=confirmed`.
 - [ ] **Ejecutar verificación R2 en staging real** — falta disponer del bucket, endpoint y
       credenciales del entorno de staging; local no se considera evidencia de escritura R2.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
