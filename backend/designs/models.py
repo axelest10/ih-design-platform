@@ -37,12 +37,23 @@ class DesignVersion(models.Model):
         PASS = "pass", "Correcto"
         NEEDS_CHANGES = "needs_changes", "Requiere cambios"
 
+    class ReviewStatus(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        APPROVED = "approved", "Aprobado"
+        REJECTED = "rejected", "Rechazado"
+        CHANGES_REQUESTED = "changes_requested", "Cambios solicitados"
+
     design = models.ForeignKey(Design, on_delete=models.CASCADE, related_name="versions")
     number = models.PositiveIntegerField()
     template_key = models.CharField(max_length=120)
     render_data = models.JSONField(default=dict)
     asset_refs = models.JSONField(default=list)
     validation_summary = models.JSONField(default=dict)
+    review_status = models.CharField(
+        max_length=24,
+        choices=ReviewStatus.choices,
+        default=ReviewStatus.PENDING,
+    )
     claude_review_status = models.CharField(
         max_length=20,
         choices=ClaudeReviewStatus.choices,
