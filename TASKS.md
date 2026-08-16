@@ -1,5 +1,9 @@
 # Tareas
 
+- [x] **Trazabilidad y calidad de IA** — cada llamada registra prompt, respuesta, proveedor,
+      modelo, timestamp y vínculo al brief/DesignVersion/material disponible; las respuestas
+      reciben una validación ligera de cifras, URLs y claims no verificables.
+
 ## Venue-kit (2026-08-15)
 
 - [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:

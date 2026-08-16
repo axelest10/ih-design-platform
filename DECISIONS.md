@@ -1,5 +1,16 @@
 # Decisiones técnicas
 
+## 2026-08-16 — Auditoría y calidad ligera para llamadas IA
+
+`ai.AICallAudit` registra prompt/contexto autorizado, respuesta, proveedor, modelo, timestamp,
+metadatos, estado y vínculo a `DesignBrief`, `DesignVersion` o `MaterialBundle` cuando existe. Se
+registran también errores del proveedor para que la auditoría no pierda llamadas fallidas.
+
+`validate_ai_output()` es una señal de calidad reutilizable, no una aprobación automática: marca
+cifras y URLs ausentes del contexto autorizado y frases que parecen claims no verificables con
+`needs_review`. No modifica el copy ni agrega un segundo proveedor; OpenAI continúa siendo el único
+adaptador de generación y la revisión visual configurada conserva su proveedor actual.
+
 ## 2026-08-15 — Visibilidad y geometría del chequeo safe-zone
 
 La revisión humana incorporará `validation_summary.safe_zone_check` en el mismo conjunto de
