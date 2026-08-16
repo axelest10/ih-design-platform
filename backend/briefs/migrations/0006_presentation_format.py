@@ -2,7 +2,9 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [("briefs", "0004_designbrief_generated_prompt_and_more")]
+    dependencies = [
+        ("briefs", "0005_alter_briefreferenceupload_file"),
+    ]
 
     operations = [
         migrations.AlterField(
@@ -16,11 +18,11 @@ class Migration(migrations.Migration):
                     ("reel", "Reel"),
                     ("carousel", "Carrusel"),
                     ("banner", "Banner"),
+                    ("presentation", "Presentación"),
                     ("html", "HTML"),
                     ("svg", "SVG"),
-                    ("presentation", "Presentación"),
                 ],
                 max_length=16,
             ),
-        )
+        ),
     ]

@@ -115,6 +115,30 @@ def test_document_preview_saves_pdf_with_configured_storage(tmp_path, monkeypatc
 
 
 @pytest.mark.django_db
+def test_document_preview_returns_400_for_invalid_render_payload():
+    material_type = MaterialType.objects.get(slug="brochure")
+    brief = DesignBrief.objects.create(
+        title="Brochure inválido",
+        format=DesignBrief.Format.HTML,
+        material_type=material_type,
+        audience="Escuelas",
+        objective="Validar errores de renderizado",
+    )
+    design = Design.objects.create(brief=brief)
+    incomplete_payload = {**DOCUMENT_PAYLOAD}
+    incomplete_payload.pop("body")
+
+    response = APIClient().post(
+        f"/api/v1/designs/{design.pk}/preview/",
+        incomplete_payload,
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "'body' es obligatorio" in response.json()["detail"]
+
+
+@pytest.mark.django_db
 def test_html_svg_dispatch_remains_unchanged_for_social_post():
     material_type = MaterialType.objects.get(slug="social-post")
     brief = DesignBrief.objects.create(

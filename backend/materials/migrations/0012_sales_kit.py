@@ -24,8 +24,8 @@ def remove_sales_kit(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("briefs", "0005_presentation_format"),
-        ("materials", "0009_alter_marketingasset_file"),
+        ("briefs", "0007_presentation_format"),
+        ("materials", "0011_venue_kit"),
     ]
 
     operations = [migrations.RunPython(seed_sales_kit, remove_sales_kit)]

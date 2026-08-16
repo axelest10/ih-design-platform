@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from briefs.storage_paths import brief_reference_path
 from campaigns.models import Campaign
 from catalog.models import Branch, Product
 
@@ -15,9 +16,9 @@ class DesignBrief(models.Model):
         REEL = "reel", "Reel"
         CAROUSEL = "carousel", "Carrusel"
         BANNER = "banner", "Banner"
+        PRESENTATION = "presentation", "Presentación"
         HTML = "html", "HTML"
         SVG = "svg", "SVG"
-        PRESENTATION = "presentation", "Presentación"
 
     class Status(models.TextChoices):
         DRAFT = "draft", "Borrador"
@@ -87,7 +88,7 @@ class BriefReferenceUpload(models.Model):
     brief = models.ForeignKey(
         DesignBrief, on_delete=models.CASCADE, related_name="reference_uploads"
     )
-    file = models.FileField(upload_to="brief-references/")
+    file = models.FileField(upload_to=brief_reference_path)
     caption = models.CharField(max_length=180, blank=True)
     created_by = models.ForeignKey(
         get_user_model(),

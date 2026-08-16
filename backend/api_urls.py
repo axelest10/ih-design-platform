@@ -7,7 +7,7 @@ from briefs.views import BriefReferenceUploadViewSet, DesignBriefViewSet
 from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
 from common.views import stats_summary
-from designs.views import DesignViewSet
+from designs.views import DesignViewSet, generation_task_status
 from materials.views import (
     MarketingAssetViewSet,
     MaterialBundleViewSet,
@@ -53,6 +53,7 @@ router.register("material-bundles", MaterialBundleViewSet, basename="material-bu
 router.register("marketing-assets", MarketingAssetViewSet, basename="marketing-asset")
 
 urlpatterns = [
+    path("tasks/<str:task_id>/", generation_task_status, name="generation-task-status"),
     path(
         "designs/<int:pk>/versions/<int:version_number>/export/",
         DesignViewSet.as_view({"get": "export_version"}),
