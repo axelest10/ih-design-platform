@@ -1,5 +1,62 @@
 # Decisiones técnicas
 
+## 2026-08-15 — `venue-kit` usa seis pilares y datos oficiales por sede
+
+- Axel confirmó que todas las sedes venden los seis pilares existentes: `general-english`,
+  `cambridge-exam-preparation`, `university-programmes`, `business-english`,
+  `ielts-preparation` y `spanish-courses`. Son las prioridades de `venue-kit`, pero la selección
+  acepta futuros slugs activos del catálogo.
+- El paquete cubre social, documento A4 y presentación mediante los renderers existentes; no se
+  crea un renderer nuevo. El CTA y la decisión de usar mapa, QR, fotografía o logos adicionales
+  pertenecen al brief/diseño, no a un default de sede.
+- `Branch` guarda `country` y `source_url`; `official_contact_data` normaliza ubicación, contacto,
+  `source_status` y `needs_confirmation`. La generación solo acepta sedes con fuente, dirección
+  y teléfono confirmados. Horarios, mapa, CTA y assets locales quedan pendientes.
+- Las sedes iniciales se cargan desde las páginas oficiales documentadas en
+  `docs/operations/venue-marketing-kit-plan.md`; no se inventan datos fuera de esas fuentes.
+
+## 2026-08-15 — Diseño inicial de `venue-kit` (superseded by confirmed implementation)
+
+- Se propone reutilizar `MaterialBundle`, `MaterialBundleItem`, briefs hijos, templates y renderers existentes de `school-kit`.
+- No se inventan programas, contactos, direcciones, mapas, horarios ni deliverables por defecto para una sede.
+- Esta entrada queda reemplazada por la decisión inmediatamente anterior, después de las
+  confirmaciones de Axel sobre los seis pilares, las fuentes oficiales y las tres familias de
+  formato.
+
+## 2026-08-15 — La verificación R2 se ejecuta en staging, no en local
+
+Como este entorno no tiene bucket, endpoint ni credenciales R2 disponibles, no se simula una
+verificación de red ni se agregan secretos al repositorio. Se añade el comando
+`python manage.py verify_storage_backend`, que exige `storages.backends.s3.S3Storage`, un bucket y
+un endpoint `*.r2.cloudflarestorage.com`; en ejecución normal guarda un objeto temporal, confirma
+existencia y contenido leído, lo elimina y reporta `result=passed`. `--dry-run` solo valida la
+configuración. La evidencia real queda pendiente de ejecutar en staging con credenciales fuera de
+Git.
+
+## 2026-08-15 — Generaciones pesadas pasan a Celery
+
+Las generaciones de PDF, PPTX y copy que requieren proveedor de IA se ejecutan mediante tareas
+Celery, no dentro del ciclo síncrono de una vista. Cada solicitud crea un `AsyncGenerationJob`
+propio, devuelve `202 Accepted` con `task_id` y `status_url`, y el frontend consulta
+`GET /api/v1/tasks/<task_id>/` hasta obtener `succeeded` o `failed`. El job guarda propietario,
+recurso, resultado y error para no exponer resultados de otra persona. El modo eager sólo se usa
+en tests; staging y producción requieren un worker real conectado a Redis.
+
+## 2026-08-15 — Nuevas escrituras de archivos quedan aisladas por usuario
+
+- Los uploads de logos, referencias de brief y activos de marketing usan rutas `users/{user_id}/...` mediante funciones `upload_to`.
+- Los PDF/PPTX generados usan el propietario del brief en `users/{user_id}/generated-designs/{design_id}/...`.
+- Registros sin propietario explícito se escriben bajo `users/unassigned/`; esto evita volver a crear claves planas.
+- Los objetos existentes con claves históricas planas no se renombran automáticamente. La migración física queda como operación explícita posterior para no romper URLs, referencias o procesos activos.
+
+## 2026-08-15 — IH Hub SSO queda definido como integración futura, no activa
+
+- IH Hub entrega un `apiToken` JWT HS256 con `sub`, `tenantId`, `email` y `exp`; design-platform lo validará más adelante con el secreto compartido `IHLATAM_SSO_SECRET`.
+- Se decide transportar el token inicialmente en el enlace de entrada (`?sso=`) y canjearlo una sola vez por `POST` sobre HTTPS; no se implementa endpoint, middleware ni vista en esta fase.
+- El SSO será una vía adicional: token ausente, inválido o expirado devuelve al magic-link existente sin tocarlo ni reemplazarlo.
+- `tenantId` se conservará en una identidad externa futura asociada al usuario local para seleccionar país/marca LATAM; no se confiará en valores enviados por el navegador.
+- La implementación está bloqueada hasta recibir el secreto real, confirmar expiración/claims y coordinar con quien mantiene el Hub el enlace hacia design-platform. Requiere luz verde explícita de Axel.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,
