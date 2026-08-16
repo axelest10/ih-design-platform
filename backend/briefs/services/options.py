@@ -11,6 +11,7 @@ PRIMARY_PRODUCT_SLUGS = (
     "university-programmes",
     "business-english",
     "general-english",
+    "cambridge-exam-preparation",
     "ielts-preparation",
     "spanish-courses",
 )
