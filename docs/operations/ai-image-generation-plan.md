@@ -20,21 +20,17 @@ Esto reduce tres riesgos: que una salida experimental rompa las piezas actuales,
 
 ### Recomendación inicial
 
-Usar el proveedor OpenAI que ya existe para texto, pero mediante un adaptador separado de `OpenAIProvider` para imágenes. El candidato principal será el modelo de imágenes más reciente habilitado para la cuenta de producción en el momento de implementar —la documentación pública actual presenta GPT Image 2—. Para un piloto controlado se deben comparar también:
+Usar el proveedor OpenAI que ya existe para texto, pero mediante un adaptador separado de `OpenAIProvider` para imágenes. La documentación consultada no permitió verificar a **GPT Image 2** como un modelo real y utilizable por la API: aparece una mención en una página general, pero no se pudo confirmar un identificador de modelo vigente en la lista/API. Por tanto, no se presenta como hecho confirmado ni como candidato presupuestable. Antes de elegir proveedor, modelo o costo se debe consultar la lista vigente de modelos de OpenAI y verificar que el modelo esté habilitado para la cuenta concreta. Para un piloto controlado se deben comparar únicamente candidatos confirmados en ese momento:
 
 | Candidato | Uso propuesto | Decisión pendiente |
 | --- | --- | --- |
-| GPT Image 2 | Calidad y dirección creativa como candidato principal | Confirmar disponibilidad, precio y límites de la cuenta |
-| `gpt-image-1` | Fallback de compatibilidad si GPT Image 2 no está disponible | Confirmar calidad mínima y costo |
+| GPT Image 2 | Hipótesis no verificada; no presupuestar ni implementar con este nombre | Confirmar que exista como modelo/API utilizable antes de considerarlo |
+| `gpt-image-1` | Candidato de compatibilidad si sigue disponible | Confirmar calidad mínima, precio y límites de la cuenta |
 | `gpt-image-1-mini` | Experimentos de costo/volumen, no default de marca | Confirmar si la calidad cumple el estándar visual |
 
-La documentación oficial de OpenAI identifica GPT Image 2 en su overview y documenta `gpt-image-1`/`gpt-image-1-mini` en la página de modelos. DALL·E no se propone como nueva integración porque esa misma documentación lo marca como deprecated. La compatibilidad de retención de datos debe verificarse para el proyecto concreto antes de enviar briefs o imágenes de referencia; la documentación de controles de datos incluye GPT Image 1 y GPT Image 1 mini entre los modelos compatibles con zero data retention, sujeto a las condiciones del endpoint y de la cuenta.
+La referencia operativa para esta decisión será la [lista vigente de modelos de OpenAI](https://platform.openai.com/docs/api-reference/models/object) y la respuesta de `GET /v1/models` con la cuenta autorizada; ambas deben comprobarse justo antes de implementar. DALL·E no se propone como nueva integración sin una revisión explícita de vigencia. La compatibilidad de retención de datos también debe verificarse para el proyecto concreto antes de enviar briefs o imágenes de referencia; la documentación de controles de datos incluye GPT Image 1 y GPT Image 1 mini entre los modelos compatibles con zero data retention, sujeto a las condiciones del endpoint y de la cuenta.
 
-Fuentes oficiales a verificar al implementar:
-
-- [OpenAI Platform overview](https://platform.openai.com/overview?height=3448)
-- [OpenAI Models](https://platform.openai.com/docs/models/o1%20.docx)
-- [OpenAI data controls by endpoint](https://platform.openai.com/docs/models/default-usage-policies-by-endpoint)
+No se tomará ninguna decisión de presupuesto, proveedor, resolución o arquitectura basándose en la mención de GPT Image 2. La selección definitiva se hará solo después de esa verificación y de la aprobación de Axel.
 
 La selección definitiva no debe codificarse en este documento como una promesa. Se guardará en configuración (`AI_IMAGE_MODEL`) cuando Axel apruebe el modelo, el costo por imagen, la resolución y el presupuesto mensual.
 
