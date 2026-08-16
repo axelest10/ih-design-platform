@@ -57,6 +57,40 @@ CORS_ALLOWED_ORIGINS=
 
 El almacenamiento local de logos y referencias no debe considerarse persistente en un PaaS. Para
 staging se debe configurar S3-compatible mediante `django-storages` antes de cargar activos reales.
+
+### Verificación de escritura en Cloudflare R2
+
+El repositorio incluye un comando reproducible que valida configuración, escritura, lectura y
+borrado de un objeto temporal. Ejecutarlo dentro del servicio de staging, después de configurar
+las cinco variables `AWS_*` y sin imprimir sus valores:
+
+```text
+python manage.py verify_storage_backend
+```
+
+Resultado esperado:
+
+```text
+storage_backend=storages.backends.s3.S3Storage
+endpoint_host=<account>.r2.cloudflarestorage.com
+bucket_configured=yes
+write=passed
+read=passed
+delete=passed
+result=passed
+```
+
+Para validar solo la configuración sin una escritura de red:
+
+```text
+python manage.py verify_storage_backend --dry-run
+```
+
+La ejecución local de este repositorio no se considera una verificación R2 porque no tiene bucket,
+endpoint ni credenciales configurados. El comando debe ejecutarse en staging; nunca se deben
+cometer credenciales ni usar el `--keep` salvo que se quiera inspeccionar manualmente el objeto.
+En esta revisión, `python manage.py verify_storage_backend --dry-run` terminó con
+`CommandError: R2 storage no está activo`, que es el resultado esperado hasta configurar staging.
 La autenticación actual no depende de un proveedor externo: cada integrante usa su cuenta y una
 contraseña almacenada con el hasher de Django. Los administradores crean cuentas y restablecen
 contraseñas desde el panel.
@@ -90,8 +124,35 @@ python manage.py collectstatic --noinput
 python manage.py check --deploy
 ```
 
-Celery no está activo en el flujo actual. Si se habilita, necesita un worker separado conectado a
-`REDIS_URL`; no se debe ejecutar dentro del mismo proceso Gunicorn.
+Las generaciones de PDF, PPTX y copy con IA se encolan en Celery. El servicio web no debe ejecutar
+un worker dentro del mismo proceso Gunicorn: necesita un segundo servicio Railway conectado al
+mismo repositorio, con el mismo `infrastructure/Dockerfile`, las mismas variables de entorno y el
+mismo `REDIS_URL`.
+
+## Servicio worker de Celery en Railway
+
+El servicio existente `web` conserva el comando de Gunicorn. Crea un segundo servicio desde el
+mismo repositorio y sobrescribe su **Start Command** en Railway con exactamente:
+
+```text
+celery -A config worker -l info --concurrency=2
+```
+
+Configuración recomendada del worker:
+
+- Builder: el mismo Dockerfile `infrastructure/Dockerfile` que usa `web`.
+- Root directory: la raíz del repositorio.
+- Variables: reutilizar las variables del servicio `web`, especialmente `REDIS_URL`,
+  `DATABASE_URL`, `DJANGO_SECRET_KEY`, almacenamiento y claves de proveedores.
+- No añadir un healthcheck HTTP al worker; no escucha tráfico web.
+- `--concurrency=2` es un punto de partida prudente para el plan actual porque los renderers de
+  PDF/PPTX consumen CPU y memoria. Ajustarlo sólo después de observar memoria, tiempos de cola y
+  número de tareas fallidas.
+
+Las vistas devuelven `202 Accepted` con `task_id` y `status_url` cuando
+`CELERY_TASK_ALWAYS_EAGER=0`. El frontend debe consultar `GET /api/v1/tasks/<task_id>/` hasta
+recibir `succeeded` o `failed`. Si no hay worker desplegado, las tareas permanecen en cola y no se
+debe interpretar el `202` como generación completada.
 
 ## Comparativo corto
 

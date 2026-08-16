@@ -66,5 +66,5 @@ def remove_email_kit(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("materials", "0009_alter_marketingasset_file")]
+    dependencies = [("materials", "0012_sales_kit")]
     operations = [migrations.RunPython(seed_email_kit, remove_email_kit)]

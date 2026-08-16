@@ -11,9 +11,16 @@ from .models import (
     MaterialTemplate,
     MaterialType,
 )
-from .services.catalog import school_kit_products
+from .services.catalog import (
+    VENUE_KIT_DEFAULT_PRODUCT_SLUGS,
+    sales_kit_products,
+    school_kit_products,
+    venue_kit_products,
+)
 from .services.email_kit import email_kit_deliverables, email_kit_products
+from .services.sales_kit import sales_kit_deliverables
 from .services.school_kit import school_kit_deliverables
+from .services.venue_kit import venue_kit_deliverables
 
 
 class MaterialTemplateSerializer(serializers.ModelSerializer):
@@ -73,16 +80,26 @@ class MaterialTypeSerializer(serializers.ModelSerializer):
     def get_available_products(self, obj):
         if obj.slug == "email-kit":
             return email_kit_products()
-        if obj.slug != "school-kit":
-            return []
+        if obj.slug == "sales-kit":
+            return sales_kit_products()
         request = self.context.get("request")
         country = request.query_params.get("country", "") if request else ""
-        return school_kit_products(country=country, priority=obj.priority_product_slugs)
+        if obj.slug == "school-kit":
+            return school_kit_products(country=country, priority=obj.priority_product_slugs)
+        if obj.slug == "venue-kit":
+            return venue_kit_products(priority=obj.priority_product_slugs)
+        return []
 
     def get_default_deliverables(self, obj):
         if obj.slug == "email-kit":
             return email_kit_deliverables()
-        return school_kit_deliverables() if obj.slug == "school-kit" else []
+        if obj.slug == "sales-kit":
+            return sales_kit_deliverables()
+        if obj.slug == "school-kit":
+            return school_kit_deliverables()
+        if obj.slug == "venue-kit":
+            return venue_kit_deliverables()
+        return []
 
 
 class MaterialBundleItemSerializer(serializers.ModelSerializer):
@@ -133,8 +150,14 @@ class MaterialBundleSerializer(serializers.ModelSerializer):
         product_slugs = attrs.get(
             "product_slugs", self.instance.product_slugs if self.instance else []
         )
-        if material_type.slug == "school-kit":
-            available = {item["product_slug"] for item in school_kit_products()}
+        if material_type.slug in {"school-kit", "venue-kit"}:
+            available_helper = (
+                school_kit_products if material_type.slug == "school-kit" else venue_kit_products
+            )
+            available = {item["product_slug"] for item in available_helper()}
+            if material_type.slug == "venue-kit" and not product_slugs:
+                product_slugs = list(VENUE_KIT_DEFAULT_PRODUCT_SLUGS)
+                attrs["product_slugs"] = product_slugs
             invalid = sorted(set(product_slugs) - available)
             if invalid:
                 raise serializers.ValidationError(
@@ -144,7 +167,7 @@ class MaterialBundleSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"product_slugs": "Selecciona al menos un producto para la paquetería."}
                 )
-        elif material_type.slug == "email-kit":
+        elif material_type.slug in {"email-kit", "sales-kit"}:
             campaign = attrs.get(
                 "campaign", self.instance.campaign if self.instance else None
             )
@@ -155,7 +178,10 @@ class MaterialBundleSerializer(serializers.ModelSerializer):
             if not product_slugs and campaign.product_id:
                 product_slugs = [campaign.product.code]
                 attrs["product_slugs"] = product_slugs
-            available = {item["product_slug"] for item in email_kit_products()}
+            available_helper = (
+                email_kit_products if material_type.slug == "email-kit" else sales_kit_products
+            )
+            available = {item["product_slug"] for item in available_helper()}
             invalid = sorted(set(product_slugs) - available)
             if invalid:
                 raise serializers.ValidationError(
@@ -163,10 +189,22 @@ class MaterialBundleSerializer(serializers.ModelSerializer):
                 )
             if not product_slugs:
                 raise serializers.ValidationError(
-                    {"product_slugs": "Selecciona al menos un producto para el email."}
+                    {
+                        "product_slugs": (
+                            "Selecciona al menos un producto para el email."
+                            if material_type.slug == "email-kit"
+                            else "Selecciona al menos un producto para la paquetería."
+                        )
+                    }
                 )
             if campaign.product_id and set(product_slugs) != {campaign.product.code}:
                 raise serializers.ValidationError(
-                    {"product_slugs": "La campaña y el producto seleccionado no coinciden."}
+                    {
+                        "product_slugs": (
+                            "La campaña y el producto seleccionado no coinciden."
+                            if material_type.slug == "email-kit"
+                            else "La campaña solo puede generar el producto que tiene asociado."
+                        )
+                    }
                 )
         return attrs
