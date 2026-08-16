@@ -87,6 +87,9 @@
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Diseño e implementación de `email-kit`** — exporta/visualiza HTML compatible con
+      clientes de correo mediante tablas, CSS inline y un ancho máximo de 640 px. No envía
+      mensajes ni integra proveedores; requiere Campaign confirmada y URL de baja.
 - [x] **Diseño e implementación de `sales-kit`** — la paquetería reutiliza los productos
       activos y los renderers social, A4 y presentación existentes. Cada generación exige una
       `Campaign` activa, vigente, con copy aprobado y `offer_data.source_status=confirmed`;
@@ -99,6 +102,9 @@
       persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
       están listas, falta aprovisionar el proveedor (Railway o Render).
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Definir el envío real de emails en una fase aparte** — falta decidir proveedor, listas y
+      consentimiento, tracking, rebotes, unsubscribe operativo y gestión de secretos. El flujo
+      actual es export-only y no debe usarse como sender.
 - [ ] **Recibir la primera `Campaign` comercial confirmada** (fuente, beneficio, CTA y vigencia)
       antes de usar `sales-kit` con datos reales; los tests usan datos sintéticos marcados como
       `source_status=confirmed`.

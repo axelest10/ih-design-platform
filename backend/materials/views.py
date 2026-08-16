@@ -28,6 +28,7 @@ from .serializers import (
     MaterialTemplateSerializer,
     MaterialTypeSerializer,
 )
+from .services.email_kit import EmailKitGenerationError, generate_email_kit
 from .services.quick_design import QuickDesignError
 from .services.sales_kit import SalesKitGenerationError, generate_sales_kit
 from .services.school_kit import SchoolKitGenerationError
@@ -262,6 +263,16 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
                     user=request.user if request.user.is_authenticated else None,
                 )
             except SalesKitGenerationError as exc:
+                return Response({"detail": str(exc)}, status=400)
+            bundle.refresh_from_db()
+            return Response(self.get_serializer(bundle).data, status=201)
+        if bundle.material_type.slug == "email-kit":
+            try:
+                generate_email_kit(
+                    bundle,
+                    user=request.user if request.user.is_authenticated else None,
+                )
+            except EmailKitGenerationError as exc:
                 return Response({"detail": str(exc)}, status=400)
             bundle.refresh_from_db()
             return Response(self.get_serializer(bundle).data, status=201)
