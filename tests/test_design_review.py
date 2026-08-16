@@ -173,6 +173,96 @@ def test_review_reject_and_request_changes_require_comment(settings):
 
 @pytest.mark.corporate_auth
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("initial_decision", "initial_comment", "new_decision", "expected_status"),
+    (
+        ("approve", None, "reject", DesignVersion.ReviewStatus.APPROVED),
+        ("reject", "No corresponde al brief.", "approve", DesignVersion.ReviewStatus.REJECTED),
+        (
+            "request_changes",
+            "Ajustar el CTA.",
+            "approve",
+            DesignVersion.ReviewStatus.CHANGES_REQUESTED,
+        ),
+    ),
+)
+def test_review_cannot_overwrite_an_existing_decision(
+    settings, initial_decision, initial_comment, new_decision, expected_status
+):
+    settings.DESIGN_TEST_MODE = False
+    design, version = _design_with_version()
+    client, _ = _role_client("reviewer")
+
+    first = client.post(
+        f"/api/v1/designs/{design.pk}/review/",
+        {
+            "decision": initial_decision,
+            "version": version.number,
+            "comment": initial_comment,
+        },
+        format="json",
+    )
+    second = client.post(
+        f"/api/v1/designs/{design.pk}/review/",
+        {
+            "decision": new_decision,
+            "version": version.number,
+            "comment": "Nueva decision no autorizada.",
+        },
+        format="json",
+    )
+
+    assert first.status_code == 200
+    assert second.status_code == 409
+    assert "reabrir" in second.json()["detail"]
+    version.refresh_from_db()
+    assert version.review_status == expected_status
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
+def test_review_can_reopen_then_make_a_new_decision(settings):
+    settings.DESIGN_TEST_MODE = False
+    design, version = _design_with_version()
+    client, _ = _role_client("reviewer")
+    review_url = f"/api/v1/designs/{design.pk}/review/"
+
+    approved = client.post(
+        review_url,
+        {"decision": "approve", "version": version.number},
+        format="json",
+    )
+    reopened = client.post(
+        f"/api/v1/designs/{design.pk}/review/reopen/",
+        {"version": version.number, "comment": "Revisar una vez mas."},
+        format="json",
+    )
+    decided_again = client.post(
+        review_url,
+        {
+            "decision": "request_changes",
+            "version": version.number,
+            "comment": "Actualizar el CTA antes de publicar.",
+        },
+        format="json",
+    )
+
+    assert approved.status_code == 200
+    assert reopened.status_code == 200
+    assert reopened.json()["review_status"] == DesignVersion.ReviewStatus.PENDING
+    assert reopened.json()["status"] == Design.Status.IN_REVIEW
+    assert decided_again.status_code == 200
+    assert decided_again.json()["review_status"] == DesignVersion.ReviewStatus.CHANGES_REQUESTED
+    design.refresh_from_db()
+    version.refresh_from_db()
+    assert design.status == Design.Status.REVISION_REQUESTED
+    assert design.approved_version is None
+    assert version.review_status == DesignVersion.ReviewStatus.CHANGES_REQUESTED
+    assert DesignReviewComment.objects.filter(version=version).count() == 2
+
+
+@pytest.mark.corporate_auth
+@pytest.mark.django_db
 def test_review_requires_an_explicit_version(settings):
     settings.DESIGN_TEST_MODE = False
     design, _ = _design_with_version()
