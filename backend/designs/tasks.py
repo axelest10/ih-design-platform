@@ -16,6 +16,7 @@ from designs.models import AsyncGenerationJob, Design, DesignVersion
 from designs.services.renderer_document import render_document_preview
 from designs.services.renderer_presentation import render_presentation_preview
 from designs.services.revision import revise_design
+from designs.services.storage_paths import generated_design_path
 from materials.models import MaterialBundle, MaterialType
 from materials.services.quick_design import create_quick_design
 from materials.services.school_kit import generate_school_kit
@@ -74,7 +75,7 @@ def _store_binary_version(design: Design, rendered, *, extension: str, data_key:
             design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
         ) + 1
         path = storage.save(
-            f"generated-designs/{design.pk}/version-{next_number}.{extension}",
+            generated_design_path(design, f"version-{next_number}.{extension}"),
             ContentFile(getattr(rendered, extension)),
         )
         version = DesignVersion.objects.create(
