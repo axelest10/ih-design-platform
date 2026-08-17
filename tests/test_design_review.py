@@ -280,6 +280,7 @@ def test_review_requires_an_explicit_version(settings):
 @pytest.mark.django_db
 def test_product_design_rejects_formal_review_during_first_50_tests(settings):
     settings.DESIGN_TEST_MODE = True
+    settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL = False
     design, version = _design_with_version(product_slug="ielts-preparation")
 
     response = APIClient().post(

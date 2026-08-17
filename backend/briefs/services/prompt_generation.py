@@ -27,7 +27,7 @@ def _authorized_context(brief: DesignBrief) -> dict:
 
 
 def generate_prompt_for_brief(brief: DesignBrief) -> None:
-    """Genera el copy o deja preparado el fallback de escritura manual."""
+    """Genera copy publicitario editable, no un prompt para generar imágenes."""
     request = GenerationRequest(
         instruction=(
             "Escribe un solo bloque de copy publicitario en el idioma indicado por el brief, "

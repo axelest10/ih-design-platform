@@ -119,3 +119,40 @@ class DesignReviewComment(models.Model):
 
     class Meta:
         ordering = ["created_at", "pk"]
+
+
+class DesignDelivery(models.Model):
+    """Registro auditable de la entrega de una versiÃ³n aprobada al solicitante."""
+
+    class Status(models.TextChoices):
+        QUEUED = "queued", "En cola"
+        PROCESSING = "processing", "Procesando"
+        DELIVERED = "delivered", "Entregado"
+        FAILED = "failed", "Fallido"
+        NO_RECIPIENT = "no_recipient", "Sin destinatario"
+
+    design = models.ForeignKey(Design, on_delete=models.CASCADE, related_name="deliveries")
+    version = models.ForeignKey(
+        DesignVersion,
+        on_delete=models.CASCADE,
+        related_name="deliveries",
+    )
+    requested_by = models.ForeignKey(
+        get_user_model(),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="design_deliveries_requested",
+    )
+    recipient_email = models.EmailField(blank=True)
+    channel = models.CharField(max_length=24, default="email")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.QUEUED)
+    download_url = models.URLField(max_length=1000, blank=True)
+    provider_message_id = models.CharField(max_length=160, blank=True)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]

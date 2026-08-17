@@ -185,6 +185,13 @@ RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 PASSWORD_RESET_MAX_AGE_SECONDS = int(os.getenv("PASSWORD_RESET_MAX_AGE_SECONDS", "900"))
 DESIGN_TEST_MODE = os.getenv("DESIGN_TEST_MODE", "1") == "1"
 DESIGN_TEST_LIMIT = int(os.getenv("DESIGN_TEST_LIMIT", "50"))
+DESIGN_TEST_ALLOW_HUMAN_APPROVAL = (
+    os.getenv("DESIGN_TEST_ALLOW_HUMAN_APPROVAL", "0") == "1"
+)
+if DJANGO_ENV == "production" and DESIGN_TEST_ALLOW_HUMAN_APPROVAL:
+    raise ImproperlyConfigured(
+        "DESIGN_TEST_ALLOW_HUMAN_APPROVAL solo puede activarse fuera de production."
+    )
 
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME", "").strip()
 if AWS_STORAGE_BUCKET_NAME:

@@ -21,8 +21,13 @@ from security.permissions import (
 )
 
 from .models import AsyncGenerationJob, Design
-from .serializers import DesignReviewCommentSerializer, DesignSerializer
+from .serializers import (
+    DesignDeliverySerializer,
+    DesignReviewCommentSerializer,
+    DesignSerializer,
+)
 from .services.async_jobs import enqueue_generation_task, task_response
+from .services.delivery import create_approved_design_delivery
 from .services.renderer import RenderValidationError, render_preview
 from .services.review import (
     ReviewDecisionLockedError,
@@ -305,14 +310,20 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
     def review(self, request, pk=None):
         """Aprueba o rechaza una versión renderizada del diseño."""
         design = self.get_object()
-        if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
             return Response(
                 {
                     "detail": (
-                        "La aprobaciÃ³n formal estÃ¡ desactivada durante las "
-                        "primeras 50 pruebas."
+                        "La aprobación formal está protegida durante las primeras 50 pruebas. "
+                        "Para probar el flujo en staging, configura "
+                        "DESIGN_TEST_ALLOW_HUMAN_APPROVAL=1; no lo actives en production."
                     ),
                     "next": "claude-review",
+                    "approval_enabled": False,
                 },
                 status=409,
             )
@@ -328,6 +339,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         if version is None:
             return Response({"detail": "No existe una versión para revisar."}, status=404)
 
+        delivery = None
         try:
             design, version, comment = transition_design_version(
                 design=design,
@@ -340,6 +352,12 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             return Response({"detail": str(exc)}, status=409)
         except ReviewTransitionError as exc:
             return Response({"detail": str(exc)}, status=400)
+        if decision == "approve":
+            delivery = create_approved_design_delivery(
+                design=design,
+                version=version,
+                base_url=request.build_absolute_uri("/").rstrip("/"),
+            )
         return Response(
             {
                 "design_id": str(design.pk),
@@ -347,6 +365,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
                 "review_status": version.review_status,
                 "version": version.number,
                 "approved_version": design.approved_version_id,
+                "delivery": DesignDeliverySerializer(delivery).data if delivery else None,
                 "comment_id": comment.pk if comment else None,
             }
         )
@@ -355,7 +374,11 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
     def reopen_review(self, request, pk=None):
         """Reabre una versión decidida para permitir una nueva revisión."""
         design = self.get_object()
-        if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
             return Response(
                 {
                     "detail": (
