@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework.test import APIClient
 
+from ai.models import AICallAudit
 from ai.providers import GenerationResponse
 from campaigns.models import Campaign
 from catalog.models import Branch, Product
@@ -55,7 +56,9 @@ def test_confirmed_campaign_kits_store_ai_copy_as_pending_approval_draft(slug):
         )
     )
 
-    with patch("materials.services.ai_copy_drafts.OpenAIProvider.generate", return_value=response):
+    with patch(
+        "materials.services.ai_copy_drafts.OpenAIProvider.generate", return_value=response
+    ) as generate:
         result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
 
     assert result.status_code == 201, result.json()
@@ -65,6 +68,12 @@ def test_confirmed_campaign_kits_store_ai_copy_as_pending_approval_draft(slug):
     assert draft["needs_confirmation"] is True
     assert draft["copy"]["cta"] == "Agenda ahora"
     assert bundle.status == bundle.Status.DRAFT
+    audit = AICallAudit.objects.get(material_bundle=bundle)
+    assert audit.status == AICallAudit.Status.COMPLETED
+    assert audit.response == response.content
+    assert audit.request_context == draft["authorized_context"]
+    assert audit.quality_report["status"] == "passed"
+    generate.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -105,3 +114,29 @@ def test_ai_copy_rejects_unconfirmed_campaign_before_calling_provider():
 
     assert result.status_code == 400
     generate.assert_not_called()
+    assert not AICallAudit.objects.filter(material_bundle=bundle).exists()
+
+
+@pytest.mark.django_db
+def test_ai_copy_provider_error_is_audited_once_without_saving_a_draft():
+    from ai.providers import AIProviderError
+
+    bundle = _bundle("sales-kit", campaign=_campaign())
+
+    with patch(
+        "materials.services.ai_copy_drafts.OpenAIProvider.generate",
+        side_effect=AIProviderError("Proveedor no disponible"),
+    ) as generate:
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 400
+    generate.assert_called_once()
+    audit = AICallAudit.objects.get(material_bundle=bundle)
+    assert audit.status == AICallAudit.Status.ERROR
+    assert audit.response == "Proveedor no disponible"
+    assert audit.quality_report == {
+        "status": "error",
+        "flags": [{"type": "provider_error"}],
+    }
+    bundle.refresh_from_db()
+    assert "ai_copy_draft" not in bundle.brief_context
