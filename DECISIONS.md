@@ -1,5 +1,40 @@
 # Decisiones técnicas
 
+## 2026-08-16 — Revisión humana por versión
+
+El endpoint `POST /api/v1/designs/{id}/review/` acepta `approve`, `reject` y `request_changes`
+con una `DesignVersion` explícita. La versión guarda `review_status` (`pending`, `approved`,
+`rejected` o `changes_requested`) y el diseño mantiene su estado agregado (`approved`, `rejected`
+o `revision_requested`). Los rechazos y solicitudes de cambios requieren comentario, que se
+persiste con `DesignReviewComment`; aprobar permite comentario opcional.
+
+La transición vive en `backend/designs/services/review.py` para que futuras vistas o paneles no
+dupliquen reglas. `notify_review_transition()` es un hook no-op: se reserva la integración de
+notificaciones para una fase posterior, sin enviar mensajes ahora. No se toca `backend/security/`.
+
+## 2026-08-16 — Historial y exportación WhatsApp sin envío
+
+La revisión expone `GET /api/v1/designs/{id}/history/` con una línea de tiempo por `DesignVersion`,
+incluyendo estado de revisión automática, validación y safe-zone. La interfaz conserva la selección
+de versiones y muestra esos estados en el historial visible.
+
+`output=whatsapp` reutiliza el renderer existente: para piezas sociales entrega el SVG con sus
+dimensiones nativas (1080 × 1080, 1080 × 1350 o 1080 × 1920) como imagen descargable; para una
+versión documental entrega el PDF persistido como documento. No se añade un renderer nuevo ni se
+integra la API de WhatsApp.
+
+## 2026-08-16 — Copy IA acotado a fuentes confirmadas
+
+`POST /api/v1/material-bundles/{id}/suggest-copy/` está disponible para `venue-kit`, `sales-kit` y
+`email-kit`. El contexto enviado al único proveedor actual (`OpenAIProvider`) se construye solo
+desde productos/sedes/campañas con `source_status=confirmed`; venue-kit aplica además la
+confirmación explícita de Axel para sus seis pilares. Un producto o campaña pendiente bloquea la
+llamada.
+
+La respuesta se guarda en `brief_context.ai_copy_draft` con `status=pending_approval`,
+`needs_confirmation=true`, proveedor/modelo y contexto autorizado. Es un borrador para el flujo de
+aprobación de la Fase 1: no crea ni modifica `DesignVersion` y no publica copy automáticamente.
+
 ## 2026-08-16 — Auditoría y calidad ligera para llamadas IA
 
 `ai.AICallAudit` registra prompt/contexto autorizado, respuesta, proveedor, modelo, timestamp,

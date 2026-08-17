@@ -1,5 +1,17 @@
 # Tareas
 
+- [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
+      aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`
+      persiste comentarios y deja un hook preparado para notificaciones futuras.
+
+- [x] **Historial visible y exportación WhatsApp** — el endpoint `history` expone la línea de
+      tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
+      compartir; no integra la API de WhatsApp.
+
+- [x] **Sugerencias de copy IA para venue/sales/email** — usa únicamente catálogos, sedes y
+      campañas con datos confirmados; guarda el resultado como `pending_approval` y no lo aplica
+      directamente a ningún diseño.
+
 - [x] **Trazabilidad y calidad de IA** — cada llamada registra prompt, respuesta, proveedor,
       modelo, timestamp y vínculo al brief/DesignVersion/material disponible; las respuestas
       reciben una validación ligera de cifras, URLs y claims no verificables.

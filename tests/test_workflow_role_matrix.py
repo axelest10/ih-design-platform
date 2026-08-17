@@ -40,6 +40,7 @@ WORKFLOW_RULES = (
     ("ejecutar revisión automática", DesignViewSet, "claude_review", DESIGN_CREATORS),
     ("agregar comentarios", DesignViewSet, "comments", HUMAN_REVIEWERS),
     ("aprobar o rechazar", DesignViewSet, "review", HUMAN_REVIEWERS),
+    ("reabrir una decision", DesignViewSet, "reopen_review", HUMAN_REVIEWERS),
     ("administrar tipos de material", MaterialTypeViewSet, "create", ADMINS),
     ("administrar plantillas", MaterialTemplateViewSet, "create", ADMINS),
     ("administrar materiales", MarketingAssetViewSet, "create", ADMINS),
