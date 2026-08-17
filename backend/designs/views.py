@@ -14,6 +14,7 @@ from security.permissions import (
     ROLE_MARKETING,
     ROLE_PLATFORM_ADMIN,
     ROLE_REVIEWER,
+    ROLE_VIEWER,
     CorporateDomainPermission,
     RoleAwareViewSet,
     is_platform_admin_user,
@@ -82,6 +83,7 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         "review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "reopen_review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "comments": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "history": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER, ROLE_REVIEWER, ROLE_VIEWER),
     }
 
     @action(detail=True, methods=["post"], url_path="preview")
@@ -186,6 +188,34 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             ),
         }
 
+        if output_format == "whatsapp":
+            if version.render_data.get("svg"):
+                response = HttpResponse(version.render_data["svg"], content_type="image/svg+xml")
+                response["Content-Disposition"] = (
+                    f'attachment; filename="design-{design.pk}-version-'
+                    f'{version.number}-whatsapp.svg"'
+                )
+                patch_cache_control(response, private=True, no_store=True)
+                return response
+            pdf_path = version.render_data.get("pdf_path")
+            if pdf_path and default_storage.exists(pdf_path):
+                response = FileResponse(
+                    default_storage.open(pdf_path, "rb"),
+                    as_attachment=True,
+                    filename=f"design-{design.pk}-version-{version.number}-whatsapp.pdf",
+                    content_type="application/pdf",
+                )
+                patch_cache_control(response, private=True, no_store=True)
+                return response
+            return Response(
+                {
+                    "detail": (
+                        "Esta versión no tiene una imagen SVG ni un documento PDF para WhatsApp."
+                    )
+                },
+                status=404,
+            )
+
         if output_format in inline_artifacts:
             data_key, content_type = inline_artifacts[output_format]
             content = version.render_data.get(data_key)
@@ -217,8 +247,30 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             return response
 
         return Response(
-            {"detail": "Formato no disponible. Usa svg, html, pdf o pptx."},
+            {"detail": "Formato no disponible. Usa svg, html, pdf, pptx o whatsapp."},
             status=400,
+        )
+
+    @action(detail=True, methods=["get"], url_path="history")
+    def history(self, request, pk=None):
+        """Devuelve la línea de tiempo de versiones y su estado de revisión."""
+        design = self.get_object()
+        timeline = [
+            {
+                "id": version.pk,
+                "number": version.number,
+                "template_key": version.template_key,
+                "created_at": version.created_at,
+                "claude_review_status": version.claude_review_status,
+                "validation_status": (version.validation_summary or {}).get("status", "pending"),
+                "safe_zone_status": (version.validation_summary or {})
+                .get("safe_zone_check", {})
+                .get("status", "not_available"),
+            }
+            for version in design.versions.all()
+        ]
+        return Response(
+            {"design_id": design.pk, "current_status": design.status, "timeline": timeline}
         )
 
     def _preview_document(self, design, render_payload, material_type):
