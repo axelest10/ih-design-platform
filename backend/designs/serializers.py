@@ -18,6 +18,7 @@ class DesignVersionSerializer(serializers.ModelSerializer):
             "render_data",
             "asset_refs",
             "validation_summary",
+            "review_status",
             "claude_review_status",
             "claude_review",
             "created_at",

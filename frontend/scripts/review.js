@@ -16,7 +16,7 @@
   const commentMarkup = (comment) => `<article class="review-comment"><strong>${escapeHtml(comment.author_email)}</strong><p>${escapeHtml(comment.comment)}</p><time>${new Date(comment.created_at).toLocaleString("es-MX")}</time></article>`;
   const formatLabels = { square: "Cuadrado", story: "Historia", portrait: "Vertical" };
   const statusLabels = { in_review: "En revisión", self_review: "Revisión automática", test_ready: "Listo para prueba", revision_requested: "Cambios solicitados" };
-  const reviewLabels = { pending: "Pendiente", pass: "Correcto", needs_changes: "Requiere cambios" };
+  const reviewLabels = { pending: "Pendiente", pass: "Correcto", needs_changes: "Requiere cambios", skipped: "No aplica", not_available: "No disponible" };
   const canvasFor = (version) => version?.validation_summary?.checks?.find((check) => check.name === "safe_area")?.canvas;
   const validationSummary = (version) => {
     const summary = version?.validation_summary || {};
@@ -44,12 +44,13 @@
       actions.push(`<a class="button button--secondary" href="${exportUrl(designId, version, "svg")}" download>Descargar SVG</a>`);
       actions.push(`<button class="button button--secondary" type="button" data-download-png="${designId}" data-version-number="${version.number}">Descargar PNG</button>`);
     }
+    if (version?.render_data?.svg || version?.render_data?.pdf_path) actions.push(`<a class="button button--secondary" href="${exportUrl(designId, version, "whatsapp")}" download>Exportar WhatsApp</a>`);
     if (version?.render_data?.html) actions.push(`<a class="button button--secondary" href="${exportUrl(designId, version, "html")}" download>Descargar HTML</a>`);
     if (version?.render_data?.pdf_path) actions.push(`<a class="button button--secondary" href="${exportUrl(designId, version, "pdf")}" download>Descargar PDF</a>`);
     if (version?.render_data?.pptx_path) actions.push(`<a class="button button--secondary" href="${exportUrl(designId, version, "pptx")}" download>Descargar PPTX</a>`);
     return actions.length ? actions.join("") : '<span class="muted">Sin archivos descargables.</span>';
   };
-  const versionHistoryMarkup = (design) => `<section class="version-history" aria-label="Historial de versiones"><h3>Historial de versiones</h3><div class="version-history__list">${design.versions.map((version, index) => `<button class="version-history__item${index === 0 ? " is-active" : ""}" type="button" data-select-version="${design.id}" data-version-id="${version.id}" data-version-number="${version.number}"><strong>Versión ${version.number}</strong><span>${escapeHtml(version.claude_review_status)}</span><time>${new Date(version.created_at).toLocaleString("es-MX")}</time></button>`).join("")}</div></section>`;
+  const versionHistoryMarkup = (design) => `<section class="version-history" aria-label="Historial de versiones"><h3>Historial de versiones</h3><div class="version-history__list">${design.versions.map((version, index) => `<button class="version-history__item${index === 0 ? " is-active" : ""}" type="button" data-select-version="${design.id}" data-version-id="${version.id}" data-version-number="${version.number}"><strong>Versión ${version.number}</strong><span>Revisión: ${escapeHtml(reviewLabels[version.claude_review_status] || version.claude_review_status || "Pendiente")}</span><span>Validación: ${escapeHtml(reviewLabels[version.validation_summary?.status] || version.validation_summary?.status || "Pendiente")}</span><time>${new Date(version.created_at).toLocaleString("es-MX")}</time></button>`).join("")}</div></section>`;
   const cardMarkup = (design, comments) => {
     const version = design.versions[0];
     const actions = design.approval_enabled === false

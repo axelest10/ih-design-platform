@@ -1,5 +1,21 @@
 # Tareas
 
+- [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
+      aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`
+      persiste comentarios y deja un hook preparado para notificaciones futuras.
+
+- [x] **Historial visible y exportación WhatsApp** — el endpoint `history` expone la línea de
+      tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
+      compartir; no integra la API de WhatsApp.
+
+- [x] **Sugerencias de copy IA para venue/sales/email** — usa únicamente catálogos, sedes y
+      campañas con datos confirmados; guarda el resultado como `pending_approval` y no lo aplica
+      directamente a ningún diseño.
+
+- [x] **Trazabilidad y calidad de IA** — cada llamada registra prompt, respuesta, proveedor,
+      modelo, timestamp y vínculo al brief/DesignVersion/material disponible; las respuestas
+      reciben una validación ligera de cifras, URLs y claims no verificables.
+
 ## Venue-kit (2026-08-15)
 
 - [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:
@@ -101,9 +117,13 @@
       staging; comprueba escritura, lectura y borrado contra Cloudflare R2 sin persistir secretos.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
-- [ ] **Crear el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
-      persistente) siguiendo `docs/operations/deployment.md` — la documentación y variables ya
-      están listas, falta aprovisionar el proveedor (Railway o Render).
+- [x] **Verificar la disponibilidad pública del web de staging** — `https://mydesign.ihlatam.com`
+      responde el healthcheck y sirve el frontend; la URL cruda de Railway queda como fallback
+      técnico.
+- [ ] **Completar el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
+      persistente) siguiendo `docs/operations/deployment.md` — el web público está confirmado,
+      pero el aprovisionamiento y las variables de infraestructura no se pueden cerrar sin acceso
+      al dashboard o shell de Railway.
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
 - [ ] **Confirmar overlays específicos por plataforma social** para sustituir o complementar la
       reserva base de los templates cuando Marketing entregue dimensiones oficiales.
@@ -115,6 +135,9 @@
       `source_status=confirmed`.
 - [ ] **Ejecutar verificación R2 en staging real** — falta disponer del bucket, endpoint y
       credenciales del entorno de staging; local no se considera evidencia de escritura R2.
+- [ ] **Confirmar el worker de Celery en staging** — falta acceso al dashboard o shell de Railway
+      para verificar que existe el segundo servicio con `celery -A config worker -l info
+      --concurrency=2`, que `CELERY_TASK_ALWAYS_EAGER=0` y que procesa una tarea real de PDF/PPTX.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".

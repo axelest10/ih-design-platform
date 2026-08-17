@@ -48,7 +48,7 @@ def confirm_brief_design(brief: DesignBrief, prompt_text: str) -> Design:
         output_format="json",
     )
     try:
-        copy_fields = generate_structured_copy(OpenAIProvider(), generation_request)
+        copy_fields = generate_structured_copy(OpenAIProvider(), generation_request, brief=brief)
     except StructuredCopyError as exc:
         raise DesignConfirmationError(str(exc)) from exc
 
