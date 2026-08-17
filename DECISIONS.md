@@ -1,16 +1,5 @@
 # Decisiones técnicas
 
-## 2026-08-16 — Historial y exportación WhatsApp sin envío
-
-La revisión expone `GET /api/v1/designs/{id}/history/` con una línea de tiempo por `DesignVersion`,
-incluyendo estado de revisión automática, validación y safe-zone. La interfaz conserva la selección
-de versiones y muestra esos estados en el historial visible.
-
-`output=whatsapp` reutiliza el renderer existente: para piezas sociales entrega el SVG con sus
-dimensiones nativas (1080 × 1080, 1080 × 1350 o 1080 × 1920) como imagen descargable; para una
-versión documental entrega el PDF persistido como documento. No se añade un renderer nuevo ni se
-integra la API de WhatsApp.
-
 ## 2026-08-16 — Revisión humana por versión
 
 El endpoint `POST /api/v1/designs/{id}/review/` acepta `approve`, `reject` y `request_changes`
@@ -22,6 +11,17 @@ persiste con `DesignReviewComment`; aprobar permite comentario opcional.
 La transición vive en `backend/designs/services/review.py` para que futuras vistas o paneles no
 dupliquen reglas. `notify_review_transition()` es un hook no-op: se reserva la integración de
 notificaciones para una fase posterior, sin enviar mensajes ahora. No se toca `backend/security/`.
+
+## 2026-08-16 — Historial y exportación WhatsApp sin envío
+
+La revisión expone `GET /api/v1/designs/{id}/history/` con una línea de tiempo por `DesignVersion`,
+incluyendo estado de revisión automática, validación y safe-zone. La interfaz conserva la selección
+de versiones y muestra esos estados en el historial visible.
+
+`output=whatsapp` reutiliza el renderer existente: para piezas sociales entrega el SVG con sus
+dimensiones nativas (1080 × 1080, 1080 × 1350 o 1080 × 1920) como imagen descargable; para una
+versión documental entrega el PDF persistido como documento. No se añade un renderer nuevo ni se
+integra la API de WhatsApp.
 
 ## 2026-08-15 — Visibilidad y geometría del chequeo safe-zone
 

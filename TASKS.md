@@ -1,12 +1,12 @@
 # Tareas
 
-- [x] **Historial visible y exportación WhatsApp** — el endpoint `history` expone la línea de
-      tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
-      compartir; no integra la API de WhatsApp.
-
 - [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
       aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`
       persiste comentarios y deja un hook preparado para notificaciones futuras.
+
+- [x] **Historial visible y exportación WhatsApp** — el endpoint `history` expone la línea de
+      tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
+      compartir; no integra la API de WhatsApp.
 
 ## Venue-kit (2026-08-15)
 
