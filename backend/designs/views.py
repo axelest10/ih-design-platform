@@ -14,15 +14,27 @@ from security.permissions import (
     ROLE_MARKETING,
     ROLE_PLATFORM_ADMIN,
     ROLE_REVIEWER,
+    ROLE_VIEWER,
     CorporateDomainPermission,
     RoleAwareViewSet,
     is_platform_admin_user,
 )
 
-from .models import AsyncGenerationJob, Design, DesignReviewComment
-from .serializers import DesignReviewCommentSerializer, DesignSerializer
+from .models import AsyncGenerationJob, Design
+from .serializers import (
+    DesignDeliverySerializer,
+    DesignReviewCommentSerializer,
+    DesignSerializer,
+)
 from .services.async_jobs import enqueue_generation_task, task_response
+from .services.delivery import create_approved_design_delivery
 from .services.renderer import RenderValidationError, render_preview
+from .services.review import (
+    ReviewDecisionLockedError,
+    ReviewTransitionError,
+    reopen_design_version,
+    transition_design_version,
+)
 from .services.revision import DesignRevisionError
 from .services.versioning import create_next_version
 from .tasks import (
@@ -74,7 +86,9 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         "revise": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "claude_review": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "reopen_review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "comments": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "history": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER, ROLE_REVIEWER, ROLE_VIEWER),
     }
 
     @action(detail=True, methods=["post"], url_path="preview")
@@ -179,6 +193,34 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             ),
         }
 
+        if output_format == "whatsapp":
+            if version.render_data.get("svg"):
+                response = HttpResponse(version.render_data["svg"], content_type="image/svg+xml")
+                response["Content-Disposition"] = (
+                    f'attachment; filename="design-{design.pk}-version-'
+                    f'{version.number}-whatsapp.svg"'
+                )
+                patch_cache_control(response, private=True, no_store=True)
+                return response
+            pdf_path = version.render_data.get("pdf_path")
+            if pdf_path and default_storage.exists(pdf_path):
+                response = FileResponse(
+                    default_storage.open(pdf_path, "rb"),
+                    as_attachment=True,
+                    filename=f"design-{design.pk}-version-{version.number}-whatsapp.pdf",
+                    content_type="application/pdf",
+                )
+                patch_cache_control(response, private=True, no_store=True)
+                return response
+            return Response(
+                {
+                    "detail": (
+                        "Esta versión no tiene una imagen SVG ni un documento PDF para WhatsApp."
+                    )
+                },
+                status=404,
+            )
+
         if output_format in inline_artifacts:
             data_key, content_type = inline_artifacts[output_format]
             content = version.render_data.get(data_key)
@@ -210,8 +252,30 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             return response
 
         return Response(
-            {"detail": "Formato no disponible. Usa svg, html, pdf o pptx."},
+            {"detail": "Formato no disponible. Usa svg, html, pdf, pptx o whatsapp."},
             status=400,
+        )
+
+    @action(detail=True, methods=["get"], url_path="history")
+    def history(self, request, pk=None):
+        """Devuelve la línea de tiempo de versiones y su estado de revisión."""
+        design = self.get_object()
+        timeline = [
+            {
+                "id": version.pk,
+                "number": version.number,
+                "template_key": version.template_key,
+                "created_at": version.created_at,
+                "claude_review_status": version.claude_review_status,
+                "validation_status": (version.validation_summary or {}).get("status", "pending"),
+                "safe_zone_status": (version.validation_summary or {})
+                .get("safe_zone_check", {})
+                .get("status", "not_available"),
+            }
+            for version in design.versions.all()
+        ]
+        return Response(
+            {"design_id": design.pk, "current_status": design.status, "timeline": timeline}
         )
 
     def _preview_document(self, design, render_payload, material_type):
@@ -246,53 +310,108 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
     def review(self, request, pk=None):
         """Aprueba o rechaza una versión renderizada del diseño."""
         design = self.get_object()
-        if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
             return Response(
                 {
                     "detail": (
-                        "La aprobaciÃ³n formal estÃ¡ desactivada durante las "
+                        "La aprobación formal está protegida durante las primeras 50 pruebas. "
+                        "Para probar el flujo en staging, configura "
+                        "DESIGN_TEST_ALLOW_HUMAN_APPROVAL=1; no lo actives en production."
+                    ),
+                    "next": "claude-review",
+                    "approval_enabled": False,
+                },
+                status=409,
+            )
+        decision = request.data.get("decision")
+        if decision not in {"approve", "reject", "request_changes"}:
+            return Response(
+                {"detail": "decision debe ser 'approve', 'reject' o 'request_changes'."},
+                status=400,
+            )
+
+        version_number = request.data.get("version")
+        version = design.versions.filter(number=version_number).first() if version_number else None
+        if version is None:
+            return Response({"detail": "No existe una versión para revisar."}, status=404)
+
+        delivery = None
+        try:
+            design, version, comment = transition_design_version(
+                design=design,
+                version=version,
+                decision=decision,
+                reviewer=request.user,
+                comment=request.data.get("comment"),
+            )
+        except ReviewDecisionLockedError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        except ReviewTransitionError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        if decision == "approve":
+            delivery = create_approved_design_delivery(
+                design=design,
+                version=version,
+                base_url=request.build_absolute_uri("/").rstrip("/"),
+            )
+        return Response(
+            {
+                "design_id": str(design.pk),
+                "status": design.status,
+                "review_status": version.review_status,
+                "version": version.number,
+                "approved_version": design.approved_version_id,
+                "delivery": DesignDeliverySerializer(delivery).data if delivery else None,
+                "comment_id": comment.pk if comment else None,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="review/reopen")
+    def reopen_review(self, request, pk=None):
+        """Reabre una versión decidida para permitir una nueva revisión."""
+        design = self.get_object()
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
+            return Response(
+                {
+                    "detail": (
+                        "La aprobación formal está desactivada durante las "
                         "primeras 50 pruebas."
                     ),
                     "next": "claude-review",
                 },
                 status=409,
             )
-        decision = request.data.get("decision")
-        if decision not in {"approve", "reject"}:
-            return Response(
-                {"detail": "decision debe ser 'approve' o 'reject'."},
-                status=400,
-            )
 
         version_number = request.data.get("version")
-        version = (
-            design.versions.filter(number=version_number).first()
-            if version_number
-            else design.versions.first()
-        )
+        version = design.versions.filter(number=version_number).first() if version_number else None
         if version is None:
-            return Response({"detail": "No existe una versión para revisar."}, status=404)
+            return Response({"detail": "No existe una versión para reabrir."}, status=404)
 
-        if decision == "approve":
-            design.status = Design.Status.APPROVED
-            design.approved_version = version
-        else:
-            design.status = Design.Status.REJECTED
-        design.save(update_fields=["status", "approved_version", "updated_at"])
-        comment = str(request.data.get("comment") or "").strip()
-        if comment:
-            DesignReviewComment.objects.create(
+        try:
+            design, version, comment = reopen_design_version(
                 design=design,
                 version=version,
-                author=request.user,
-                comment=comment,
+                reviewer=request.user,
+                comment=request.data.get("comment"),
             )
+        except ReviewTransitionError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return Response(
             {
                 "design_id": str(design.pk),
                 "status": design.status,
+                "review_status": version.review_status,
                 "version": version.number,
                 "approved_version": design.approved_version_id,
+                "comment_id": comment.pk if comment else None,
             }
         )
 

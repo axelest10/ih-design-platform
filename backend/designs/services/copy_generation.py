@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 
 from ai.providers import AIProvider, AIProviderError, GenerationRequest
+from ai.services.audit import audited_generate
 
 
 class StructuredCopyError(ValueError):
@@ -32,11 +33,21 @@ def _parse_structured_copy(content: str) -> dict[str, str] | None:
 def generate_structured_copy(
     provider: AIProvider,
     generation_request: GenerationRequest,
+    *,
+    brief=None,
+    design_version=None,
+    material_bundle=None,
 ) -> dict[str, str]:
     """Genera y valida JSON de copy, con un único reintento controlado."""
     try:
         for _attempt in range(2):
-            response = provider.generate(generation_request)
+            response = audited_generate(
+                provider,
+                generation_request,
+                brief=brief,
+                design_version=design_version,
+                material_bundle=material_bundle,
+            )
             copy_fields = _parse_structured_copy(response.content)
             if copy_fields is not None:
                 return copy_fields
