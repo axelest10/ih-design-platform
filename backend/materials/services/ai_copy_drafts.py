@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from ai.providers import AIProviderError, GenerationRequest, OpenAIProvider
+from ai.services.audit import audited_generate
 
 from .catalog import sales_kit_products, venue_kit_products
 from .email_kit import EmailKitGenerationError, _campaign_snapshot, _validate_campaign
@@ -139,7 +140,7 @@ def suggest_copy_draft(bundle, *, provider=None) -> dict[str, Any]:
         output_format="json",
     )
     try:
-        response = provider.generate(request)
+        response = audited_generate(provider, request, material_bundle=bundle)
     except AIProviderError as exc:
         raise AICopyDraftError(str(exc)) from exc
     copy = _parse_copy(response.content, authorized_context)
