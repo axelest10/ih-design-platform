@@ -23,6 +23,18 @@ dimensiones nativas (1080 × 1080, 1080 × 1350 o 1080 × 1920) como imagen desc
 versión documental entrega el PDF persistido como documento. No se añade un renderer nuevo ni se
 integra la API de WhatsApp.
 
+## 2026-08-16 — Copy IA acotado a fuentes confirmadas
+
+`POST /api/v1/material-bundles/{id}/suggest-copy/` está disponible para `venue-kit`, `sales-kit` y
+`email-kit`. El contexto enviado al único proveedor actual (`OpenAIProvider`) se construye solo
+desde productos/sedes/campañas con `source_status=confirmed`; venue-kit aplica además la
+confirmación explícita de Axel para sus seis pilares. Un producto o campaña pendiente bloquea la
+llamada.
+
+La respuesta se guarda en `brief_context.ai_copy_draft` con `status=pending_approval`,
+`needs_confirmation=true`, proveedor/modelo y contexto autorizado. Es un borrador para el flujo de
+aprobación de la Fase 1: no crea ni modifica `DesignVersion` y no publica copy automáticamente.
+
 ## 2026-08-15 — Visibilidad y geometría del chequeo safe-zone
 
 La revisión humana incorporará `validation_summary.safe_zone_check` en el mismo conjunto de
