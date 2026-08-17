@@ -13,6 +13,8 @@ from django.utils import timezone
 from common.observability import operation_event
 from designs.models import Design, DesignVersion
 
+from .audit import record_visual_review
+
 
 class VisualReviewProviderError(RuntimeError):
     """El proveedor de revisión no pudo devolver una decisión válida."""
@@ -125,6 +127,12 @@ def run_automatic_design_review(
     try:
         result = selected_provider.review(_review_request(version))
     except VisualReviewProviderError as exc:
+        record_visual_review(
+            provider=selected_provider,
+            request=_review_request(version),
+            result=None,
+            error=exc,
+        )
         reviewed = persist_design_review(
             version,
             decision=DesignVersion.ClaudeReviewStatus.PENDING,
@@ -146,6 +154,11 @@ def run_automatic_design_review(
         )
         return reviewed
 
+    record_visual_review(
+        provider=selected_provider,
+        request=_review_request(version),
+        result=result,
+    )
     reviewed = persist_design_review(
         version,
         decision=result.decision,

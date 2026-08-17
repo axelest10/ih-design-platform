@@ -28,6 +28,7 @@ from .serializers import (
     MaterialTemplateSerializer,
     MaterialTypeSerializer,
 )
+from .services.ai_copy_drafts import AICopyDraftError, suggest_copy_draft
 from .services.email_kit import EmailKitGenerationError, generate_email_kit
 from .services.quick_design import QuickDesignError
 from .services.sales_kit import SalesKitGenerationError, generate_sales_kit
@@ -228,6 +229,7 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
         "partial_update": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "destroy": (ROLE_PLATFORM_ADMIN,),
         "generate": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
+        "suggest_copy": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
     }
 
     def get_queryset(self):
@@ -289,3 +291,12 @@ class MaterialBundleViewSet(RoleAwareViewSet, ModelViewSet):
         except SchoolKitGenerationError as exc:
             return Response({"detail": str(exc)}, status=400)
         return task_response(request, job)
+
+    @action(detail=True, methods=["post"], url_path="suggest-copy")
+    def suggest_copy(self, request, pk=None):
+        bundle = self.get_object()
+        try:
+            draft = suggest_copy_draft(bundle)
+        except AICopyDraftError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response({"status": "pending_approval", "ai_copy_draft": draft}, status=201)
