@@ -1,5 +1,13 @@
 # Decisiones técnicas
 
+## 2026-08-22 — Configuración Railway separada para el worker Celery
+
+El worker de staging usa el mismo Dockerfile y código que el servicio web, pero carga
+`/railway.worker.json`. La configuración fija `celery -A config worker -l info --concurrency=2` y
+omite el healthcheck HTTP y la migración pre-deploy: el worker no escucha HTTP y las migraciones
+pertenecen al despliegue web. Las variables se comparten mediante referencias de Railway, sin
+copiar secretos al repositorio.
+
 ## 2026-08-22 — Identidad verificable del despliegue de Railway
 
 El healthcheck público conserva su función de liveness sin consultar base de datos ni servicios

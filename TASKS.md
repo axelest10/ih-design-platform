@@ -9,6 +9,8 @@
       aprobación → descargas → entrega.
 - [ ] Verificar desde Railway PostgreSQL persistente, escritura R2, Redis, worker Celery y una
       tarea asíncrona real con `CELERY_TASK_ALWAYS_EAGER=0`.
+- [x] Separar la configuración Railway del worker Celery en `railway.worker.json`, sin migración
+      pre-deploy ni healthcheck HTTP.
 
 - [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
       aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`

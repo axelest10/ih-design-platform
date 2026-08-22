@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from django.conf import settings
 from rest_framework.test import APIClient
@@ -55,3 +57,19 @@ def test_dockerfile_uses_railway_port_and_emits_gunicorn_logs():
     assert "${PORT:-8000}" in dockerfile
     assert "--access-logfile -" in dockerfile
     assert "--error-logfile -" in dockerfile
+
+
+def test_railway_worker_config_uses_celery_without_http_healthcheck():
+    worker_config = json.loads(
+        (settings.BASE_DIR / "railway.worker.json").read_text(encoding="utf-8")
+    )
+
+    assert worker_config["build"] == {
+        "builder": "DOCKERFILE",
+        "dockerfilePath": "/infrastructure/Dockerfile",
+    }
+    assert worker_config["deploy"]["startCommand"] == (
+        "celery -A config worker -l info --concurrency=2"
+    )
+    assert "healthcheckPath" not in worker_config["deploy"]
+    assert "preDeployCommand" not in worker_config["deploy"]
