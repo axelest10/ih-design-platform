@@ -196,6 +196,9 @@ celery -A config worker -l info --concurrency=2
 Configuración recomendada del worker:
 
 - Builder: el mismo Dockerfile `infrastructure/Dockerfile` que usa `web`.
+- Railway Config File: `/railway.worker.json`. Este archivo conserva el Dockerfile y el comando
+  Celery, pero omite deliberadamente la migración pre-deploy y el healthcheck HTTP exclusivos del
+  servicio web.
 - Root directory: la raíz del repositorio.
 - Variables: reutilizar las variables del servicio `web`, especialmente `REDIS_URL`,
   `DATABASE_URL`, `DJANGO_SECRET_KEY`, almacenamiento y claves de proveedores.
