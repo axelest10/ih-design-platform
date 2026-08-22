@@ -95,6 +95,7 @@ AWS_S3_REGION_NAME=<región del bucket>
 AWS_S3_ENDPOINT_URL=
 AWS_ACCESS_KEY_ID=<credencial fuera de Git>
 AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
+AI_ROUTER_ENABLED=0
 OPENAI_API_KEY=<secreto fuera de Git>
 OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
@@ -159,6 +160,22 @@ configurar `ANTHROPIC_MODEL=claude-sonnet-5`, ID vigente documentado por Anthrop
 entre velocidad e inteligencia; sigue siendo una variable de entorno y no una constante del
 código. Antes de cambiarlo en el futuro, confirmar el ID disponible en la cuenta mediante la
 documentación o Models API oficial.
+
+### AI Router Fase A y rollback
+
+`AI_ROUTER_ENABLED` queda en `0` por defecto. Con ese valor, los borradores de copy llaman
+directamente a `OpenAIProvider` y la revisión visual obtiene directamente el proveedor Anthropic o
+el fallback `needs_confirmation`, exactamente como antes de la Fase A.
+
+Al establecer `AI_ROUTER_ENABLED=1`, únicamente esos dos flujos certificados pasan por el registro
+y la política de tarea. La selección sigue siendo OpenAI para `copy_draft` y Anthropic para
+`automatic_visual_review`; no hay scoring, proveedores alternativos ni fallback pagado. Cada
+auditoría agrega `route_id`, `task_type`, `flow_classification` y `selection_reason` a
+`response_metadata`, sin modificar el resultado del proveedor ni el modelo persistido.
+
+Rollback operativo: establecer `AI_ROUTER_ENABLED=0` en web y worker y redesplegar ambos servicios.
+No requiere migración ni revocar o cambiar credenciales. La Fase A no debe activarse durante la
+certificación end-to-end salvo que Axel decida probar explícitamente la equivalencia del router.
 
 ## Comandos del servicio web
 

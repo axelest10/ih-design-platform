@@ -72,6 +72,7 @@ def test_confirmed_campaign_kits_store_ai_copy_as_pending_approval_draft(slug):
     assert audit.status == AICallAudit.Status.COMPLETED
     assert audit.response == response.content
     assert audit.request_context == draft["authorized_context"]
+    assert audit.response_metadata == {}
     assert audit.quality_report["status"] == "passed"
     generate.assert_called_once()
 
@@ -140,3 +141,46 @@ def test_ai_copy_provider_error_is_audited_once_without_saving_a_draft():
     }
     bundle.refresh_from_db()
     assert "ai_copy_draft" not in bundle.brief_context
+
+
+@pytest.mark.django_db
+def test_router_enabled_copy_uses_current_openai_provider_model_and_contract(settings):
+    settings.AI_ROUTER_ENABLED = True
+    settings.OPENAI_API_KEY = "router-test-key"
+    settings.OPENAI_MODEL = "router-test-openai-model"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    response = GenerationResponse(
+        provider="openai",
+        model=settings.OPENAI_MODEL,
+        content=json.dumps(
+            {"headline": "Aprende inglés", "body": "Una ruta confirmada.", "cta": "Agenda ahora"}
+        ),
+        metadata={"response_id": "same-openai-response"},
+    )
+
+    with patch(
+        "ai.providers.openai_provider.OpenAIProvider.generate",
+        autospec=True,
+        return_value=response,
+    ) as generate:
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 201, result.json()
+    provider, request = generate.call_args.args
+    assert provider.name == "openai"
+    assert provider.api_key == settings.OPENAI_API_KEY
+    assert provider.model == settings.OPENAI_MODEL
+    assert request.output_format == "json"
+    assert result.json()["ai_copy_draft"]["provider"] == "openai"
+    assert result.json()["ai_copy_draft"]["model"] == settings.OPENAI_MODEL
+    audit = AICallAudit.objects.get(material_bundle=bundle)
+    assert audit.provider == "openai"
+    assert audit.model == settings.OPENAI_MODEL
+    assert audit.response == response.content
+    assert audit.response_metadata == {
+        "response_id": "same-openai-response",
+        "route_id": "existing-copy-draft-openai-v1",
+        "task_type": "copy_draft",
+        "flow_classification": "existing_certified_flow",
+        "selection_reason": "existing_certified_flow, único candidato",
+    }

@@ -28,6 +28,7 @@ def audited_generate(
     brief=None,
     design_version=None,
     material_bundle=None,
+    audit_metadata: dict[str, Any] | None = None,
 ):
     """Ejecuta una llamada y registra éxito/error sin cambiar el contrato del proveedor."""
     prompt = _prompt_text(request.instruction, request.authorized_context, request.output_format)
@@ -36,6 +37,9 @@ def audited_generate(
     try:
         response = provider.generate(request)
     except Exception as exc:
+        audit_fields = {}
+        if audit_metadata:
+            audit_fields["response_metadata"] = audit_metadata
         AICallAudit.objects.create(
             provider=provider_name,
             model=model,
@@ -47,15 +51,19 @@ def audited_generate(
             brief=brief,
             design_version=design_version,
             material_bundle=material_bundle,
+            **audit_fields,
         )
         raise
+    response_metadata = response.metadata
+    if audit_metadata:
+        response_metadata = {**response.metadata, **audit_metadata}
     AICallAudit.objects.create(
         provider=response.provider or provider_name,
         model=response.model or model,
         prompt=prompt,
         response=response.content,
         request_context=request.authorized_context,
-        response_metadata=response.metadata,
+        response_metadata=response_metadata,
         quality_report=validate_ai_output(response.content, request.authorized_context),
         status=AICallAudit.Status.COMPLETED,
         brief=brief,
@@ -65,7 +73,9 @@ def audited_generate(
     return response
 
 
-def record_visual_review(*, provider, request, result, error=None) -> AICallAudit:
+def record_visual_review(
+    *, provider, request, result, error=None, audit_metadata: dict[str, Any] | None = None
+) -> AICallAudit:
     """Registra una revisión visual aunque el proveedor use un contrato distinto a generate()."""
     context = {
         "version_id": request.version_id,
@@ -76,6 +86,9 @@ def record_visual_review(*, provider, request, result, error=None) -> AICallAudi
     response_text = json.dumps(
         result.report if result else {"error": str(error)}, ensure_ascii=False
     )
+    audit_fields = {}
+    if audit_metadata:
+        audit_fields["response_metadata"] = audit_metadata
     return AICallAudit.objects.create(
         provider=getattr(provider, "name", provider.__class__.__name__),
         model=getattr(provider, "model", ""),
@@ -85,4 +98,5 @@ def record_visual_review(*, provider, request, result, error=None) -> AICallAudi
         quality_report=validate_ai_output(response_text, context),
         status=AICallAudit.Status.ERROR if error else AICallAudit.Status.COMPLETED,
         design_version_id=request.version_id,
+        **audit_fields,
     )

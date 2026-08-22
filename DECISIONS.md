@@ -1,5 +1,17 @@
 # Decisiones técnicas
 
+## 2026-08-22 — AI Router Fase A conserva los proveedores certificados
+
+Axel aprobó el plan de `docs/operations/ai-router-plan.md` en el PR #28 y autorizó implementar
+exclusivamente su Fase A. Se introduce un registro con las dos rutas actuales: OpenAI para
+borradores de copy y Anthropic para revisión visual automática. Ambas políticas se clasifican como
+`existing_certified_flow`; no participan en la prioridad free-first de fases futuras.
+
+`AI_ROUTER_ENABLED` queda apagado por defecto. Con `0`, se conserva el camino directo; con `1`, la
+selección sigue teniendo un único candidato y solo agrega metadata de routing a `AICallAudit`. No se
+incorporan proveedores, dependencias, credenciales, scoring ni fallback nuevos. El rollback consiste
+en volver el flag a `0` y redesplegar, sin migraciones.
+
 ## 2026-08-22 — Configuración Railway separada para el worker Celery
 
 El worker de staging usa el mismo Dockerfile y código que el servicio web, pero carga

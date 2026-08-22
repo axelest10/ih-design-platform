@@ -7,6 +7,7 @@ from typing import Any
 
 from ai.providers import AIProviderError, GenerationRequest, OpenAIProvider
 from ai.services.audit import audited_generate
+from ai.services.routing import AITaskType, ai_router_enabled, routed_generate
 
 from .catalog import sales_kit_products, venue_kit_products
 from .email_kit import EmailKitGenerationError, _campaign_snapshot, _validate_campaign
@@ -129,7 +130,6 @@ def suggest_copy_draft(bundle, *, provider=None) -> dict[str, Any]:
             "Las sugerencias IA solo están disponibles para venue, sales y email kit."
         )
     authorized_context = _authorized_context(bundle)
-    provider = provider or OpenAIProvider()
     request = GenerationRequest(
         instruction=(
             "Devuelve solo JSON con headline, body y cta. Parafrasea únicamente los datos del "
@@ -140,7 +140,18 @@ def suggest_copy_draft(bundle, *, provider=None) -> dict[str, Any]:
         output_format="json",
     )
     try:
-        response = audited_generate(provider, request, material_bundle=bundle)
+        if provider is None and ai_router_enabled():
+            response = routed_generate(
+                AITaskType.COPY_DRAFT,
+                request,
+                material_bundle=bundle,
+            )
+        else:
+            response = audited_generate(
+                provider or OpenAIProvider(),
+                request,
+                material_bundle=bundle,
+            )
     except AIProviderError as exc:
         raise AICopyDraftError(str(exc)) from exc
     copy = _parse_copy(response.content, authorized_context)
