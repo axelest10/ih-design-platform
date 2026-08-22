@@ -1,5 +1,16 @@
 # Decisiones técnicas
 
+## 2026-08-22 — Identidad verificable del despliegue de Railway
+
+El healthcheck público conserva su función de liveness sin consultar base de datos ni servicios
+externos, y expone además el SHA, la rama, el entorno y el servicio que Railway inyecta en el
+proceso. La fuente del SHA es exclusivamente `RAILWAY_GIT_COMMIT_SHA`; si Railway no originó el
+deploy desde GitHub, el valor queda `null` en vez de inferirse o hardcodearse. Esto permite
+comparar producción y staging contra `main` antes de ejecutar cualquier certificación funcional.
+
+No se modifica autenticación, SSO ni proveedores. Los metadatos no incluyen secretos, IDs de
+proyecto ni variables de infraestructura.
+
 ## 2026-08-16 — Revisión humana por versión
 
 El endpoint `POST /api/v1/designs/{id}/review/` acepta `approve`, `reject` y `request_changes`

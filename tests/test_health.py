@@ -4,11 +4,43 @@ from rest_framework.test import APIClient
 
 
 @pytest.mark.django_db
-def test_health_endpoint():
+def test_health_endpoint_reports_the_running_railway_release(settings):
+    settings.DEPLOYMENT_COMMIT_SHA = "a" * 40
+    settings.DEPLOYMENT_GIT_BRANCH = "main"
+    settings.DEPLOYMENT_ENVIRONMENT = "staging"
+    settings.DEPLOYMENT_SERVICE = "web"
+
     response = APIClient().get("/api/v1/health/")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "ih-design-platform"}
+    assert response.json() == {
+        "status": "ok",
+        "service": "ih-design-platform",
+        "release": {
+            "commit_sha": "a" * 40,
+            "git_branch": "main",
+            "environment": "staging",
+            "service": "web",
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_health_endpoint_marks_missing_release_metadata_without_guessing(settings):
+    settings.DEPLOYMENT_COMMIT_SHA = ""
+    settings.DEPLOYMENT_GIT_BRANCH = ""
+    settings.DEPLOYMENT_ENVIRONMENT = "local"
+    settings.DEPLOYMENT_SERVICE = ""
+
+    response = APIClient().get("/api/v1/health/")
+
+    assert response.status_code == 200
+    assert response.json()["release"] == {
+        "commit_sha": None,
+        "git_branch": None,
+        "environment": "local",
+        "service": None,
+    }
 
 
 def test_railway_healthcheck_hostname_is_allowed():
