@@ -37,6 +37,29 @@ La aceptación del custom domain por el endpoint de salud confirma el comportami
 lo que los valores literales de las variables y el target DNS configurado en Railway no se pueden
 confirmar directamente; deben revisarse allí antes de considerar cerrado ese punto operativo.
 
+### Identidad del release desplegado
+
+`GET /api/v1/health/` incluye metadatos no secretos que Railway proporciona automáticamente a los
+builds y procesos originados por GitHub:
+
+```json
+{
+  "status": "ok",
+  "service": "ih-design-platform",
+  "release": {
+    "commit_sha": "<RAILWAY_GIT_COMMIT_SHA>",
+    "git_branch": "<RAILWAY_GIT_BRANCH>",
+    "environment": "<RAILWAY_ENVIRONMENT_NAME>",
+    "service": "<RAILWAY_SERVICE_NAME>"
+  }
+}
+```
+
+No se deben crear manualmente esas cuatro variables. Si `commit_sha` o `git_branch` aparecen como
+`null`, el proceso no recibió metadatos de un trigger GitHub y ese despliegue no sirve como
+evidencia de alineación con `main`. Antes de una certificación, el SHA de producción y staging se
+compara literalmente con `git rev-parse origin/main`.
+
 ## Base técnica actual
 
 - `backend/config/settings.py` acepta `DATABASE_URL` con PostgreSQL y conserva SQLite para local.

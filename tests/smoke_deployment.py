@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
@@ -57,11 +58,23 @@ def main() -> int:
         print(f"ERROR JSON inválido {health_url}: {exc}", file=sys.stderr)
         return 1
 
-    if payload != EXPECTED_HEALTH:
+    if any(payload.get(key) != value for key, value in EXPECTED_HEALTH.items()):
         print(
-            f"ERROR JSON esperado={EXPECTED_HEALTH!r} recibido={payload!r}",
+            f"ERROR health base esperado={EXPECTED_HEALTH!r} recibido={payload!r}",
             file=sys.stderr,
         )
+        return 1
+
+    release = payload.get("release")
+    if not isinstance(release, dict):
+        print(f"ERROR health sin metadatos release: {payload!r}", file=sys.stderr)
+        return 1
+    commit_sha = str(release.get("commit_sha") or "")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit_sha):
+        print(f"ERROR commit SHA de Railway inválido: {release!r}", file=sys.stderr)
+        return 1
+    if not release.get("git_branch") or not release.get("environment"):
+        print(f"ERROR release sin branch/environment: {release!r}", file=sys.stderr)
         return 1
 
     print(f"OK {status} {health_url} {payload!r}")

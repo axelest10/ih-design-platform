@@ -7,6 +7,12 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DJANGO_ENV = os.getenv("DJANGO_ENV", "local").strip().casefold()
+DEPLOYMENT_COMMIT_SHA = os.getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
+DEPLOYMENT_GIT_BRANCH = os.getenv("RAILWAY_GIT_BRANCH", "").strip()
+DEPLOYMENT_ENVIRONMENT = (
+    os.getenv("RAILWAY_ENVIRONMENT_NAME", "").strip() or DJANGO_ENV
+)
+DEPLOYMENT_SERVICE = os.getenv("RAILWAY_SERVICE_NAME", "").strip()
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-only-insecure-key")
 if DJANGO_ENV in {"staging", "production"} and SECRET_KEY == "local-only-insecure-key":
     raise ImproperlyConfigured("DJANGO_SECRET_KEY es obligatorio fuera de local.")

@@ -1,5 +1,15 @@
 # Tareas
 
+## Estabilización y certificación (2026-08-22)
+
+- [x] Exponer en el healthcheck el SHA/rama/entorno/servicio reales inyectados por Railway, sin
+      consultar infraestructura ni hardcodear una versión.
+- [ ] Alinear staging y producción con `main` y documentar el SHA efectivo de ambos entornos.
+- [ ] Certificar en staging el flujo real brief square → generación → persistencia → revisión →
+      aprobación → descargas → entrega.
+- [ ] Verificar desde Railway PostgreSQL persistente, escritura R2, Redis, worker Celery y una
+      tarea asíncrona real con `CELERY_TASK_ALWAYS_EAGER=0`.
+
 - [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
       aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`
       persiste comentarios y deja un hook preparado para notificaciones futuras.
