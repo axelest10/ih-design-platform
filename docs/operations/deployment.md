@@ -1,5 +1,10 @@
 # Preparación de despliegue
 
+La topología operativa autoritativa, el mapeo de ramas, la promoción manual de Production, el
+aislamiento, el correo seguro y el rollback están en
+[`release-topology.md`](release-topology.md). Este documento conserva los detalles de construcción
+y diagnóstico del servicio.
+
 Estado actual: el staging de Railway está desplegado y su endpoint de salud fue confirmado el
 2026-08-09. El repositorio conserva SQLite para desarrollo local;
 `infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para pruebas locales de la
@@ -117,6 +122,15 @@ RESEND_API_KEY=<API key secreta de Resend>
 RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
 PASSWORD_RESET_MAX_AGE_SECONDS=900
 LOGIN_THROTTLE_RATE=10/hour
+HUB_OIDC_ENABLED=1
+HUB_OIDC_PRODUCTION_APPROVED=0
+HUB_OIDC_ISSUER=https://dev-hub.ihlatam.com/oidc
+HUB_OIDC_CLIENT_ID=ih-design-platform-staging
+HUB_OIDC_CLIENT_SECRET=<secreto compartido generado fuera de Git>
+HUB_OIDC_REDIRECT_URI=https://mydesign-staging.ihlatam.com/api/v1/auth/hub/callback/
+HUB_OIDC_SESSION_MAX_AGE_SECONDS=900
+HUB_OIDC_STATE_MAX_AGE_SECONDS=600
+HUB_OIDC_CLOCK_SKEW_SECONDS=30
 DESIGN_TEST_MODE=1
 DESIGN_TEST_LIMIT=50
 CELERY_TASK_ALWAYS_EAGER=0
@@ -125,6 +139,15 @@ CORS_ALLOWED_ORIGINS=
 
 El almacenamiento local de logos y referencias no debe considerarse persistente en un PaaS. Para
 staging se debe configurar S3-compatible mediante `django-storages` antes de cargar activos reales.
+El SSO de Staging depende del proveedor OIDC del IH LATAM Hub. El `client_secret` debe coincidir
+en ambos servicios y permanecer fuera de Git. El callback es exacto y no admite comodines. La
+migración `security.0005_hubidentityevent_hubidentity` debe ejecutarse antes de activar el flag.
+El login local permanece visible como contingencia de Staging; no debe presentarse como la ruta
+principal cuando el SSO está habilitado.
+
+Rollback de Design: poner `HUB_OIDC_ENABLED=0` y redeployar solo el servicio de Staging. Esto
+detiene nuevas redirecciones OIDC sin borrar usuarios, enlaces ni eventos. No eliminar la
+migración ni reescribir el historial; la autenticación local permanece disponible.
 
 ### Verificación de escritura en Cloudflare R2
 
@@ -159,9 +182,9 @@ endpoint ni credenciales configurados. El comando debe ejecutarse en staging; nu
 cometer credenciales ni usar el `--keep` salvo que se quiera inspeccionar manualmente el objeto.
 En esta revisión, `python manage.py verify_storage_backend --dry-run` terminó con
 `CommandError: R2 storage no está activo`, que es el resultado esperado hasta configurar staging.
-La autenticación actual no depende de un proveedor externo: cada integrante usa su cuenta y una
-contraseña almacenada con el hasher de Django. Los administradores crean cuentas y restablecen
-contraseñas desde el panel.
+Con `HUB_OIDC_ENABLED=0`, cada integrante usa su cuenta y una contraseña almacenada con el hasher
+de Django. Con `HUB_OIDC_ENABLED=1`, Hub SSO es la ruta principal y el login local permanece como
+contingencia de Staging; los administradores siguen gestionando las cuentas locales desde el panel.
 
 La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
@@ -300,6 +323,8 @@ gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}
 
 Railway inyecta `PORT`; `8000` es únicamente el fallback local. El comando completo del
 Dockerfile también fija un worker, timeout de 120 segundos y envía access/error logs a stdout.
+El formato de access log usa únicamente el path (`%(U)s`): omite query strings y `Referer` para
+que el callback OIDC no registre el authorization code ni el state.
 
 Antes del primer arranque se debe ejecutar, como pre-deploy o job controlado:
 
@@ -421,8 +446,10 @@ OK 200 https://<dominio>/api/v1/health/ {'status': 'ok', 'service': 'ih-design-p
 4. Configurar almacenamiento S3-compatible para logos, referencias y futuras exportaciones.
 5. Ejecutar migraciones, `check --deploy` y `tests/smoke_deployment.py` contra el dominio real
    antes de iniciar o reanudar el lote de pruebas.
-6. Probar que la cuenta administradora puede abrir el panel y crear una cuenta de equipo.
-7. Recién entonces iniciar el lote de 50 pruebas.
+6. Verificar discovery/JWKS, callback exacto, PKCE, rechazo de replay/claims/usuarios inactivos,
+   provisión `viewer`, preservación de roles locales, deep links y logout con usuarios sintéticos.
+7. Probar que la cuenta administradora puede abrir el panel y crear una cuenta de equipo.
+8. Recién entonces iniciar el lote de 50 pruebas.
 
 ## Invalidación de caché del frontend
 

@@ -60,6 +60,9 @@
 
 ## Completadas
 
+- [x] Implementar el contrato v1 de SSO con IH LATAM Hub como proveedor OIDC para Staging:
+      Authorization Code + PKCE S256, enlace/provisión por identidad estable, rol local
+      `viewer` por defecto, auditoría sin secretos y rollback por feature flag (2026-08-14).
 - [x] Mover las generaciones de PDF, PPTX y copy de IA a Celery (`feature/celery-worker-railway`):
       las vistas devuelven `202` con `task_id`/`status_url`, y el estado queda persistido en
       `AsyncGenerationJob`. Railway requiere un segundo servicio con
@@ -67,7 +70,6 @@
 - [x] Implementar storage user-scoped para uploads y archivos generados en `feature/user-scoped-storage`; las claves históricas quedan documentadas sin migración automática.
 - [x] Documentar el plan de integración SSO con IH Hub en `docs/operations/ihlatam-sso-plan.md`; la implementación queda bloqueada hasta recibir el secreto real y la autorización explícita de Axel.
 - [x] Documentar el workflow de ramas y pull requests en `AGENTS.md` mediante `docs/branching-workflow`.
-
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
@@ -146,13 +148,17 @@
       staging; comprueba escritura, lectura y borrado contra Cloudflare R2 sin persistir secretos.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
+- [x] **Crear y aislar el entorno de Staging real** — Railway tiene PostgreSQL y Redis propios,
+      bucket de objetos exclusivo, autenticación corporativa, correo suprimido y despliegue
+      automático con espera por CI. Production quedó sin autodeploy y con promoción manual
+      documentada en `docs/operations/release-topology.md` (2026-08-15).
 - [x] **Verificar la disponibilidad pública del web de staging** — `https://mydesign.ihlatam.com`
       responde el healthcheck y sirve el frontend; la URL cruda de Railway queda como fallback
       técnico.
 - [ ] **Completar el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
       persistente) siguiendo `docs/operations/deployment.md` — el web público está confirmado,
-      pero el aprovisionamiento y las variables de infraestructura no se pueden cerrar sin acceso
-      al dashboard o shell de Railway.
+       pero el aprovisionamiento y las variables de infraestructura no se pueden cerrar sin acceso
+       al dashboard o shell de Railway.
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
 - [ ] **Confirmar overlays específicos por plataforma social** para sustituir o complementar la
       reserva base de los templates cuando Marketing entregue dimensiones oficiales.
@@ -185,7 +191,7 @@
       pilar Inglés General, usa el logo institucional de IH México ya cargado — no aplica
       cargar un logo distinto salvo que el cliente decida adoptar la identidad visual propia
       del deck más adelante.
-- [ ] Definir roles, permisos y proveedor de identidad corporativa.
+- [x] Definir roles, permisos y proveedor de identidad corporativa.
 - [ ] Diseñar y versionar las primeras plantillas HTML/SVG (consumiendo `brand/generated/` y
       `brand/assets/`).
 - [ ] Acordar checklist de aprobación con Marketing.

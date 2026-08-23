@@ -21,6 +21,7 @@ from security.admin_views import (
     corporate_user_password,
     corporate_user_roles,
 )
+from security.hub_views import hub_oidc_callback, hub_oidc_login
 from security.views import (
     change_password,
     confirm_password_reset,
@@ -88,6 +89,8 @@ urlpatterns = [
         name="security-user-password",
     ),
     path("auth/login/", password_login, name="password-login"),
+    path("auth/hub/login/", hub_oidc_login, name="hub-oidc-login"),
+    path("auth/hub/callback/", hub_oidc_callback, name="hub-oidc-callback"),
     path("auth/logout/", session_logout, name="session-logout"),
     path(
         "auth/password-reset/request/",

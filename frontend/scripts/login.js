@@ -7,6 +7,24 @@
   const resetRequestForm = document.getElementById("password-reset-request-form");
   const resetConfirmForm = document.getElementById("password-reset-confirm-form");
   const resetToken = new URLSearchParams(window.location.hash.slice(1)).get("reset");
+  const search = new URLSearchParams(window.location.search);
+  const requestedNext = search.get("next");
+
+  const safeNext = (value) => {
+    if (!value || value.length > 2048 || value.includes("\\")) return "/panel.html";
+    try {
+      const parsed = new URL(value, window.location.origin);
+      if (parsed.origin !== window.location.origin || !value.startsWith("/") || value.startsWith("//")) {
+        return "/panel.html";
+      }
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    } catch (_) {
+      return "/panel.html";
+    }
+  };
+  const nextPath = safeNext(requestedNext);
+  const ssoButton = document.getElementById("hub-sso-button");
+  if (ssoButton) ssoButton.href = `/api/v1/auth/hub/login/?next=${encodeURIComponent(nextPath)}`;
 
   const json = async (response) => response.json().catch(() => ({}));
 
@@ -32,7 +50,7 @@
       if (response.status === 429) throw new Error("Demasiados intentos, espera un momento.");
       if (!response.ok) throw new Error(body.detail || "No fue posible iniciar sesión.");
 
-      window.location.href = "/panel.html";
+      window.location.href = nextPath;
     } catch (error) {
       showNotice(error.message, "error");
       button.textContent = "Intentar de nuevo";
@@ -85,7 +103,11 @@
     }
   });
 
+  if (search.get("sso_error") === "1") {
+    showNotice("No fue posible validar el acceso con IH LATAM Hub. Int\u00e9ntalo de nuevo.", "error");
+  }
+
   fetch("/api/v1/me/").then(json).then((body) => {
-    if (body.authenticated) window.location.replace("/panel.html");
+    if (body.authenticated) window.location.replace(nextPath);
   }).catch(() => {});
 })();
