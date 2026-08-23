@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import base64
 import json
-import re
 from collections.abc import Callable
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from django.conf import settings
-from jsonschema import Draft202012Validator
 
 from ai.services.design_review import (
     VisualReviewProviderError,
@@ -19,41 +16,19 @@ from ai.services.design_review import (
     VisualReviewResult,
 )
 
+from .visual_review_contract import (
+    REQUIRED_REVIEW_CHECKS,
+    REVIEW_SCHEMA,
+    anthropic_image_block,
+    review_prompt_text,
+    sanitized_svg,
+    validate_review_report,
+)
+
+__all__ = ["REQUIRED_REVIEW_CHECKS", "REVIEW_SCHEMA", "AnthropicVisualReviewProvider"]
+
 ANTHROPIC_MESSAGES_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_API_VERSION = "2023-06-01"
-REQUIRED_REVIEW_CHECKS = (
-    "logo_usage",
-    "authorized_colors",
-    "legibility",
-    "safe_area",
-    "contrast",
-    "hierarchy",
-    "visible_copy",
-    "additional_logos",
-)
-REVIEW_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "decision": {"type": "string", "enum": ["pass", "needs_changes"]},
-        "summary": {"type": "string"},
-        "checks": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "name": {"type": "string", "enum": list(REQUIRED_REVIEW_CHECKS)},
-                    "status": {"type": "string", "enum": ["pass", "needs_changes"]},
-                    "finding": {"type": "string"},
-                },
-                "required": ["name", "status", "finding"],
-                "additionalProperties": False,
-            },
-        },
-    },
-    "required": ["decision", "summary", "checks"],
-    "additionalProperties": False,
-}
-
 Transport = Callable[[str, dict[str, str], dict[str, Any], float], dict[str, Any]]
 
 
@@ -82,60 +57,16 @@ def _default_transport(
 
 
 def _sanitized_svg(svg: str) -> str:
-    """Keep visual structure while excluding large embedded binary logo payloads."""
-    return re.sub(
-        r"data:[^;\"']+;base64,[A-Za-z0-9+/=]+",
-        "embedded-logo://omitted",
-        str(svg or ""),
-    )
+    """Compatibilidad interna para consumidores existentes."""
+    return sanitized_svg(svg)
 
 
 def _optional_image_block(render_data: dict[str, Any]) -> dict[str, Any] | None:
-    data_uri = str(render_data.get("preview_image_data_uri") or "")
-    match = re.fullmatch(
-        r"data:(image/(?:png|jpeg|gif|webp));base64,([A-Za-z0-9+/=]+)", data_uri
-    )
-    if not match:
-        return None
-    try:
-        decoded_size = len(base64.b64decode(match.group(2), validate=True))
-    except ValueError:
-        return None
-    if decoded_size > 7_500_000:
-        return None
-    return {
-        "type": "image",
-        "source": {
-            "type": "base64",
-            "media_type": match.group(1),
-            "data": match.group(2),
-        },
-    }
+    return anthropic_image_block(render_data)
 
 
 def _review_content(request: VisualReviewRequest) -> list[dict[str, Any]]:
     render_data = request.render_data or {}
-    evidence = {
-        "version_id": request.version_id,
-        "design_id": request.design_id,
-        "template_key": request.template_key,
-        "visible_content": {
-            key: render_data.get(key)
-            for key in (
-                "headline",
-                "headline_lines",
-                "body",
-                "body_lines",
-                "cta",
-                "eyebrow",
-                "product_slug",
-                "logo_name",
-                "additional_logo_keys",
-            )
-        },
-        "asset_refs": request.asset_refs,
-        "deterministic_validation": request.validation_summary,
-    }
     content = []
     image_block = _optional_image_block(render_data)
     if image_block:
@@ -143,14 +74,7 @@ def _review_content(request: VisualReviewRequest) -> list[dict[str, Any]]:
     content.append(
         {
             "type": "text",
-            "text": (
-                "Revisa únicamente esta versión visual. Evalúa los ocho controles requeridos "
-                "con la evidencia disponible. No inventes reglas ni conviertas el resultado en "
-                "una aprobación humana. Si un defecto visible o una validación determinista "
-                "fallida afecta la pieza, usa needs_changes.\n\n"
-                f"EVIDENCIA_JSON:\n{json.dumps(evidence, ensure_ascii=False)}\n\n"
-                f"SVG_RENDERIZADO:\n{_sanitized_svg(render_data.get('svg', ''))}"
-            ),
+            "text": review_prompt_text(request),
         }
     )
     return content
@@ -174,22 +98,7 @@ def _parse_message(response: dict[str, Any]) -> tuple[dict[str, Any], str | None
         report = json.loads(text)
     except json.JSONDecodeError as exc:
         raise VisualReviewProviderError("Anthropic devolvió JSON inválido.") from exc
-    errors = sorted(Draft202012Validator(REVIEW_SCHEMA).iter_errors(report), key=str)
-    if errors:
-        raise VisualReviewProviderError("Anthropic devolvió un reporte fuera del contrato.")
-    check_names = [check["name"] for check in report["checks"]]
-    if len(check_names) != len(REQUIRED_REVIEW_CHECKS) or set(check_names) != set(
-        REQUIRED_REVIEW_CHECKS
-    ):
-        raise VisualReviewProviderError("Anthropic omitió controles obligatorios del reporte.")
-    expected_decision = (
-        "needs_changes"
-        if any(check["status"] == "needs_changes" for check in report["checks"])
-        else "pass"
-    )
-    if report["decision"] != expected_decision:
-        raise VisualReviewProviderError("La decisión de Anthropic contradice sus controles.")
-    return report, response.get("id")
+    return validate_review_report(report, provider_label="Anthropic"), response.get("id")
 
 
 class AnthropicVisualReviewProvider:
