@@ -7,7 +7,9 @@
 - [x] Conservar `audited_generate()`/`record_visual_review()` y agregar metadata de selección sin
       migrar `AICallAudit`.
 - [x] Añadir `AI_ROUTER_ENABLED=0` por defecto y documentar rollback al camino directo.
-- [ ] Las fases Groq, Cloudflare/FLUX, Gemini y premium compare permanecen fuera de este alcance.
+- [x] Registrar el adaptador Gemini como `evaluation_only`, sin política, fallback ni datos reales.
+- [ ] Las fases Groq, Cloudflare/FLUX, activación de Gemini y premium compare permanecen fuera de
+      este alcance.
 
 ## Estabilización y certificación (2026-08-22)
 

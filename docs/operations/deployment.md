@@ -101,6 +101,8 @@ OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
 ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el código>
 ANTHROPIC_TIMEOUT_SECONDS=45
+GEMINI_API_KEY=
+GEMINI_MODEL=
 RESEND_API_KEY=<API key secreta de Resend>
 RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
 PASSWORD_RESET_MAX_AGE_SECONDS=900
@@ -176,6 +178,16 @@ auditoría agrega `route_id`, `task_type`, `flow_classification` y `selection_re
 Rollback operativo: establecer `AI_ROUTER_ENABLED=0` en web y worker y redesplegar ambos servicios.
 No requiere migración ni revocar o cambiar credenciales. La Fase A no debe activarse durante la
 certificación end-to-end salvo que Axel decida probar explícitamente la equivalencia del router.
+
+### Gemini: proveedor solo para evaluación
+
+`GeminiProvider` queda registrado con `production_status=evaluation_only`, sin política de tarea,
+fallback ni flujo real asociado. `GEMINI_API_KEY` y `GEMINI_MODEL` permanecen vacías: su activación
+queda pendiente de una decisión separada y no requiere encender `AI_ROUTER_ENABLED`. Según los
+[términos de Gemini API](https://ai.google.dev/gemini-api/terms), los servicios gratuitos pueden
+usar entradas y respuestas para mejorar productos y contemplan revisión humana. Por ello, aun si
+se configuran ambas variables, este adaptador solo puede evaluarse con datos sintéticos o públicos;
+nunca debe recibir briefs reales, datos confidenciales ni información personal de IH.
 
 ## Comandos del servicio web
 
