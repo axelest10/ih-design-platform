@@ -29,6 +29,7 @@ class AIFlowClassification:
 
 class AIProviderCapability:
     GENERATE = "generate"
+    IMAGE_GENERATION = "image_generation"
     VISUAL_REVIEW = "visual_review"
 
 
@@ -108,6 +109,24 @@ def _gemini_provider():
     return GeminiProvider()
 
 
+def _groq_provider():
+    from ai.providers.groq_provider import GroqProvider
+
+    return GroqProvider()
+
+
+def _openrouter_provider():
+    from ai.providers.openrouter_provider import OpenRouterProvider
+
+    return OpenRouterProvider()
+
+
+def _cloudflare_image_provider():
+    from ai.providers.cloudflare_provider import CloudflareWorkersAIProvider
+
+    return CloudflareWorkersAIProvider()
+
+
 DEFAULT_AI_PROVIDER_REGISTRY = AIProviderRegistry(
     (
         AIProviderRegistration(
@@ -125,6 +144,24 @@ DEFAULT_AI_PROVIDER_REGISTRY = AIProviderRegistry(
             capability=AIProviderCapability.GENERATE,
             factory=_gemini_provider,
             production_status=AIProviderProductionStatus.EVALUATION_ONLY,
+        ),
+        AIProviderRegistration(
+            key="groq_generation",
+            capability=AIProviderCapability.GENERATE,
+            factory=_groq_provider,
+            production_status=AIProviderProductionStatus.PRODUCTION,
+        ),
+        AIProviderRegistration(
+            key="openrouter_generation",
+            capability=AIProviderCapability.GENERATE,
+            factory=_openrouter_provider,
+            production_status=AIProviderProductionStatus.PRODUCTION,
+        ),
+        AIProviderRegistration(
+            key="cloudflare_image_generation",
+            capability=AIProviderCapability.IMAGE_GENERATION,
+            factory=_cloudflare_image_provider,
+            production_status=AIProviderProductionStatus.PRODUCTION,
         ),
     )
 )

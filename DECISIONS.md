@@ -1,5 +1,18 @@
 # Decisiones técnicas
 
+## 2026-08-22 — Adaptadores free-tier registrados sin activación ni políticas
+
+Axel autorizó preparar Groq, OpenRouter y Cloudflare Workers AI sin conectarlos a tareas reales.
+Groq y OpenRouter reutilizan el SDK OpenAI existente con `max_retries=0` y bases URL específicas;
+Cloudflare usa REST/`urllib` y almacena la imagen antes de devolver un descriptor JSON. No se
+agregan dependencias, tareas, fallbacks, llamadas ni cambios a los flujos certificados.
+
+Los tres registros usan `production_status=production`, pero su elegibilidad futura sigue
+pendiente de credenciales y activación explícita. `TASK_POLICIES` conserva únicamente OpenAI para
+`copy_draft` y Anthropic para `automatic_visual_review`; `AI_ROUTER_ENABLED` permanece en `0`.
+OpenRouter no admite `openrouter/free`: se propone `openai/gpt-oss-120b:free` como modelo fijo para
+confirmación posterior. Ollama y Gemini quedan fuera de esta fase.
+
 ## 2026-08-22 — Gemini queda registrado solo para evaluación sintética/pública
 
 Axel autorizó añadir `GeminiProvider` como candidato sin ruta operativa. El adaptador usa la API

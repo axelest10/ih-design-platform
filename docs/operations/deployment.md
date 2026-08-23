@@ -103,6 +103,13 @@ ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el códig
 ANTHROPIC_TIMEOUT_SECONDS=45
 GEMINI_API_KEY=
 GEMINI_MODEL=
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-120b
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_IMAGE_MODEL=@cf/black-forest-labs/flux-2-klein-4b
 RESEND_API_KEY=<API key secreta de Resend>
 RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
 PASSWORD_RESET_MAX_AGE_SECONDS=900
@@ -188,6 +195,25 @@ queda pendiente de una decisión separada y no requiere encender `AI_ROUTER_ENAB
 usar entradas y respuestas para mejorar productos y contemplan revisión humana. Por ello, aun si
 se configuran ambas variables, este adaptador solo puede evaluarse con datos sintéticos o públicos;
 nunca debe recibir briefs reales, datos confidenciales ni información personal de IH.
+
+### Adaptadores free-tier pendientes de activación
+
+Groq, OpenRouter y Cloudflare Workers AI quedan registrados como candidatos de producción futura,
+pero no pertenecen a `TASK_POLICIES`, no tienen fallback ni punto de llamada real. Sus credenciales
+permanecen vacías y no deben configurarse en staging o producción hasta una autorización separada.
+Agregar estos adaptadores tampoco requiere activar `AI_ROUTER_ENABLED`, que continúa en `0`.
+
+- Groq usa el modelo de texto `openai/gpt-oss-120b` por defecto mediante la compatibilidad OpenAI.
+- OpenRouter exige un modelo fijo explícito y rechaza `openrouter/free`. El candidato a confirmar
+  es `openai/gpt-oss-120b:free`, listado en el
+  [catálogo gratuito oficial](https://openrouter.ai/models?pricing=free); `OPENROUTER_MODEL` sigue
+  vacío hasta esa confirmación.
+- Cloudflare usa exclusivamente `@cf/black-forest-labs/flux-2-klein-4b` para imagen base y devuelve
+  un descriptor del artefacto almacenado, nunca el binario dentro de `GenerationResponse.content`.
+
+Los adaptadores no reintentan automáticamente un `429`: Groq/OpenRouter conservan `retry-after`
+en el error y Cloudflare expone el código `3036` cuando se agota la asignación gratuita. El
+circuit breaker, fallback y rollout son trabajo posterior.
 
 ## Comandos del servicio web
 

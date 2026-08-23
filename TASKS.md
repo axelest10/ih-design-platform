@@ -8,8 +8,10 @@
       migrar `AICallAudit`.
 - [x] Añadir `AI_ROUTER_ENABLED=0` por defecto y documentar rollback al camino directo.
 - [x] Registrar el adaptador Gemini como `evaluation_only`, sin política, fallback ni datos reales.
-- [ ] Las fases Groq, Cloudflare/FLUX, activación de Gemini y premium compare permanecen fuera de
-      este alcance.
+- [x] Preparar adaptadores Groq, OpenRouter y Cloudflare/FLUX sin credenciales, políticas ni
+      activación; falta benchmark y autorización antes de cualquier rollout.
+- [ ] La activación de proveedores, nuevas tareas, fallbacks, circuit breaker, Gemini y premium
+      compare permanecen fuera de este alcance.
 
 ## Estabilización y certificación (2026-08-22)
 
