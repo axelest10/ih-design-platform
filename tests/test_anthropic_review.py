@@ -186,6 +186,47 @@ def test_router_enabled_preserves_needs_confirmation_without_anthropic_config(se
 
 
 @pytest.mark.django_db
+def test_groq_copy_rollout_keeps_visual_review_safe_without_anthropic_credentials(settings):
+    settings.AI_ROUTER_ENABLED = True
+    settings.ANTHROPIC_API_KEY = ""
+    settings.ANTHROPIC_MODEL = ""
+    brief = DesignBrief.objects.create(
+        title="Regresión visual al activar Groq para copy",
+        format=DesignBrief.Format.SQUARE,
+        audience="Audiencia sintética",
+        objective="Confirmar que la revisión permanece trazable",
+    )
+    design = Design.objects.create(brief=brief)
+    version = DesignVersion.objects.create(
+        design=design,
+        number=1,
+        template_key="square-v1",
+        render_data={"headline": "Prueba", "svg": "<svg></svg>"},
+    )
+
+    reviewed = run_automatic_design_review(version)
+
+    reviewed.refresh_from_db()
+    design.refresh_from_db()
+    assert reviewed.claude_review_status == DesignVersion.ClaudeReviewStatus.PENDING
+    assert reviewed.claude_review["integration_status"] == "needs_confirmation"
+    assert "ANTHROPIC_API_KEY" in reviewed.claude_review["summary"]
+    assert "ANTHROPIC_MODEL" in reviewed.claude_review["summary"]
+    assert reviewed.claude_review["provider"] == "claude-stub"
+    assert design.approved_version is None
+    assert design.status != Design.Status.APPROVED
+    audit = AICallAudit.objects.get(design_version=version)
+    assert audit.provider == "claude-stub"
+    assert audit.status == AICallAudit.Status.COMPLETED
+    assert audit.response_metadata == {
+        "route_id": "existing-visual-review-anthropic-v1",
+        "task_type": "automatic_visual_review",
+        "flow_classification": "existing_certified_flow",
+        "selection_reason": "existing_certified_flow, único candidato",
+    }
+
+
+@pytest.mark.django_db
 def test_provider_failure_keeps_generated_version_and_records_pending_error():
     brief = DesignBrief.objects.create(
         title="Prueba de error Anthropic",

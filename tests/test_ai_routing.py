@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from ai.providers import AnthropicVisualReviewProvider, OpenAIProvider
+from ai.providers import AnthropicVisualReviewProvider, GroqProvider
 from ai.services.routing import (
     DEFAULT_AI_PROVIDER_REGISTRY,
     TASK_POLICIES,
@@ -52,21 +52,30 @@ def test_policies_keep_certified_flows_and_classify_prompt_improvement_as_new():
     }
 
 
-def test_gemini_registration_does_not_change_certified_provider_selection(settings):
-    settings.OPENAI_API_KEY = "synthetic-openai-key"
-    settings.OPENAI_MODEL = "certified-openai-model"
+def test_router_selects_groq_for_copy_and_keeps_anthropic_for_review(settings):
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
     settings.ANTHROPIC_API_KEY = "synthetic-anthropic-key"
     settings.ANTHROPIC_MODEL = "certified-anthropic-model"
 
     copy_selection = select_provider(AITaskType.COPY_DRAFT)
     review_selection = select_provider(AITaskType.AUTOMATIC_VISUAL_REVIEW)
 
-    assert copy_selection.registration.key == "openai_generation"
-    assert isinstance(copy_selection.provider, OpenAIProvider)
-    assert copy_selection.provider.model == "certified-openai-model"
+    assert copy_selection.registration.key == "groq_generation"
+    assert isinstance(copy_selection.provider, GroqProvider)
+    assert copy_selection.provider.model == settings.GROQ_MODEL
     assert review_selection.registration.key == "anthropic_visual_review"
     assert isinstance(review_selection.provider, AnthropicVisualReviewProvider)
     assert review_selection.provider.model == "certified-anthropic-model"
+
+
+def test_copy_draft_policy_records_explicit_groq_route_decision():
+    policy = TASK_POLICIES[AITaskType.COPY_DRAFT]
+
+    assert policy.provider_key == "groq_generation"
+    assert policy.route_id == "existing-copy-draft-groq-v1"
+    assert "Axel" in policy.selection_reason
+    assert "costo recurrente" in policy.selection_reason
 
 
 def test_ai_router_is_disabled_by_default():
