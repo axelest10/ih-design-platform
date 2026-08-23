@@ -6,10 +6,11 @@ import pytest
 from rest_framework.test import APIClient
 
 from ai.models import AICallAudit
-from ai.providers import GenerationResponse
+from ai.providers import AIProviderError, GenerationResponse
 from campaigns.models import Campaign
 from catalog.models import Branch, Product
 from materials.models import MaterialType
+from materials.services.ai_copy_drafts import COPY_DRAFT_INSTRUCTION
 
 
 def _campaign():
@@ -184,3 +185,222 @@ def test_router_enabled_copy_uses_current_openai_provider_model_and_contract(set
         "flow_classification": "existing_certified_flow",
         "selection_reason": "existing_certified_flow, único candidato",
     }
+
+
+@pytest.mark.django_db
+def test_prompt_improvement_disabled_preserves_original_copy_request_and_draft(settings):
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = False
+    settings.AI_ROUTER_ENABLED = False
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    response = GenerationResponse(
+        provider="openai",
+        model="test-model",
+        content=json.dumps(
+            {"headline": "Aprende inglés", "body": "Una ruta confirmada.", "cta": "Agenda ahora"}
+        ),
+    )
+
+    with (
+        patch(
+            "materials.services.ai_copy_drafts.OpenAIProvider.generate",
+            autospec=True,
+            return_value=response,
+        ) as generate,
+        patch("materials.services.ai_copy_drafts.routed_generate") as routed,
+    ):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 201, result.json()
+    request = generate.call_args.args[1]
+    assert request.instruction == COPY_DRAFT_INSTRUCTION
+    assert request.output_format == "json"
+    draft = result.json()["ai_copy_draft"]
+    assert set(draft) == {
+        "status",
+        "source_status",
+        "needs_confirmation",
+        "provider",
+        "model",
+        "copy",
+        "authorized_context",
+    }
+    assert AICallAudit.objects.filter(material_bundle=bundle).count() == 1
+    routed.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_prompt_improvement_success_reaches_openai_and_is_traced(settings):
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = True
+    settings.AI_ROUTER_ENABLED = False
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    improved = GenerationResponse(
+        provider="groq",
+        model=settings.GROQ_MODEL,
+        content="Devuelve un copy claro, breve y fiel al contexto autorizado.",
+    )
+    final = GenerationResponse(
+        provider="openai",
+        model="test-openai-model",
+        content=json.dumps(
+            {"headline": "Aprende inglés", "body": "Una ruta confirmada.", "cta": "Agenda ahora"}
+        ),
+    )
+
+    with (
+        patch(
+            "ai.providers.groq_provider.GroqProvider.generate",
+            autospec=True,
+            return_value=improved,
+        ) as groq_generate,
+        patch(
+            "materials.services.ai_copy_drafts.OpenAIProvider.generate",
+            autospec=True,
+            return_value=final,
+        ) as openai_generate,
+    ):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 201, result.json()
+    improvement_request = groq_generate.call_args.args[1]
+    final_request = openai_generate.call_args.args[1]
+    assert improvement_request.authorized_context == final_request.authorized_context
+    assert final_request.instruction.startswith(improved.content)
+    assert "No inventes precios, porcentajes, fechas" in final_request.instruction
+    draft = result.json()["ai_copy_draft"]
+    assert draft["prompt_improvement"] == {
+        "attempted": True,
+        "used": True,
+        "instruction_source": "improved",
+        "provider": "groq",
+        "model": settings.GROQ_MODEL,
+    }
+    audits = AICallAudit.objects.filter(material_bundle=bundle).order_by("created_at")
+    assert audits.count() == 2
+    assert audits[0].provider == "groq"
+    assert audits[0].response_metadata["task_type"] == "prompt_improvement"
+    assert audits[1].provider == "openai"
+
+
+@pytest.mark.django_db
+def test_prompt_improvement_keeps_final_anti_invention_validation(settings):
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = True
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    improved = GenerationResponse(
+        provider="groq",
+        model="openai/gpt-oss-120b",
+        content="Escribe un copy claro usando solo el contexto autorizado.",
+    )
+    unsafe_final = GenerationResponse(
+        provider="openai",
+        model="test-openai-model",
+        content=json.dumps(
+            {
+                "headline": "Aprende en 30 días",
+                "body": "Una ruta confirmada.",
+                "cta": "Agenda ahora",
+            }
+        ),
+    )
+
+    with (
+        patch(
+            "ai.providers.groq_provider.GroqProvider.generate",
+            autospec=True,
+            return_value=improved,
+        ),
+        patch(
+            "materials.services.ai_copy_drafts.OpenAIProvider.generate",
+            autospec=True,
+            return_value=unsafe_final,
+        ),
+    ):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 400
+    assert "cifras que no están" in result.json()["detail"]
+    bundle.refresh_from_db()
+    assert "ai_copy_draft" not in bundle.brief_context
+
+
+@pytest.mark.django_db
+def test_prompt_improvement_provider_failure_falls_back_to_original_instruction(settings):
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = True
+    settings.AI_ROUTER_ENABLED = False
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    final = GenerationResponse(
+        provider="openai",
+        model="test-openai-model",
+        content=json.dumps(
+            {"headline": "Aprende inglés", "body": "Una ruta confirmada.", "cta": "Agenda ahora"}
+        ),
+    )
+
+    with (
+        patch(
+            "ai.providers.groq_provider.GroqProvider.generate",
+            autospec=True,
+            side_effect=AIProviderError("Groq no configurado"),
+        ),
+        patch(
+            "materials.services.ai_copy_drafts.OpenAIProvider.generate",
+            autospec=True,
+            return_value=final,
+        ) as openai_generate,
+    ):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 201, result.json()
+    assert openai_generate.call_args.args[1].instruction == COPY_DRAFT_INSTRUCTION
+    trace = result.json()["ai_copy_draft"]["prompt_improvement"]
+    assert trace == {
+        "attempted": True,
+        "used": False,
+        "instruction_source": "original",
+        "fallback_reason": "provider_error",
+    }
+    audits = AICallAudit.objects.filter(material_bundle=bundle)
+    assert audits.filter(provider="groq", status=AICallAudit.Status.ERROR).exists()
+    assert audits.filter(provider="openai", status=AICallAudit.Status.COMPLETED).exists()
+
+
+@pytest.mark.django_db
+def test_prompt_improvement_empty_response_falls_back_without_breaking_copy(settings):
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = True
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    empty = GenerationResponse(
+        provider="groq",
+        model="openai/gpt-oss-120b",
+        content="   ",
+    )
+    final = GenerationResponse(
+        provider="openai",
+        model="test-openai-model",
+        content=json.dumps(
+            {"headline": "Aprende inglés", "body": "Una ruta confirmada.", "cta": "Agenda ahora"}
+        ),
+    )
+
+    with (
+        patch(
+            "ai.providers.groq_provider.GroqProvider.generate",
+            autospec=True,
+            return_value=empty,
+        ),
+        patch(
+            "materials.services.ai_copy_drafts.OpenAIProvider.generate",
+            autospec=True,
+            return_value=final,
+        ) as openai_generate,
+    ):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 201, result.json()
+    assert openai_generate.call_args.args[1].instruction == COPY_DRAFT_INSTRUCTION
+    trace = result.json()["ai_copy_draft"]["prompt_improvement"]
+    assert trace["used"] is False
+    assert trace["fallback_reason"] == "invalid_response"
