@@ -17,6 +17,9 @@ def test_registry_keeps_certified_routes_and_marks_gemini_as_evaluation_only():
         "openai_generation",
         "anthropic_visual_review",
         "gemini_generation",
+        "groq_generation",
+        "openrouter_generation",
+        "cloudflare_image_generation",
     )
     assert DEFAULT_AI_PROVIDER_REGISTRY.get("openai_generation").capability == (
         AIProviderCapability.GENERATE
