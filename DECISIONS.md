@@ -1,5 +1,25 @@
 # Decisiones técnicas
 
+## 2026-08-23 — Groq sustituye a OpenAI en la ruta activa de `copy_draft`
+
+Axel decidió que, cuando `AI_ROUTER_ENABLED=1`, la generación final de borradores de copy use
+`GroqProvider` con `openai/gpt-oss-120b` en lugar de OpenAI para evitar costo recurrente. La ruta
+directa con OpenAI se conserva cuando el flag está en `0`, que continúa siendo el valor por
+defecto. La ruta Groq no tiene fallback automático: una clave ausente, cuota agotada o falla del
+proveedor se reporta de forma visible y trazable, sin intentar OpenAI ni OpenRouter.
+
+La activación exige vigilancia operativa. Los [límites oficiales de Groq](https://console.groq.com/docs/rate-limits)
+para el plan gratuito de `openai/gpt-oss-120b` reportaban, al confirmar esta decisión, 30 RPM,
+1,000 RPD, 8,000 TPM y 200,000 TPD; los límites efectivos de la organización deben comprobarse en
+Groq Console y un exceso devuelve HTTP 429. Además, la calidad del copy debe evaluarse con casos
+reales de IH antes de equipararla a la salida histórica de OpenAI; `_parse_copy()` continúa
+bloqueando cifras y CTA no autorizados independientemente del proveedor.
+
+Esta decisión no modifica `automatic_visual_review`: su política sigue apuntando a Anthropic y,
+sin `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL`, conserva el estado pendiente y trazable
+`needs_confirmation`. La configuración real de Groq y la activación del router corresponden a
+Axel en Railway, no al repositorio.
+
 ## 2026-08-22 — Mejora de prompt opt-in sin alterar la certificación
 
 Axel autorizó `prompt_improvement` como primera tarea real del router, con Groq como único candidato

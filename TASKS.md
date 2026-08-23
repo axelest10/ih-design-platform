@@ -12,8 +12,10 @@
       activación; falta benchmark y autorización antes de cualquier rollout.
 - [x] Preparar `prompt_improvement` como tarea opt-in con Groq y fallback local a la instrucción
       original; mantener `AI_PROMPT_IMPROVEMENT_ENABLED=0` hasta autorización separada.
-- [ ] La activación de proveedores, nuevas tareas, fallbacks, circuit breaker, Gemini y premium
-      compare permanecen fuera de este alcance.
+- [x] Enrutar `copy_draft` a Groq cuando `AI_ROUTER_ENABLED=1`, sin fallback automático; conservar
+      OpenAI directo con el flag apagado y dejar la activación/credenciales a Axel en Railway.
+- [ ] OpenRouter/Cloudflare, fallbacks, circuit breaker, Gemini y premium compare permanecen fuera
+      de las rutas de producción actuales.
 
 ## Estabilización y certificación (2026-08-22)
 

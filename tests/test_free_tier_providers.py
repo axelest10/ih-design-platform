@@ -16,7 +16,6 @@ from ai.providers import (
     CloudflareWorkersAIProvider,
     GenerationRequest,
     GroqProvider,
-    OpenAIProvider,
     OpenRouterProvider,
 )
 from ai.providers.cloudflare_provider import CLOUDFLARE_API_BASE_URL
@@ -358,10 +357,10 @@ def test_free_tier_registrations_are_production_candidates_with_only_groq_opt_in
 
 
 @pytest.mark.parametrize("router_enabled", [False, True])
-def test_free_tier_registration_never_changes_certified_routes(settings, router_enabled):
+def test_free_tier_routes_keep_explicit_groq_copy_and_anthropic_review(settings, router_enabled):
     settings.AI_ROUTER_ENABLED = router_enabled
-    settings.OPENAI_API_KEY = "synthetic-openai-key"
-    settings.OPENAI_MODEL = "certified-openai-model"
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
     settings.ANTHROPIC_API_KEY = "synthetic-anthropic-key"
     settings.ANTHROPIC_MODEL = "certified-anthropic-model"
 
@@ -374,7 +373,7 @@ def test_free_tier_registration_never_changes_certified_routes(settings, router_
         AITaskType.AUTOMATIC_VISUAL_REVIEW,
         AITaskType.PROMPT_IMPROVEMENT,
     }
-    assert copy_selection.registration.key == "openai_generation"
-    assert isinstance(copy_selection.provider, OpenAIProvider)
+    assert copy_selection.registration.key == "groq_generation"
+    assert isinstance(copy_selection.provider, GroqProvider)
     assert review_selection.registration.key == "anthropic_visual_review"
     assert isinstance(review_selection.provider, AnthropicVisualReviewProvider)
