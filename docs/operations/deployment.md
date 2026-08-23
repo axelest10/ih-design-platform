@@ -96,6 +96,7 @@ AWS_S3_ENDPOINT_URL=
 AWS_ACCESS_KEY_ID=<credencial fuera de Git>
 AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
 AI_ROUTER_ENABLED=0
+AI_PROMPT_IMPROVEMENT_ENABLED=0
 OPENAI_API_KEY=<secreto fuera de Git>
 OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
@@ -214,6 +215,18 @@ Agregar estos adaptadores tampoco requiere activar `AI_ROUTER_ENABLED`, que cont
 Los adaptadores no reintentan automáticamente un `429`: Groq/OpenRouter conservan `retry-after`
 en el error y Cloudflare expone el código `3036` cuando se agota la asignación gratuita. El
 circuit breaker, fallback y rollout son trabajo posterior.
+
+### Mejora opcional de instrucción de copy
+
+`AI_PROMPT_IMPROVEMENT_ENABLED=0` conserva exactamente el flujo certificado: una sola generación
+de copy con OpenAI y la instrucción fija actual. Debe permanecer en `0` tanto en staging como en
+producción hasta una autorización separada de Axel, porque habilitarlo modifica la instrucción que
+recibe el flujo actualmente en certificación.
+
+Con `1`, Groq intenta aclarar la instrucción usando únicamente el mismo `authorized_context` ya
+validado. La generación final continúa en OpenAI y conserva `_parse_copy()` como barrera para
+cifras y CTA. Si Groq no está configurado, falla o devuelve contenido inválido, se usa la
+instrucción original y la generación final continúa; no existe fallback a OpenRouter.
 
 ## Comandos del servicio web
 

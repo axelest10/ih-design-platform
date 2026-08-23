@@ -21,10 +21,12 @@ class AIRoutingError(RuntimeError):
 class AITaskType:
     COPY_DRAFT = "copy_draft"
     AUTOMATIC_VISUAL_REVIEW = "automatic_visual_review"
+    PROMPT_IMPROVEMENT = "prompt_improvement"
 
 
 class AIFlowClassification:
     EXISTING_CERTIFIED_FLOW = "existing_certified_flow"
+    NEW_ROUTED_TASK = "new_routed_task"
 
 
 class AIProviderCapability:
@@ -181,11 +183,22 @@ TASK_POLICIES = {
         route_id="existing-visual-review-anthropic-v1",
         selection_reason="existing_certified_flow, único candidato",
     ),
+    AITaskType.PROMPT_IMPROVEMENT: AITaskPolicy(
+        task_type=AITaskType.PROMPT_IMPROVEMENT,
+        flow_classification=AIFlowClassification.NEW_ROUTED_TASK,
+        provider_key="groq_generation",
+        route_id="new-prompt-improvement-groq-v1",
+        selection_reason="new_routed_task, único candidato opt-in",
+    ),
 }
 
 
 def ai_router_enabled() -> bool:
     return bool(getattr(settings, "AI_ROUTER_ENABLED", False))
+
+
+def ai_prompt_improvement_enabled() -> bool:
+    return bool(getattr(settings, "AI_PROMPT_IMPROVEMENT_ENABLED", False))
 
 
 def select_provider(
@@ -214,7 +227,7 @@ def routed_generate(
     material_bundle=None,
     registry: AIProviderRegistry = DEFAULT_AI_PROVIDER_REGISTRY,
 ):
-    """Selecciona el candidato certificado y conserva la auditoría existente."""
+    """Selecciona el candidato de la política y conserva la auditoría existente."""
     selection = select_provider(task_type, registry=registry)
     if selection.registration.capability != AIProviderCapability.GENERATE:
         raise AIRoutingError(f"La tarea {task_type} no usa el contrato generate().")
