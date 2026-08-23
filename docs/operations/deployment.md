@@ -102,6 +102,7 @@ AWS_ACCESS_KEY_ID=<credencial fuera de Git>
 AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
 AI_ROUTER_ENABLED=0
 AI_PROMPT_IMPROVEMENT_ENABLED=0
+AI_VISUAL_REVIEW_FREE_TIER_ENABLED=0
 OPENAI_API_KEY=<secreto fuera de Git>
 OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
@@ -115,6 +116,7 @@ OPENROUTER_API_KEY=
 OPENROUTER_MODEL=
 CLOUDFLARE_ACCOUNT_ID=
 CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_VISION_MODEL=
 CLOUDFLARE_IMAGE_MODEL=@cf/black-forest-labs/flux-2-klein-4b
 RESEND_API_KEY=<API key secreta de Resend>
 RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
@@ -225,6 +227,48 @@ Rollback operativo: establecer `AI_ROUTER_ENABLED=0` en web y worker y redespleg
 Esto restaura la ruta directa de OpenAI y, por tanto, requiere que `OPENAI_API_KEY` esté configurada
 si se necesita seguir generando copy. No requiere migración ni revocar credenciales.
 
+### Revisión visual gratuita opt-in con Cloudflare
+
+`AI_VISUAL_REVIEW_FREE_TIER_ENABLED=0` conserva sin cambios la selección actual: Anthropic cuando
+`ANTHROPIC_API_KEY` y `ANTHROPIC_MODEL` están configuradas, o el fallback trazable
+`needs_confirmation` cuando faltan. Este interruptor es independiente de `AI_ROUTER_ENABLED` y
+`AI_PROMPT_IMPROVEMENT_ENABLED`; no modifica `copy_draft` ni la ruta Groq.
+
+El modelo recomendado para la evaluación inicial es
+[`@cf/meta/llama-3.2-11b-vision-instruct`](https://developers.cloudflare.com/ai/models/%40cf/meta/llama-3.2-11b-vision-instruct/).
+Cloudflare lo documenta con visión y lo incluye explícitamente en la lista de modelos compatibles
+con [JSON Mode](https://developers.cloudflare.com/workers-ai/features/json-mode/). La variable no
+tiene valor predeterminado en el código: debe fijarse deliberadamente. Antes del primer uso, la
+cuenta debe aceptar la licencia y política de uso de Meta con la solicitud `{"prompt":"agree"}`
+descrita en el
+[tutorial oficial](https://developers.cloudflare.com/workers-ai/guides/tutorials/llama-vision-tutorial/).
+Esa aceptación es una acción manual de Axel y nunca la ejecuta la aplicación.
+
+Activación en Railway, después de revisar el proveedor y aceptar la licencia:
+
+1. Agregar en el servicio web y en el worker Celery las mismas variables
+   `CLOUDFLARE_ACCOUNT_ID=<account id>`, `CLOUDFLARE_API_TOKEN=<secreto>` y
+   `CLOUDFLARE_VISION_MODEL=@cf/meta/llama-3.2-11b-vision-instruct`.
+2. Mantener `AI_VISUAL_REVIEW_FREE_TIER_ENABLED=0` durante la primera configuración y comprobar que
+   ambos servicios arrancan sin cambios de comportamiento.
+3. Cambiar `AI_VISUAL_REVIEW_FREE_TIER_ENABLED=1` en web y worker.
+4. Redesplegar ambos servicios.
+5. Generar revisiones con datos sintéticos realistas y comprobar en `AICallAudit`
+   `provider=cloudflare-workers-ai-vision`, el modelo configurado y `status=completed` o el error
+   explícito. Axel debe revisar manualmente varios reportes antes de usar esta alternativa con
+   diseños reales.
+
+Prioridad con el flag activo: Cloudflare solo se selecciona si las tres variables están completas;
+si falta cualquiera, se conserva Anthropic cuando está configurado y, en último lugar, el stub
+`needs_confirmation`. No existe fallback automático después de que una llamada Cloudflare ya
+falló. Según el [pricing oficial](https://developers.cloudflare.com/workers-ai/platform/pricing/),
+la asignación gratuita es de 10,000 Neurons al día y reinicia a las 00:00 UTC. Al agotarla,
+Cloudflare documenta el error `3036`/HTTP 429; la revisión queda `pending` con
+`integration_status=provider_error`.
+
+Rollback: poner `AI_VISUAL_REVIEW_FREE_TIER_ENABLED=0` en web y worker y redesplegar ambos. No es
+necesario cambiar `AI_ROUTER_ENABLED`, retirar las credenciales ni ejecutar migraciones.
+
 ### Gemini: proveedor solo para evaluación
 
 `GeminiProvider` queda registrado con `production_status=evaluation_only`, sin política de tarea,
@@ -240,8 +284,9 @@ nunca debe recibir briefs reales, datos confidenciales ni información personal 
 Groq, OpenRouter y Cloudflare Workers AI están registrados como candidatos de producción. Groq es
 el único que pertenece a una ruta de producción: atiende `copy_draft` cuando
 `AI_ROUTER_ENABLED=1` y también la mejora opt-in cuando su flag independiente está activo.
-OpenRouter y Cloudflare siguen sin política, fallback ni punto de llamada real. Sus credenciales
-permanecen vacías y no deben configurarse en staging o producción hasta una autorización separada.
+OpenRouter y el adaptador de generación de imagen de Cloudflare siguen sin política, fallback ni
+punto de llamada real. La revisión visual Cloudflare descrita arriba es un flujo separado y opt-in,
+controlado exclusivamente por `AI_VISUAL_REVIEW_FREE_TIER_ENABLED`.
 
 - Groq usa el modelo de texto `openai/gpt-oss-120b` por defecto mediante la compatibilidad OpenAI.
 - OpenRouter exige un modelo fijo explícito y rechaza `openrouter/free`. El candidato a confirmar

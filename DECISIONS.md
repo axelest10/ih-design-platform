@@ -1,5 +1,28 @@
 # Decisiones técnicas
 
+## 2026-08-23 — Revisión visual Cloudflare aislada por un flag propio
+
+Axel autorizó preparar Cloudflare Workers AI como alternativa gratuita y no certificada para
+`automatic_visual_review`. La integración se activa únicamente con
+`AI_VISUAL_REVIEW_FREE_TIER_ENABLED=1` y las tres variables de Cloudflare completas; el valor por
+defecto permanece en `0`. Con el flag apagado, Anthropic y el fallback trazable
+`needs_confirmation` conservan exactamente la prioridad anterior, tanto con
+`AI_ROUTER_ENABLED=0` como con `AI_ROUTER_ENABLED=1`. No se modifica `TASK_POLICIES`, la ruta de
+`copy_draft` por Groq ni `AI_PROMPT_IMPROVEMENT_ENABLED`.
+
+El modelo recomendado para la evaluación inicial es
+[`@cf/meta/llama-3.2-11b-vision-instruct`](https://developers.cloudflare.com/ai/models/%40cf/meta/llama-3.2-11b-vision-instruct/):
+Cloudflare documenta visión y lo incluye explícitamente entre los modelos compatibles con
+[JSON Mode](https://developers.cloudflare.com/workers-ai/features/json-mode/), requisito central
+para reutilizar el contrato estructurado de ocho controles. Antes del primer uso, Axel debe aceptar
+la licencia de Meta mediante el procedimiento oficial; el repositorio no realiza esa aceptación.
+
+Esta alternativa no está probada como equivalente a Anthropic para juzgar cumplimiento de marca.
+Axel debe revisar manualmente una muestra de resultados sintéticos realistas antes de permitir su
+uso con diseños reales. La asignación gratuita oficial es de 10,000 Neurons por día y, cuando se
+agota, Cloudflare devuelve `3036`/HTTP 429; no hay reintento ni fallback automático. El límite y la
+calidad deben vigilarse durante la evaluación.
+
 ## 2026-08-23 — Groq sustituye a OpenAI en la ruta activa de `copy_draft`
 
 Axel decidió que, cuando `AI_ROUTER_ENABLED=1`, la generación final de borradores de copy use
