@@ -7,7 +7,13 @@ from typing import Any
 
 from ai.providers import AIProviderError, GenerationRequest, OpenAIProvider
 from ai.services.audit import audited_generate
-from ai.services.routing import AITaskType, ai_router_enabled, routed_generate
+from ai.services.routing import (
+    AIRoutingError,
+    AITaskType,
+    ai_prompt_improvement_enabled,
+    ai_router_enabled,
+    routed_generate,
+)
 
 from .catalog import sales_kit_products, venue_kit_products
 from .email_kit import EmailKitGenerationError, _campaign_snapshot, _validate_campaign
@@ -21,6 +27,16 @@ class AICopyDraftError(ValueError):
 
 
 KIT_SLUGS = {"venue-kit", "sales-kit", "email-kit"}
+COPY_DRAFT_INSTRUCTION = (
+    "Devuelve solo JSON con headline, body y cta. Parafrasea únicamente los datos del "
+    "authorized_context; no inventes precios, porcentajes, fechas, lugares, contactos, "
+    "beneficios ni llamadas a la acción. Si no hay CTA confirmado, devuelve cta vacío."
+)
+COPY_SAFETY_REQUIREMENTS = (
+    "No inventes precios, porcentajes, fechas, lugares, contactos, beneficios ni llamadas a la "
+    "acción. Si no hay CTA confirmado, exige cta vacío."
+)
+MAX_IMPROVED_INSTRUCTION_LENGTH = 4000
 
 
 def _confirmed_products(bundle) -> list[dict[str, Any]]:
@@ -123,6 +139,58 @@ def _parse_copy(content: str, authorized_context: dict[str, Any]) -> dict[str, s
     return copy
 
 
+def _improve_copy_instruction(
+    original_instruction: str,
+    authorized_context: dict[str, Any],
+    *,
+    bundle,
+) -> tuple[str, dict[str, Any] | None]:
+    if not ai_prompt_improvement_enabled():
+        return original_instruction, None
+    trace = {
+        "attempted": True,
+        "used": False,
+        "instruction_source": "original",
+    }
+    improvement_request = GenerationRequest(
+        instruction=(
+            "Reescribe la INSTRUCCION_ORIGINAL para que sea más clara y precisa al solicitar un "
+            "borrador de copy. Devuelve únicamente la instrucción mejorada en texto plano. "
+            "Conserva explícitamente estas restricciones: no inventar precios, porcentajes, "
+            "fechas, lugares, contactos, beneficios ni llamadas a la acción; si no hay CTA "
+            "confirmado, debe pedirse un CTA vacío. No agregues datos que no existan en "
+            "authorized_context.\n\n"
+            f"INSTRUCCION_ORIGINAL:\n{original_instruction}"
+        ),
+        authorized_context=authorized_context,
+        output_format="text",
+    )
+    try:
+        response = routed_generate(
+            AITaskType.PROMPT_IMPROVEMENT,
+            improvement_request,
+            material_bundle=bundle,
+        )
+    except (AIProviderError, AIRoutingError):
+        return original_instruction, {**trace, "fallback_reason": "provider_error"}
+    improved = response.content.strip() if isinstance(response.content, str) else ""
+    if not improved or len(improved) > MAX_IMPROVED_INSTRUCTION_LENGTH:
+        return original_instruction, {
+            **trace,
+            "provider": response.provider,
+            "model": response.model,
+            "fallback_reason": "invalid_response",
+        }
+    guarded_instruction = f"{improved}\n\nRestricciones obligatorias: {COPY_SAFETY_REQUIREMENTS}"
+    return guarded_instruction, {
+        "attempted": True,
+        "used": True,
+        "instruction_source": "improved",
+        "provider": response.provider,
+        "model": response.model,
+    }
+
+
 def suggest_copy_draft(bundle, *, provider=None) -> dict[str, Any]:
     """Genera y guarda un borrador pendiente de aprobación, sin aplicarlo a diseños."""
     if bundle.material_type.slug not in KIT_SLUGS:
@@ -130,12 +198,13 @@ def suggest_copy_draft(bundle, *, provider=None) -> dict[str, Any]:
             "Las sugerencias IA solo están disponibles para venue, sales y email kit."
         )
     authorized_context = _authorized_context(bundle)
+    instruction, prompt_improvement = _improve_copy_instruction(
+        COPY_DRAFT_INSTRUCTION,
+        authorized_context,
+        bundle=bundle,
+    )
     request = GenerationRequest(
-        instruction=(
-            "Devuelve solo JSON con headline, body y cta. Parafrasea únicamente los datos del "
-            "authorized_context; no inventes precios, porcentajes, fechas, lugares, contactos, "
-            "beneficios ni llamadas a la acción. Si no hay CTA confirmado, devuelve cta vacío."
-        ),
+        instruction=instruction,
         authorized_context=authorized_context,
         output_format="json",
     )
@@ -164,6 +233,8 @@ def suggest_copy_draft(bundle, *, provider=None) -> dict[str, Any]:
         "copy": copy,
         "authorized_context": authorized_context,
     }
+    if prompt_improvement is not None:
+        draft["prompt_improvement"] = prompt_improvement
     context = dict(bundle.brief_context or {})
     context["ai_copy_draft"] = draft
     bundle.brief_context = context

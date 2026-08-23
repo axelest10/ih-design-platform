@@ -1,5 +1,18 @@
 # Decisiones técnicas
 
+## 2026-08-22 — Mejora de prompt opt-in sin alterar la certificación
+
+Axel autorizó `prompt_improvement` como primera tarea real del router, con Groq como único candidato
+y sin fallback a OpenRouter. `AI_PROMPT_IMPROVEMENT_ENABLED` queda en `0` por defecto y debe
+permanecer apagado en staging y producción hasta una autorización separada de Axel, porque cambia
+la instrucción que recibe el flujo de copy actualmente en certificación.
+
+Con el flag apagado, `suggest_copy_draft()` conserva la instrucción, proveedor, payload, borrador y
+auditoría anteriores. Con el flag encendido, Groq recibe solo el mismo `authorized_context`; un
+fallo o respuesta inválida vuelve silenciosamente a la instrucción original. OpenAI sigue generando
+el copy final y `_parse_copy()` conserva sin cambios el bloqueo de cifras y CTA no autorizados.
+Anthropic, revisión visual, seguridad, dependencias y configuración Railway quedan fuera.
+
 ## 2026-08-22 — Adaptadores free-tier registrados sin activación ni políticas
 
 Axel autorizó preparar Groq, OpenRouter y Cloudflare Workers AI sin conectarlos a tareas reales.

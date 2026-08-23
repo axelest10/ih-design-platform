@@ -340,7 +340,7 @@ def test_cloudflare_provider_propagates_3036_rate_limit_without_retry():
     urlopen.assert_called_once()
 
 
-def test_free_tier_registrations_are_production_candidates_without_task_policies():
+def test_free_tier_registrations_are_production_candidates_with_only_groq_opt_in_task():
     expected = {
         "groq_generation": AIProviderCapability.GENERATE,
         "openrouter_generation": AIProviderCapability.GENERATE,
@@ -350,7 +350,9 @@ def test_free_tier_registrations_are_production_candidates_without_task_policies
         registration = DEFAULT_AI_PROVIDER_REGISTRY.get(key)
         assert registration.capability == capability
         assert registration.production_status == AIProviderProductionStatus.PRODUCTION
-    assert expected.keys().isdisjoint(
+    prompt_policy = TASK_POLICIES[AITaskType.PROMPT_IMPROVEMENT]
+    assert prompt_policy.provider_key == "groq_generation"
+    assert {"openrouter_generation", "cloudflare_image_generation"}.isdisjoint(
         policy.provider_key for policy in TASK_POLICIES.values()
     )
 
@@ -370,6 +372,7 @@ def test_free_tier_registration_never_changes_certified_routes(settings, router_
     assert set(TASK_POLICIES) == {
         AITaskType.COPY_DRAFT,
         AITaskType.AUTOMATIC_VISUAL_REVIEW,
+        AITaskType.PROMPT_IMPROVEMENT,
     }
     assert copy_selection.registration.key == "openai_generation"
     assert isinstance(copy_selection.provider, OpenAIProvider)
