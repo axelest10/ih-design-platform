@@ -1,10 +1,73 @@
 # Tareas
 
+## AI Router — Fase A (2026-08-22)
+
+- [x] Registrar exclusivamente OpenAI para borradores de copy y Anthropic para revisión visual.
+- [x] Clasificar ambos puntos como `existing_certified_flow`, sin aplicar prioridad free-first.
+- [x] Conservar `audited_generate()`/`record_visual_review()` y agregar metadata de selección sin
+      migrar `AICallAudit`.
+- [x] Añadir `AI_ROUTER_ENABLED=0` por defecto y documentar rollback al camino directo.
+- [x] Registrar el adaptador Gemini como `evaluation_only`, sin política, fallback ni datos reales.
+- [x] Preparar adaptadores Groq, OpenRouter y Cloudflare/FLUX sin credenciales, políticas ni
+      activación; falta benchmark y autorización antes de cualquier rollout.
+- [x] Preparar `prompt_improvement` como tarea opt-in con Groq y fallback local a la instrucción
+      original; mantener `AI_PROMPT_IMPROVEMENT_ENABLED=0` hasta autorización separada.
+- [ ] La activación de proveedores, nuevas tareas, fallbacks, circuit breaker, Gemini y premium
+      compare permanecen fuera de este alcance.
+
+## Estabilización y certificación (2026-08-22)
+
+- [x] Exponer en el healthcheck el SHA/rama/entorno/servicio reales inyectados por Railway, sin
+      consultar infraestructura ni hardcodear una versión.
+- [ ] Alinear staging y producción con `main` y documentar el SHA efectivo de ambos entornos.
+- [ ] Certificar en staging el flujo real brief square → generación → persistencia → revisión →
+      aprobación → descargas → entrega.
+- [ ] Verificar desde Railway PostgreSQL persistente, escritura R2, Redis, worker Celery y una
+      tarea asíncrona real con `CELERY_TASK_ALWAYS_EAGER=0`.
+- [x] Separar la configuración Railway del worker Celery en `railway.worker.json`, sin migración
+      pre-deploy ni healthcheck HTTP.
+
+- [x] **Flujo de revisión y aprobación** — `DesignVersion` persiste estados pendientes,
+      aprobados, rechazados o con cambios solicitados; `POST /api/v1/designs/{id}/review/`
+      persiste comentarios y deja un hook preparado para notificaciones futuras.
+
+- [x] **Historial visible y exportación WhatsApp** — el endpoint `history` expone la línea de
+      tiempo por versión y `output=whatsapp` entrega el SVG social o PDF documental listo para
+      compartir; no integra la API de WhatsApp.
+
+- [x] **Sugerencias de copy IA para venue/sales/email** — usa únicamente catálogos, sedes y
+      campañas con datos confirmados; guarda el resultado como `pending_approval` y no lo aplica
+      directamente a ningún diseño.
+
+- [x] **Trazabilidad y calidad de IA** — cada llamada registra prompt, respuesta, proveedor,
+      modelo, timestamp y vínculo al brief/DesignVersion/material disponible; las respuestas
+      reciben una validación ligera de cifras, URLs y claims no verificables.
+
+## Venue-kit (2026-08-15)
+
+- [x] Axel confirmó que todas las sedes comparten los seis pilares del catálogo:
+      `general-english`, `cambridge-exam-preparation`, `university-programmes`,
+      `business-english`, `ielts-preparation` y `spanish-courses`.
+- [x] Reconciliar `spanish-courses` en el catálogo con esa confirmación: aplica a las sedes activas
+      de MX, CO, PE y CL, sin quedar pendiente de confirmación.
+- [x] Implementar `venue-kit` con piezas sociales, documento A4 y presentación, reutilizando
+      los renderers existentes y dejando abierto el catálogo para futuros slugs activos.
+- [x] Cargar sedes iniciales de México, Colombia, Perú y Chile con fuente oficial, dirección y
+      contacto; conservar pendientes de horario, mapa, CTA y assets locales.
+- [x] Revisar y fusionar el PR de `venue-kit` contra `main`.
+
 ## Completadas
 
 - [x] Implementar el contrato v1 de SSO con IH LATAM Hub como proveedor OIDC para Staging:
       Authorization Code + PKCE S256, enlace/provisión por identidad estable, rol local
       `viewer` por defecto, auditoría sin secretos y rollback por feature flag (2026-08-14).
+- [x] Mover las generaciones de PDF, PPTX y copy de IA a Celery (`feature/celery-worker-railway`):
+      las vistas devuelven `202` con `task_id`/`status_url`, y el estado queda persistido en
+      `AsyncGenerationJob`. Railway requiere un segundo servicio con
+      `celery -A config worker -l info --concurrency=2`.
+- [x] Implementar storage user-scoped para uploads y archivos generados en `feature/user-scoped-storage`; las claves históricas quedan documentadas sin migración automática.
+- [x] Documentar el plan de integración SSO con IH Hub en `docs/operations/ihlatam-sso-plan.md`; la implementación queda bloqueada hasta recibir el secreto real y la autorización explícita de Axel.
+- [x] Documentar el workflow de ramas y pull requests en `AGENTS.md` mediante `docs/branching-workflow`.
 - [x] Crear base modular Django y DRF.
 - [x] Separar branding, catálogo, campañas, briefs, diseños, activos, validaciones e IA.
 - [x] Añadir contrato JSON Schema para briefs.
@@ -61,17 +124,53 @@
 
 ## Siguientes
 
+- [x] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
+      `docs/operations/venue-marketing-kit-plan.md`; Axel confirmó los seis pilares y el PR de
+      implementación ya está fusionado.
+
 - [x] **Ratificación de los productos default de la paquetería de colegios** (`qc-2026`,
       `teacher-training-certifications`) — Axel confirmó ambos productos el 2026-08-08. La
       decisión queda trazada junto a la lista de prioridad en
       `backend/materials/services/catalog.py` y en `DECISIONS.md`.
+- [x] **Safe-zone y legibilidad por `DesignVersion`** — cada versión registra un resultado
+      determinista en `validation_summary.safe_zone_check`, con política porcentual por formato
+      social y contraste AA 4.5:1 basado en `brand/documentation/accessibility-rules.md`.
+- [x] **Diseño e implementación de `email-kit`** — exporta/visualiza HTML compatible con
+      clientes de correo mediante tablas, CSS inline y un ancho máximo de 640 px. No envía
+      mensajes ni integra proveedores; requiere Campaign confirmada y URL de baja.
+- [x] **Diseño e implementación de `sales-kit`** — la paquetería reutiliza los productos
+      activos y los renderers social, A4 y presentación existentes. Cada generación exige una
+      `Campaign` activa, vigente, con copy aprobado y `offer_data.source_status=confirmed`;
+      no se sembró ninguna oferta comercial real.
+- [x] **Comando de verificación R2** — añadido `python manage.py verify_storage_backend` para
+      staging; comprueba escritura, lectura y borrado contra Cloudflare R2 sin persistir secretos.
 - [x] **Primer commit grande del trabajo acumulado** — realizado el 2026-08-08 en commits
       lógicos, después de limpiar los archivos temporales sueltos de la raíz.
 - [x] **Crear y aislar el entorno de Staging real** — Railway tiene PostgreSQL y Redis propios,
       bucket de objetos exclusivo, autenticación corporativa, correo suprimido y despliegue
       automático con espera por CI. Production quedó sin autodeploy y con promoción manual
       documentada en `docs/operations/release-topology.md` (2026-08-15).
+- [x] **Verificar la disponibilidad pública del web de staging** — `https://mydesign.ihlatam.com`
+      responde el healthcheck y sirve el frontend; la URL cruda de Railway queda como fallback
+      técnico.
+- [ ] **Completar el entorno de staging real** (PostgreSQL + auth corporativa + almacenamiento
+      persistente) siguiendo `docs/operations/deployment.md` — el web público está confirmado,
+       pero el aprovisionamiento y las variables de infraestructura no se pueden cerrar sin acceso
+       al dashboard o shell de Railway.
 - [ ] Recibir catálogo comercial autorizado de los productos piloto.
+- [ ] **Confirmar overlays específicos por plataforma social** para sustituir o complementar la
+      reserva base de los templates cuando Marketing entregue dimensiones oficiales.
+- [ ] **Definir el envío real de emails en una fase aparte** — falta decidir proveedor, listas y
+      consentimiento, tracking, rebotes, unsubscribe operativo y gestión de secretos. El flujo
+      actual es export-only y no debe usarse como sender.
+- [ ] **Recibir la primera `Campaign` comercial confirmada** (fuente, beneficio, CTA y vigencia)
+      antes de usar `sales-kit` con datos reales; los tests usan datos sintéticos marcados como
+      `source_status=confirmed`.
+- [ ] **Ejecutar verificación R2 en staging real** — falta disponer del bucket, endpoint y
+      credenciales del entorno de staging; local no se considera evidencia de escritura R2.
+- [ ] **Confirmar el worker de Celery en staging** — falta acceso al dashboard o shell de Railway
+      para verificar que existe el segundo servicio con `celery -A config worker -l info
+      --concurrency=2`, que `CELERY_TASK_ALWAYS_EAGER=0` y que procesa una tarea real de PDF/PPTX.
 - [ ] **Cargar las variantes de logo faltantes** (white-reversed, dual-branding) y, si es
       posible, versiones SVG de las variantes ya cargadas — ver
       `brand/assets/logos/README.md` → "Qué falta".

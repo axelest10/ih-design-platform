@@ -5,6 +5,7 @@ from jsonschema import Draft202012Validator
 from rest_framework import serializers
 
 from .models import BriefReferenceUpload, DesignBrief
+from .services.generation import SUPPORTED_BRIEF_FORMATS
 from .services.options import (
     PRIMARY_PRODUCT_SLUGS,
     is_regional_admin,
@@ -40,9 +41,19 @@ class DesignBriefSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         instance = self.instance
+        brief_format = attrs.get("format", instance.format if instance else None)
+        if brief_format not in SUPPORTED_BRIEF_FORMATS:
+            raise serializers.ValidationError(
+                {
+                    "format": (
+                        f"El formato '{brief_format}' no está disponible todavía. "
+                        "Por ahora solo se pueden generar square, story y portrait."
+                    )
+                }
+            )
         payload = {
             "title": attrs.get("title", instance.title if instance else None),
-            "format": attrs.get("format", instance.format if instance else None),
+            "format": brief_format,
             "audience": attrs.get("audience", instance.audience if instance else None),
             "objective": attrs.get("objective", instance.objective if instance else None),
             "requested_message": attrs.get(

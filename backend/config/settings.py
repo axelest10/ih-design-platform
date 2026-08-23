@@ -7,6 +7,12 @@ from django.core.exceptions import ImproperlyConfigured
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 DJANGO_ENV = os.getenv("DJANGO_ENV", "local").strip().casefold()
+DEPLOYMENT_COMMIT_SHA = os.getenv("RAILWAY_GIT_COMMIT_SHA", "").strip()
+DEPLOYMENT_GIT_BRANCH = os.getenv("RAILWAY_GIT_BRANCH", "").strip()
+DEPLOYMENT_ENVIRONMENT = (
+    os.getenv("RAILWAY_ENVIRONMENT_NAME", "").strip() or DJANGO_ENV
+)
+DEPLOYMENT_SERVICE = os.getenv("RAILWAY_SERVICE_NAME", "").strip()
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "local-only-insecure-key")
 if DJANGO_ENV in {"staging", "production"} and SECRET_KEY == "local-only-insecure-key":
     raise ImproperlyConfigured("DJANGO_SECRET_KEY es obligatorio fuera de local.")
@@ -235,16 +241,36 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "0") == "1"
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
+AI_ROUTER_ENABLED = os.getenv("AI_ROUTER_ENABLED", "0") == "1"
+AI_PROMPT_IMPROVEMENT_ENABLED = os.getenv("AI_PROMPT_IMPROVEMENT_ENABLED", "0") == "1"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4.1-mini")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "")
 ANTHROPIC_TIMEOUT_SECONDS = float(os.getenv("ANTHROPIC_TIMEOUT_SECONDS", "45"))
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "")
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
+CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN", "")
+CLOUDFLARE_IMAGE_MODEL = os.getenv(
+    "CLOUDFLARE_IMAGE_MODEL", "@cf/black-forest-labs/flux-2-klein-4b"
+)
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "")
 PASSWORD_RESET_MAX_AGE_SECONDS = int(os.getenv("PASSWORD_RESET_MAX_AGE_SECONDS", "900"))
 DESIGN_TEST_MODE = os.getenv("DESIGN_TEST_MODE", "1") == "1"
 DESIGN_TEST_LIMIT = int(os.getenv("DESIGN_TEST_LIMIT", "50"))
+DESIGN_TEST_ALLOW_HUMAN_APPROVAL = (
+    os.getenv("DESIGN_TEST_ALLOW_HUMAN_APPROVAL", "0") == "1"
+)
+if DJANGO_ENV == "production" and DESIGN_TEST_ALLOW_HUMAN_APPROVAL:
+    raise ImproperlyConfigured(
+        "DESIGN_TEST_ALLOW_HUMAN_APPROVAL solo puede activarse fuera de production."
+    )
 
 LOGGING = {
     "version": 1,

@@ -9,7 +9,7 @@
     "title": { "type": "string", "minLength": 1, "maxLength": 180 },
     "format": {
       "type": "string",
-      "enum": ["square", "story", "portrait", "reel", "carousel", "banner", "html", "svg"]
+      "enum": ["square", "story", "portrait"]
     },
     "country": { "type": "string", "enum": ["MX", "CO", "CL", "PE"] },
     "product_slug": {

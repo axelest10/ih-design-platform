@@ -10,6 +10,7 @@ PRIMARY_PRODUCTS = {
     "university-programmes",
     "business-english",
     "general-english",
+    "cambridge-exam-preparation",
     "ielts-preparation",
     "spanish-courses",
 }
@@ -22,6 +23,7 @@ def test_brief_options_expose_only_primary_products_and_country_logos():
     assert response.status_code == 200
     payload = response.json()
     assert {product["product_slug"] for product in payload["products"]} == PRIMARY_PRODUCTS
+    assert len(payload["products"]) == 6
     assert payload["regional_access"] is False
     assert all(
         logo["scope"] in {"regional", "partner", "sub-brand"}

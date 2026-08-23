@@ -128,11 +128,6 @@ def test_invalid_brief_format_is_rejected():
         ("square", "general-english"),
         ("story", ""),
         ("portrait", "ielts-preparation"),
-        ("reel", ""),
-        ("carousel", "business-english"),
-        ("banner", ""),
-        ("html", "spanish-courses"),
-        ("svg", ""),
     ],
 )
 @pytest.mark.django_db
@@ -151,3 +146,20 @@ def test_creating_brief_never_creates_design(brief_format, product_slug):
     brief = DesignBrief.objects.get(pk=response.json()["id"])
     assert brief.status == DesignBrief.Status.DRAFT
     assert not Design.objects.filter(brief=brief).exists()
+
+
+@pytest.mark.parametrize(
+    "brief_format",
+    ("reel", "carousel", "banner", "presentation", "html", "svg"),
+)
+@pytest.mark.django_db
+def test_unavailable_brief_formats_are_rejected_before_generation(brief_format):
+    response = APIClient().post(
+        "/api/v1/briefs/",
+        _brief_payload(format=brief_format),
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "no está disponible todavía" in str(response.json()["format"])
+    assert not DesignBrief.objects.filter(format=brief_format).exists()

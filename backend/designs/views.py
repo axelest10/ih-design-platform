@@ -1,11 +1,8 @@
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from django.db import transaction
-from django.db.models import Max
 from django.http import FileResponse, HttpResponse
 from django.utils.cache import patch_cache_control
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
@@ -17,16 +14,62 @@ from security.permissions import (
     ROLE_MARKETING,
     ROLE_PLATFORM_ADMIN,
     ROLE_REVIEWER,
+    ROLE_VIEWER,
+    CorporateDomainPermission,
     RoleAwareViewSet,
+    is_platform_admin_user,
 )
 
-from .models import Design, DesignReviewComment, DesignVersion
-from .serializers import DesignReviewCommentSerializer, DesignSerializer
+from .models import AsyncGenerationJob, Design
+from .serializers import (
+    DesignDeliverySerializer,
+    DesignReviewCommentSerializer,
+    DesignSerializer,
+)
+from .services.async_jobs import enqueue_generation_task, task_response
+from .services.delivery import create_approved_design_delivery
 from .services.renderer import RenderValidationError, render_preview
-from .services.renderer_document import render_document_preview
-from .services.renderer_presentation import render_presentation_preview
-from .services.revision import DesignRevisionError, revise_design
+from .services.review import (
+    ReviewDecisionLockedError,
+    ReviewTransitionError,
+    reopen_design_version,
+    transition_design_version,
+)
+from .services.revision import DesignRevisionError
 from .services.versioning import create_next_version
+from .tasks import (
+    generate_document_preview_task,
+    generate_presentation_preview_task,
+    revise_design_task,
+)
+
+
+@api_view(["GET"])
+@permission_classes([CorporateDomainPermission])
+def generation_task_status(request, task_id):
+    """Devuelve el estado de una generación sin exponer jobs de otra persona."""
+    job = AsyncGenerationJob.objects.filter(task_id=task_id).select_related("owner").first()
+    if job is None:
+        return Response({"detail": "La tarea solicitada no existe."}, status=404)
+    if (
+        job.owner_id
+        and job.owner_id != getattr(request.user, "pk", None)
+        and not is_platform_admin_user(request.user)
+    ):
+        return Response({"detail": "La tarea solicitada no existe."}, status=404)
+    return Response(
+        {
+            "task_id": job.task_id,
+            "kind": job.kind,
+            "resource_type": job.resource_type,
+            "resource_id": job.resource_id or None,
+            "status": job.status,
+            "result": job.result if job.status == AsyncGenerationJob.Status.SUCCEEDED else None,
+            "error": job.error if job.status == AsyncGenerationJob.Status.FAILED else None,
+            "created_at": job.created_at,
+            "updated_at": job.updated_at,
+        }
+    )
 
 
 class DesignViewSet(RoleAwareViewSet, ModelViewSet):
@@ -43,7 +86,9 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         "revise": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "claude_review": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER),
         "review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "reopen_review": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
         "comments": (ROLE_PLATFORM_ADMIN, ROLE_REVIEWER),
+        "history": (ROLE_PLATFORM_ADMIN, ROLE_MARKETING, ROLE_DESIGNER, ROLE_REVIEWER, ROLE_VIEWER),
     }
 
     @action(detail=True, methods=["post"], url_path="preview")
@@ -104,13 +149,17 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
         """Refina el copy vigente mediante una instrucción independiente."""
         design = self.get_object()
         try:
-            design = revise_design(design, request.data.get("instruction"))
+            job = enqueue_generation_task(
+                revise_design_task,
+                owner=request.user,
+                kind="design-revision-copy",
+                resource_type="design",
+                resource_id=design.pk,
+                args=(design.pk, request.data.get("instruction")),
+            )
         except DesignRevisionError as exc:
             return Response({"detail": str(exc)}, status=400)
-        return Response(
-            DesignSerializer(design, context=self.get_serializer_context()).data,
-            status=201,
-        )
+        return task_response(request, job)
 
     def export_version(self, request, pk=None, version_number=None):
         """Descarga un artefacto persistido de una versión sin regenerarlo."""
@@ -144,6 +193,34 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             ),
         }
 
+        if output_format == "whatsapp":
+            if version.render_data.get("svg"):
+                response = HttpResponse(version.render_data["svg"], content_type="image/svg+xml")
+                response["Content-Disposition"] = (
+                    f'attachment; filename="design-{design.pk}-version-'
+                    f'{version.number}-whatsapp.svg"'
+                )
+                patch_cache_control(response, private=True, no_store=True)
+                return response
+            pdf_path = version.render_data.get("pdf_path")
+            if pdf_path and default_storage.exists(pdf_path):
+                response = FileResponse(
+                    default_storage.open(pdf_path, "rb"),
+                    as_attachment=True,
+                    filename=f"design-{design.pk}-version-{version.number}-whatsapp.pdf",
+                    content_type="application/pdf",
+                )
+                patch_cache_control(response, private=True, no_store=True)
+                return response
+            return Response(
+                {
+                    "detail": (
+                        "Esta versión no tiene una imagen SVG ni un documento PDF para WhatsApp."
+                    )
+                },
+                status=404,
+            )
+
         if output_format in inline_artifacts:
             data_key, content_type = inline_artifacts[output_format]
             content = version.render_data.get(data_key)
@@ -175,183 +252,166 @@ class DesignViewSet(RoleAwareViewSet, ModelViewSet):
             return response
 
         return Response(
-            {"detail": "Formato no disponible. Usa svg, html, pdf o pptx."},
+            {"detail": "Formato no disponible. Usa svg, html, pdf, pptx o whatsapp."},
             status=400,
+        )
+
+    @action(detail=True, methods=["get"], url_path="history")
+    def history(self, request, pk=None):
+        """Devuelve la línea de tiempo de versiones y su estado de revisión."""
+        design = self.get_object()
+        timeline = [
+            {
+                "id": version.pk,
+                "number": version.number,
+                "template_key": version.template_key,
+                "created_at": version.created_at,
+                "claude_review_status": version.claude_review_status,
+                "validation_status": (version.validation_summary or {}).get("status", "pending"),
+                "safe_zone_status": (version.validation_summary or {})
+                .get("safe_zone_check", {})
+                .get("status", "not_available"),
+            }
+            for version in design.versions.all()
+        ]
+        return Response(
+            {"design_id": design.pk, "current_status": design.status, "timeline": timeline}
         )
 
     def _preview_document(self, design, render_payload, material_type):
         try:
-            rendered = render_document_preview(
-                render_payload,
-                material_type=material_type,
+            job = enqueue_generation_task(
+                generate_document_preview_task,
+                owner=self.request.user,
+                kind="design-pdf-render",
+                resource_type="design",
+                resource_id=design.pk,
+                args=(design.pk, dict(render_payload), material_type.pk),
             )
         except RenderValidationError as exc:
             return Response({"detail": str(exc)}, status=400)
-
-        with transaction.atomic():
-            next_number = (
-                design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
-            ) + 1
-            pdf_path = default_storage.save(
-                f"generated-designs/{design.pk}/version-{next_number}.pdf",
-                ContentFile(rendered.pdf),
-            )
-            version = DesignVersion.objects.create(
-                design=design,
-                number=next_number,
-                template_key=rendered.template_key,
-                render_data={**rendered.data, "pdf_path": pdf_path},
-                asset_refs=[*rendered.asset_refs, pdf_path],
-                validation_summary=rendered.validation_summary,
-            )
-            update_fields = ["status", "updated_at"]
-            if design.brief.product_slug and settings.DESIGN_TEST_MODE:
-                if design.test_number is None:
-                    latest_test = (
-                        Design.objects.filter(test_number__isnull=False).aggregate(
-                            max_number=Max("test_number")
-                        )["max_number"]
-                        or 0
-                    )
-                    design.test_number = latest_test + 1
-                    update_fields.append("test_number")
-                design.status = Design.Status.SELF_REVIEW
-            else:
-                design.status = Design.Status.IN_REVIEW
-            design.save(update_fields=update_fields)
-
-        run_automatic_design_review(version)
-        design.refresh_from_db(fields=["status", "updated_at"])
-        return Response(
-            {
-                "design_id": str(design.pk),
-                "status": design.status,
-                "version": version.number,
-                "test_number": design.test_number,
-                "template_key": rendered.template_key,
-                "template_version": rendered.template_version,
-                "validation": rendered.validation_summary,
-                "test_batch_limit": settings.DESIGN_TEST_LIMIT,
-                "test_batch_complete": bool(
-                    design.test_number and design.test_number >= settings.DESIGN_TEST_LIMIT
-                ),
-                "preview": {"pdf_url": default_storage.url(pdf_path)},
-            },
-            status=201,
-        )
+        return task_response(self.request, job)
 
     def _preview_presentation(self, design, render_payload, material_type):
         try:
-            rendered = render_presentation_preview(
-                render_payload,
-                material_type=material_type,
+            job = enqueue_generation_task(
+                generate_presentation_preview_task,
+                owner=self.request.user,
+                kind="design-pptx-render",
+                resource_type="design",
+                resource_id=design.pk,
+                args=(design.pk, dict(render_payload), material_type.pk),
             )
         except RenderValidationError as exc:
             return Response({"detail": str(exc)}, status=400)
-
-        with transaction.atomic():
-            next_number = (
-                design.versions.aggregate(max_number=Max("number"))["max_number"] or 0
-            ) + 1
-            pptx_path = default_storage.save(
-                f"generated-designs/{design.pk}/version-{next_number}.pptx",
-                ContentFile(rendered.pptx),
-            )
-            version = DesignVersion.objects.create(
-                design=design,
-                number=next_number,
-                template_key=rendered.template_key,
-                render_data={**rendered.data, "pptx_path": pptx_path},
-                asset_refs=[*rendered.asset_refs, pptx_path],
-                validation_summary=rendered.validation_summary,
-            )
-            update_fields = ["status", "updated_at"]
-            if design.brief.product_slug and settings.DESIGN_TEST_MODE:
-                if design.test_number is None:
-                    latest_test = (
-                        Design.objects.filter(test_number__isnull=False).aggregate(
-                            max_number=Max("test_number")
-                        )["max_number"]
-                        or 0
-                    )
-                    design.test_number = latest_test + 1
-                    update_fields.append("test_number")
-                design.status = Design.Status.SELF_REVIEW
-            else:
-                design.status = Design.Status.IN_REVIEW
-            design.save(update_fields=update_fields)
-
-        run_automatic_design_review(version)
-        design.refresh_from_db(fields=["status", "updated_at"])
-        return Response(
-            {
-                "design_id": str(design.pk),
-                "status": design.status,
-                "version": version.number,
-                "test_number": design.test_number,
-                "template_key": rendered.template_key,
-                "template_version": rendered.template_version,
-                "validation": rendered.validation_summary,
-                "test_batch_limit": settings.DESIGN_TEST_LIMIT,
-                "test_batch_complete": bool(
-                    design.test_number and design.test_number >= settings.DESIGN_TEST_LIMIT
-                ),
-                "preview": {"pptx_url": default_storage.url(pptx_path)},
-            },
-            status=201,
-        )
+        return task_response(self.request, job)
 
     @action(detail=True, methods=["post"], url_path="review")
     def review(self, request, pk=None):
         """Aprueba o rechaza una versión renderizada del diseño."""
         design = self.get_object()
-        if design.brief.product_slug and settings.DESIGN_TEST_MODE:
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
             return Response(
                 {
                     "detail": (
-                        "La aprobaciÃ³n formal estÃ¡ desactivada durante las "
+                        "La aprobación formal está protegida durante las primeras 50 pruebas. "
+                        "Para probar el flujo en staging, configura "
+                        "DESIGN_TEST_ALLOW_HUMAN_APPROVAL=1; no lo actives en production."
+                    ),
+                    "next": "claude-review",
+                    "approval_enabled": False,
+                },
+                status=409,
+            )
+        decision = request.data.get("decision")
+        if decision not in {"approve", "reject", "request_changes"}:
+            return Response(
+                {"detail": "decision debe ser 'approve', 'reject' o 'request_changes'."},
+                status=400,
+            )
+
+        version_number = request.data.get("version")
+        version = design.versions.filter(number=version_number).first() if version_number else None
+        if version is None:
+            return Response({"detail": "No existe una versión para revisar."}, status=404)
+
+        delivery = None
+        try:
+            design, version, comment = transition_design_version(
+                design=design,
+                version=version,
+                decision=decision,
+                reviewer=request.user,
+                comment=request.data.get("comment"),
+            )
+        except ReviewDecisionLockedError as exc:
+            return Response({"detail": str(exc)}, status=409)
+        except ReviewTransitionError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        if decision == "approve":
+            delivery = create_approved_design_delivery(
+                design=design,
+                version=version,
+                base_url=request.build_absolute_uri("/").rstrip("/"),
+            )
+        return Response(
+            {
+                "design_id": str(design.pk),
+                "status": design.status,
+                "review_status": version.review_status,
+                "version": version.number,
+                "approved_version": design.approved_version_id,
+                "delivery": DesignDeliverySerializer(delivery).data if delivery else None,
+                "comment_id": comment.pk if comment else None,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="review/reopen")
+    def reopen_review(self, request, pk=None):
+        """Reabre una versión decidida para permitir una nueva revisión."""
+        design = self.get_object()
+        if (
+            design.brief.product_slug
+            and settings.DESIGN_TEST_MODE
+            and not settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL
+        ):
+            return Response(
+                {
+                    "detail": (
+                        "La aprobación formal está desactivada durante las "
                         "primeras 50 pruebas."
                     ),
                     "next": "claude-review",
                 },
                 status=409,
             )
-        decision = request.data.get("decision")
-        if decision not in {"approve", "reject"}:
-            return Response(
-                {"detail": "decision debe ser 'approve' o 'reject'."},
-                status=400,
-            )
 
         version_number = request.data.get("version")
-        version = (
-            design.versions.filter(number=version_number).first()
-            if version_number
-            else design.versions.first()
-        )
+        version = design.versions.filter(number=version_number).first() if version_number else None
         if version is None:
-            return Response({"detail": "No existe una versión para revisar."}, status=404)
+            return Response({"detail": "No existe una versión para reabrir."}, status=404)
 
-        if decision == "approve":
-            design.status = Design.Status.APPROVED
-            design.approved_version = version
-        else:
-            design.status = Design.Status.REJECTED
-        design.save(update_fields=["status", "approved_version", "updated_at"])
-        comment = str(request.data.get("comment") or "").strip()
-        if comment:
-            DesignReviewComment.objects.create(
+        try:
+            design, version, comment = reopen_design_version(
                 design=design,
                 version=version,
-                author=request.user,
-                comment=comment,
+                reviewer=request.user,
+                comment=request.data.get("comment"),
             )
+        except ReviewTransitionError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return Response(
             {
                 "design_id": str(design.pk),
                 "status": design.status,
+                "review_status": version.review_status,
                 "version": version.number,
                 "approved_version": design.approved_version_id,
+                "comment_id": comment.pk if comment else None,
             }
         )
 

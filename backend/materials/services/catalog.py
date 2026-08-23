@@ -42,3 +42,65 @@ def school_kit_products(country: str = "", priority: list[str] | None = None) ->
             product["canonical_name"],
         ),
     )
+
+
+def sales_kit_products() -> list[dict]:
+    """Devuelve todos los productos activos, sin inventar prioridades comerciales."""
+    return [
+        {
+            "product_slug": product["product_slug"],
+            "canonical_name": product.get("canonical_name", product["product_slug"]),
+            "brand_scope": product.get("brand_scope", "core"),
+            "pillar": product.get("pillar"),
+            "status": product.get("status", "needs_confirmation"),
+            "needs_confirmation": product.get("needs_confirmation", False),
+            "priority": False,
+        }
+        for product in _catalog_products()
+    ]
+
+VENUE_KIT_DEFAULT_PRODUCT_SLUGS = [
+    "general-english",
+    "cambridge-exam-preparation",
+    "university-programmes",
+    "business-english",
+    "ielts-preparation",
+    "spanish-courses",
+]
+
+
+def venue_kit_products(priority: list[str] | None = None) -> list[dict]:
+    """Return the shared six-pillar venue offer plus future catalogued options.
+
+    Venue availability is explicitly confirmed by the client for the six defaults, so this
+    helper intentionally does not apply the country inference filter used by school-kit.
+    Additional active catalog products remain selectable without changing this default set.
+    """
+    priority = priority or VENUE_KIT_DEFAULT_PRODUCT_SLUGS
+    products = []
+    for product in _catalog_products():
+        products.append(
+            {
+                "product_slug": product["product_slug"],
+                "canonical_name": product.get("canonical_name", product["product_slug"]),
+                "brand_scope": product.get("brand_scope", "core"),
+                "pillar": product.get("pillar"),
+                "status": product.get("status", "needs_confirmation"),
+                "needs_confirmation": product.get("needs_confirmation", False),
+                "availability_status": (
+                    "confirmed_by_client"
+                    if product["product_slug"] in VENUE_KIT_DEFAULT_PRODUCT_SLUGS
+                    else "needs_confirmation"
+                ),
+                "priority": product["product_slug"] in priority,
+            }
+        )
+    priority_order = {slug: index for index, slug in enumerate(priority)}
+    return sorted(
+        products,
+        key=lambda product: (
+            0 if product["priority"] else 1,
+            priority_order.get(product["product_slug"], len(priority)),
+            product["canonical_name"],
+        ),
+    )

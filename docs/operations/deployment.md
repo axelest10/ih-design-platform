@@ -10,6 +10,61 @@ Estado actual: el staging de Railway está desplegado y su endpoint de salud fue
 `infrastructure/docker-compose.yml` levanta PostgreSQL y Redis para pruebas locales de la
 arquitectura de servicios.
 
+## Estado verificado de staging (2026-08-16)
+
+El servicio web de staging está publicado en el dominio custom:
+
+```text
+https://mydesign.ihlatam.com
+```
+
+La URL cruda de Railway (`ih-design-platform-production.up.railway.app`) se conserva como
+referencia técnica y fallback de diagnóstico, pero no es la URL pública principal. La evidencia
+verificada desde fuera de Railway es:
+
+- `GET /api/v1/health/` responde `200` con `{"status": "ok", "service": "ih-design-platform"}`.
+- `GET /` responde `200` y sirve el frontend de la plataforma.
+- `GET /api/v1/branding/logos/` responde `200` y devuelve el catálogo público activo.
+
+Configuración esperada en Railway para el servicio `web`:
+
+1. En **Settings > Networking > Custom Domains**, el dominio custom es
+   `mydesign.ihlatam.com`.
+2. El DNS del dominio apunta al target que Railway muestra para ese custom domain. Ese target es
+   específico del proyecto y no se copia al repositorio; debe conservarse en el proveedor DNS.
+3. `DJANGO_ALLOWED_HOSTS` debe incluir `mydesign.ihlatam.com`,
+   `ih-design-platform-production.up.railway.app` y `healthcheck.railway.app`.
+4. `CSRF_TRUSTED_ORIGINS` debe incluir `https://mydesign.ihlatam.com` y
+   `https://ih-design-platform-production.up.railway.app`.
+
+La aceptación del custom domain por el endpoint de salud confirma el comportamiento efectivo de
+`DJANGO_ALLOWED_HOSTS`. En esta auditoría no hubo acceso al dashboard ni a un shell de Railway, por
+lo que los valores literales de las variables y el target DNS configurado en Railway no se pueden
+confirmar directamente; deben revisarse allí antes de considerar cerrado ese punto operativo.
+
+### Identidad del release desplegado
+
+`GET /api/v1/health/` incluye metadatos no secretos que Railway proporciona automáticamente a los
+builds y procesos originados por GitHub:
+
+```json
+{
+  "status": "ok",
+  "service": "ih-design-platform",
+  "release": {
+    "commit_sha": "<RAILWAY_GIT_COMMIT_SHA>",
+    "git_branch": "<RAILWAY_GIT_BRANCH>",
+    "environment": "<RAILWAY_ENVIRONMENT_NAME>",
+    "service": "<RAILWAY_SERVICE_NAME>"
+  }
+}
+```
+
+No se deben crear manualmente esas cuatro variables. Si `commit_sha` o `git_branch` aparecen como
+`null`, el proceso no recibió metadatos de un trigger GitHub y ese despliegue no sirve como
+evidencia de alineación con `main`. Antes de una certificación, el SHA de producción y staging se
+compara literalmente con `git rev-parse origin/main`.
+
 ## Base técnica actual
 
 - `backend/config/settings.py` acepta `DATABASE_URL` con PostgreSQL y conserva SQLite para local.
@@ -45,11 +100,22 @@ AWS_S3_REGION_NAME=<región del bucket>
 AWS_S3_ENDPOINT_URL=
 AWS_ACCESS_KEY_ID=<credencial fuera de Git>
 AWS_SECRET_ACCESS_KEY=<secreto fuera de Git>
+AI_ROUTER_ENABLED=0
+AI_PROMPT_IMPROVEMENT_ENABLED=0
 OPENAI_API_KEY=<secreto fuera de Git>
 OPENAI_MODEL=gpt-4.1-mini
 ANTHROPIC_API_KEY=<secreto creado en Claude Console>
 ANTHROPIC_MODEL=<ID de modelo habilitado para la cuenta; no se fija en el código>
 ANTHROPIC_TIMEOUT_SECONDS=45
+GEMINI_API_KEY=
+GEMINI_MODEL=
+GROQ_API_KEY=
+GROQ_MODEL=openai/gpt-oss-120b
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+CLOUDFLARE_IMAGE_MODEL=@cf/black-forest-labs/flux-2-klein-4b
 RESEND_API_KEY=<API key secreta de Resend>
 RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
 PASSWORD_RESET_MAX_AGE_SECONDS=900
@@ -81,6 +147,43 @@ Rollback de Design: poner `HUB_OIDC_ENABLED=0` y redeployar solo el servicio de 
 detiene nuevas redirecciones OIDC sin borrar usuarios, enlaces ni eventos. No eliminar la
 migración ni reescribir el historial; la autenticación local permanece disponible.
 
+### Verificación de escritura en Cloudflare R2
+
+El repositorio incluye un comando reproducible que valida configuración, escritura, lectura y
+borrado de un objeto temporal. Ejecutarlo dentro del servicio de staging, después de configurar
+las cinco variables `AWS_*` y sin imprimir sus valores:
+
+```text
+python manage.py verify_storage_backend
+```
+
+Resultado esperado:
+
+```text
+storage_backend=storages.backends.s3.S3Storage
+endpoint_host=<account>.r2.cloudflarestorage.com
+bucket_configured=yes
+write=passed
+read=passed
+delete=passed
+result=passed
+```
+
+Para validar solo la configuración sin una escritura de red:
+
+```text
+python manage.py verify_storage_backend --dry-run
+```
+
+La ejecución local de este repositorio no se considera una verificación R2 porque no tiene bucket,
+endpoint ni credenciales configurados. El comando debe ejecutarse en staging; nunca se deben
+cometer credenciales ni usar el `--keep` salvo que se quiera inspeccionar manualmente el objeto.
+En esta revisión, `python manage.py verify_storage_backend --dry-run` terminó con
+`CommandError: R2 storage no está activo`, que es el resultado esperado hasta configurar staging.
+Con `HUB_OIDC_ENABLED=0`, cada integrante usa su cuenta y una contraseña almacenada con el hasher
+de Django. Con `HUB_OIDC_ENABLED=1`, Hub SSO es la ruta principal y el login local permanece como
+contingencia de Staging; los administradores siguen gestionando las cuentas locales desde el panel.
+
 La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
 `pending` con `integration_status=needs_confirmation`; una falla del proveedor deja
@@ -90,6 +193,63 @@ configurar `ANTHROPIC_MODEL=claude-sonnet-5`, ID vigente documentado por Anthrop
 entre velocidad e inteligencia; sigue siendo una variable de entorno y no una constante del
 código. Antes de cambiarlo en el futuro, confirmar el ID disponible en la cuenta mediante la
 documentación o Models API oficial.
+
+### AI Router Fase A y rollback
+
+`AI_ROUTER_ENABLED` queda en `0` por defecto. Con ese valor, los borradores de copy llaman
+directamente a `OpenAIProvider` y la revisión visual obtiene directamente el proveedor Anthropic o
+el fallback `needs_confirmation`, exactamente como antes de la Fase A.
+
+Al establecer `AI_ROUTER_ENABLED=1`, únicamente esos dos flujos certificados pasan por el registro
+y la política de tarea. La selección sigue siendo OpenAI para `copy_draft` y Anthropic para
+`automatic_visual_review`; no hay scoring, proveedores alternativos ni fallback pagado. Cada
+auditoría agrega `route_id`, `task_type`, `flow_classification` y `selection_reason` a
+`response_metadata`, sin modificar el resultado del proveedor ni el modelo persistido.
+
+Rollback operativo: establecer `AI_ROUTER_ENABLED=0` en web y worker y redesplegar ambos servicios.
+No requiere migración ni revocar o cambiar credenciales. La Fase A no debe activarse durante la
+certificación end-to-end salvo que Axel decida probar explícitamente la equivalencia del router.
+
+### Gemini: proveedor solo para evaluación
+
+`GeminiProvider` queda registrado con `production_status=evaluation_only`, sin política de tarea,
+fallback ni flujo real asociado. `GEMINI_API_KEY` y `GEMINI_MODEL` permanecen vacías: su activación
+queda pendiente de una decisión separada y no requiere encender `AI_ROUTER_ENABLED`. Según los
+[términos de Gemini API](https://ai.google.dev/gemini-api/terms), los servicios gratuitos pueden
+usar entradas y respuestas para mejorar productos y contemplan revisión humana. Por ello, aun si
+se configuran ambas variables, este adaptador solo puede evaluarse con datos sintéticos o públicos;
+nunca debe recibir briefs reales, datos confidenciales ni información personal de IH.
+
+### Adaptadores free-tier pendientes de activación
+
+Groq, OpenRouter y Cloudflare Workers AI quedan registrados como candidatos de producción futura,
+pero no pertenecen a `TASK_POLICIES`, no tienen fallback ni punto de llamada real. Sus credenciales
+permanecen vacías y no deben configurarse en staging o producción hasta una autorización separada.
+Agregar estos adaptadores tampoco requiere activar `AI_ROUTER_ENABLED`, que continúa en `0`.
+
+- Groq usa el modelo de texto `openai/gpt-oss-120b` por defecto mediante la compatibilidad OpenAI.
+- OpenRouter exige un modelo fijo explícito y rechaza `openrouter/free`. El candidato a confirmar
+  es `openai/gpt-oss-120b:free`, listado en el
+  [catálogo gratuito oficial](https://openrouter.ai/models?pricing=free); `OPENROUTER_MODEL` sigue
+  vacío hasta esa confirmación.
+- Cloudflare usa exclusivamente `@cf/black-forest-labs/flux-2-klein-4b` para imagen base y devuelve
+  un descriptor del artefacto almacenado, nunca el binario dentro de `GenerationResponse.content`.
+
+Los adaptadores no reintentan automáticamente un `429`: Groq/OpenRouter conservan `retry-after`
+en el error y Cloudflare expone el código `3036` cuando se agota la asignación gratuita. El
+circuit breaker, fallback y rollout son trabajo posterior.
+
+### Mejora opcional de instrucción de copy
+
+`AI_PROMPT_IMPROVEMENT_ENABLED=0` conserva exactamente el flujo certificado: una sola generación
+de copy con OpenAI y la instrucción fija actual. Debe permanecer en `0` tanto en staging como en
+producción hasta una autorización separada de Axel, porque habilitarlo modifica la instrucción que
+recibe el flujo actualmente en certificación.
+
+Con `1`, Groq intenta aclarar la instrucción usando únicamente el mismo `authorized_context` ya
+validado. La generación final continúa en OpenAI y conserva `_parse_copy()` como barrera para
+cifras y CTA. Si Groq no está configurado, falla o devuelve contenido inválido, se usa la
+instrucción original y la generación final continúa; no existe fallback a OpenRouter.
 
 ## Comandos del servicio web
 
@@ -112,8 +272,38 @@ python manage.py collectstatic --noinput
 python manage.py check --deploy
 ```
 
-Celery no está activo en el flujo actual. Si se habilita, necesita un worker separado conectado a
-`REDIS_URL`; no se debe ejecutar dentro del mismo proceso Gunicorn.
+Las generaciones de PDF, PPTX y copy con IA se encolan en Celery. El servicio web no debe ejecutar
+un worker dentro del mismo proceso Gunicorn: necesita un segundo servicio Railway conectado al
+mismo repositorio, con el mismo `infrastructure/Dockerfile`, las mismas variables de entorno y el
+mismo `REDIS_URL`.
+
+## Servicio worker de Celery en Railway
+
+El servicio existente `web` conserva el comando de Gunicorn. Crea un segundo servicio desde el
+mismo repositorio y sobrescribe su **Start Command** en Railway con exactamente:
+
+```text
+celery -A config worker -l info --concurrency=2
+```
+
+Configuración recomendada del worker:
+
+- Builder: el mismo Dockerfile `infrastructure/Dockerfile` que usa `web`.
+- Railway Config File: `/railway.worker.json`. Este archivo conserva el Dockerfile y el comando
+  Celery, pero omite deliberadamente la migración pre-deploy y el healthcheck HTTP exclusivos del
+  servicio web.
+- Root directory: la raíz del repositorio.
+- Variables: reutilizar las variables del servicio `web`, especialmente `REDIS_URL`,
+  `DATABASE_URL`, `DJANGO_SECRET_KEY`, almacenamiento y claves de proveedores.
+- No añadir un healthcheck HTTP al worker; no escucha tráfico web.
+- `--concurrency=2` es un punto de partida prudente para el plan actual porque los renderers de
+  PDF/PPTX consumen CPU y memoria. Ajustarlo sólo después de observar memoria, tiempos de cola y
+  número de tareas fallidas.
+
+Las vistas devuelven `202 Accepted` con `task_id` y `status_url` cuando
+`CELERY_TASK_ALWAYS_EAGER=0`. El frontend debe consultar `GET /api/v1/tasks/<task_id>/` hasta
+recibir `succeeded` o `failed`. Si no hay worker desplegado, las tareas permanecen en cola y no se
+debe interpretar el `202` como generación completada.
 
 ## Comparativo corto
 
@@ -169,14 +359,14 @@ JSON exacto esperado.
 PowerShell:
 
 ```powershell
-$env:SMOKE_TEST_BASE_URL="https://ih-design-platform-production.up.railway.app"
+$env:SMOKE_TEST_BASE_URL="https://mydesign.ihlatam.com"
 python tests/smoke_deployment.py
 ```
 
 Shell compatible con POSIX:
 
 ```bash
-SMOKE_TEST_BASE_URL=https://ih-design-platform-production.up.railway.app \
+SMOKE_TEST_BASE_URL=https://mydesign.ihlatam.com \
   python tests/smoke_deployment.py
 ```
 

@@ -48,7 +48,9 @@ def revise_design(design: Design, instruction: str) -> Design:
     )
 
     try:
-        copy_fields = generate_structured_copy(OpenAIProvider(), generation_request)
+        copy_fields = generate_structured_copy(
+            OpenAIProvider(), generation_request, design_version=current_version
+        )
         rendered = render_preview(
             {
                 "template_key": current_version.template_key,
