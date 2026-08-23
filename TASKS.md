@@ -1,5 +1,14 @@
 # Tareas
 
+## AI Router — Fase A (2026-08-22)
+
+- [x] Registrar exclusivamente OpenAI para borradores de copy y Anthropic para revisión visual.
+- [x] Clasificar ambos puntos como `existing_certified_flow`, sin aplicar prioridad free-first.
+- [x] Conservar `audited_generate()`/`record_visual_review()` y agregar metadata de selección sin
+      migrar `AICallAudit`.
+- [x] Añadir `AI_ROUTER_ENABLED=0` por defecto y documentar rollback al camino directo.
+- [ ] Las fases Groq, Cloudflare/FLUX, Gemini y premium compare permanecen fuera de este alcance.
+
 ## Estabilización y certificación (2026-08-22)
 
 - [x] Exponer en el healthcheck el SHA/rama/entorno/servicio reales inyectados por Railway, sin

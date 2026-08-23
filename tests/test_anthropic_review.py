@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 from rest_framework.test import APIClient
 
+from ai.models import AICallAudit
 from ai.providers import GenerationResponse
 from ai.providers.anthropic_review import (
     ANTHROPIC_MESSAGES_URL,
@@ -105,6 +106,83 @@ def test_configured_provider_falls_back_without_key_or_model(settings):
     settings.ANTHROPIC_MODEL = ""
 
     assert isinstance(configured_visual_review_provider(), NeedsConfirmationClaudeReviewProvider)
+
+
+@pytest.mark.django_db
+def test_router_enabled_visual_review_uses_current_anthropic_model_and_contract(settings):
+    settings.AI_ROUTER_ENABLED = True
+    settings.ANTHROPIC_API_KEY = "router-test-anthropic-key"
+    settings.ANTHROPIC_MODEL = "router-test-anthropic-model"
+    settings.ANTHROPIC_TIMEOUT_SECONDS = 17
+    brief = DesignBrief.objects.create(
+        title="Revisión Anthropic por router",
+        format=DesignBrief.Format.SQUARE,
+        audience="Audiencia sintética",
+        objective="Comprobar equivalencia",
+    )
+    design = Design.objects.create(brief=brief)
+    version = DesignVersion.objects.create(
+        design=design,
+        number=1,
+        template_key="square-v1",
+        render_data={"headline": "Prueba", "svg": "<svg></svg>"},
+    )
+    result = VisualReviewResult(decision="pass", report=_report())
+
+    with patch.object(
+        AnthropicVisualReviewProvider,
+        "review",
+        autospec=True,
+        return_value=result,
+    ) as review:
+        reviewed = run_automatic_design_review(version)
+
+    provider, request = review.call_args.args
+    assert provider.name == "anthropic"
+    assert provider.api_key == settings.ANTHROPIC_API_KEY
+    assert provider.model == settings.ANTHROPIC_MODEL
+    assert provider.timeout == settings.ANTHROPIC_TIMEOUT_SECONDS
+    assert request.version_id == version.pk
+    assert reviewed.claude_review_status == DesignVersion.ClaudeReviewStatus.PASS
+    assert reviewed.claude_review["provider"] == "anthropic"
+    audit = AICallAudit.objects.get(design_version=version)
+    assert audit.provider == "anthropic"
+    assert audit.model == settings.ANTHROPIC_MODEL
+    assert audit.response_metadata == {
+        "route_id": "existing-visual-review-anthropic-v1",
+        "task_type": "automatic_visual_review",
+        "flow_classification": "existing_certified_flow",
+        "selection_reason": "existing_certified_flow, único candidato",
+    }
+
+
+@pytest.mark.django_db
+def test_router_enabled_preserves_needs_confirmation_without_anthropic_config(settings):
+    settings.AI_ROUTER_ENABLED = True
+    settings.ANTHROPIC_API_KEY = ""
+    settings.ANTHROPIC_MODEL = ""
+    brief = DesignBrief.objects.create(
+        title="Revisión sin credenciales",
+        format=DesignBrief.Format.SQUARE,
+        audience="Audiencia sintética",
+        objective="Conservar fallback",
+    )
+    design = Design.objects.create(brief=brief)
+    version = DesignVersion.objects.create(
+        design=design,
+        number=1,
+        template_key="square-v1",
+        render_data={"headline": "Prueba", "svg": "<svg></svg>"},
+    )
+
+    reviewed = run_automatic_design_review(version)
+
+    assert reviewed.claude_review_status == DesignVersion.ClaudeReviewStatus.PENDING
+    assert reviewed.claude_review["integration_status"] == "needs_confirmation"
+    assert reviewed.claude_review["provider"] == "claude-stub"
+    audit = AICallAudit.objects.get(design_version=version)
+    assert audit.provider == "claude-stub"
+    assert audit.response_metadata["route_id"] == "existing-visual-review-anthropic-v1"
 
 
 @pytest.mark.django_db
