@@ -1,12 +1,14 @@
 import json
 from datetime import date, timedelta
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 from rest_framework.test import APIClient
 
 from ai.models import AICallAudit
 from ai.providers import AIProviderError, GenerationResponse
+from ai.providers.groq_provider import GROQ_BASE_URL
 from campaigns.models import Campaign
 from catalog.models import Branch, Product
 from materials.models import MaterialType
@@ -45,6 +47,22 @@ def _bundle(slug, **kwargs):
     from materials.models import MaterialBundle
 
     return MaterialBundle.objects.create(**payload)
+
+
+def _groq_client_factory(content):
+    response = SimpleNamespace(
+        id="groq-copy-response",
+        model="served-groq-model",
+        choices=[SimpleNamespace(message=SimpleNamespace(content=content))],
+        usage=SimpleNamespace(
+            model_dump=lambda: {"prompt_tokens": 20, "completion_tokens": 12}
+        ),
+    )
+    create = Mock(return_value=response)
+    client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+    )
+    return Mock(return_value=client), create
 
 
 @pytest.mark.django_db
@@ -145,46 +163,115 @@ def test_ai_copy_provider_error_is_audited_once_without_saving_a_draft():
 
 
 @pytest.mark.django_db
-def test_router_enabled_copy_uses_current_openai_provider_model_and_contract(settings):
+def test_router_enabled_copy_uses_groq_model_and_contract_without_network(settings):
     settings.AI_ROUTER_ENABLED = True
-    settings.OPENAI_API_KEY = "router-test-key"
-    settings.OPENAI_MODEL = "router-test-openai-model"
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = False
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
     bundle = _bundle("sales-kit", campaign=_campaign())
-    response = GenerationResponse(
-        provider="openai",
-        model=settings.OPENAI_MODEL,
-        content=json.dumps(
-            {"headline": "Aprende inglés", "body": "Una ruta confirmada.", "cta": "Agenda ahora"}
-        ),
-        metadata={"response_id": "same-openai-response"},
+    factory, create = _groq_client_factory(
+        json.dumps(
+            {
+                "headline": "Aprende inglés",
+                "body": "Una ruta confirmada.",
+                "cta": "Agenda ahora",
+            }
+        )
     )
 
-    with patch(
-        "ai.providers.openai_provider.OpenAIProvider.generate",
-        autospec=True,
-        return_value=response,
-    ) as generate:
+    with (
+        patch("ai.providers.groq_provider.default_client_factory", factory),
+        patch("materials.services.ai_copy_drafts.OpenAIProvider.generate") as openai_generate,
+    ):
         result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
 
     assert result.status_code == 201, result.json()
-    provider, request = generate.call_args.args
-    assert provider.name == "openai"
-    assert provider.api_key == settings.OPENAI_API_KEY
-    assert provider.model == settings.OPENAI_MODEL
-    assert request.output_format == "json"
-    assert result.json()["ai_copy_draft"]["provider"] == "openai"
-    assert result.json()["ai_copy_draft"]["model"] == settings.OPENAI_MODEL
+    factory.assert_called_once_with(
+        api_key=settings.GROQ_API_KEY,
+        base_url=GROQ_BASE_URL,
+        max_retries=0,
+    )
+    assert create.call_args.kwargs["model"] == settings.GROQ_MODEL
+    assert result.json()["ai_copy_draft"]["provider"] == "groq"
+    assert result.json()["ai_copy_draft"]["model"] == settings.GROQ_MODEL
+    openai_generate.assert_not_called()
     audit = AICallAudit.objects.get(material_bundle=bundle)
-    assert audit.provider == "openai"
-    assert audit.model == settings.OPENAI_MODEL
-    assert audit.response == response.content
+    assert audit.provider == "groq"
+    assert audit.model == settings.GROQ_MODEL
     assert audit.response_metadata == {
-        "response_id": "same-openai-response",
-        "route_id": "existing-copy-draft-openai-v1",
+        "response_id": "groq-copy-response",
+        "actual_model": "served-groq-model",
+        "usage": {"prompt_tokens": 20, "completion_tokens": 12},
+        "route_id": "existing-copy-draft-groq-v1",
         "task_type": "copy_draft",
         "flow_classification": "existing_certified_flow",
-        "selection_reason": "existing_certified_flow, único candidato",
+        "selection_reason": (
+            "existing_certified_flow, Groq seleccionado explícitamente por Axel para evitar "
+            "costo recurrente"
+        ),
     }
+
+
+@pytest.mark.django_db
+def test_router_enabled_groq_copy_keeps_anti_invention_validation(settings):
+    settings.AI_ROUTER_ENABLED = True
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = False
+    settings.GROQ_API_KEY = "synthetic-groq-key"
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    factory, _create = _groq_client_factory(
+        json.dumps(
+            {
+                "headline": "Aprende inglés en 30 días",
+                "body": "Una ruta confirmada.",
+                "cta": "Agenda ahora",
+            }
+        )
+    )
+
+    with patch("ai.providers.groq_provider.default_client_factory", factory):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 400
+    assert "cifras que no están" in result.json()["detail"]
+    bundle.refresh_from_db()
+    assert "ai_copy_draft" not in bundle.brief_context
+    assert AICallAudit.objects.filter(
+        material_bundle=bundle,
+        provider="groq",
+        status=AICallAudit.Status.COMPLETED,
+    ).exists()
+
+
+@pytest.mark.django_db
+def test_router_enabled_copy_without_groq_key_fails_without_fallback(settings):
+    settings.AI_ROUTER_ENABLED = True
+    settings.AI_PROMPT_IMPROVEMENT_ENABLED = False
+    settings.GROQ_API_KEY = ""
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
+    bundle = _bundle("sales-kit", campaign=_campaign())
+    factory = Mock()
+
+    with (
+        patch("ai.providers.groq_provider.default_client_factory", factory),
+        patch("materials.services.ai_copy_drafts.OpenAIProvider.generate") as openai_generate,
+        patch(
+            "ai.providers.openrouter_provider.OpenRouterProvider.generate"
+        ) as openrouter_generate,
+    ):
+        result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
+
+    assert result.status_code == 400
+    assert "GROQ_API_KEY is not configured" in result.json()["detail"]
+    factory.assert_not_called()
+    openai_generate.assert_not_called()
+    openrouter_generate.assert_not_called()
+    audit = AICallAudit.objects.get(material_bundle=bundle)
+    assert audit.provider == "groq"
+    assert audit.status == AICallAudit.Status.ERROR
+    assert audit.response == "GROQ_API_KEY is not configured"
+    bundle.refresh_from_db()
+    assert "ai_copy_draft" not in bundle.brief_context
 
 
 @pytest.mark.django_db
@@ -206,12 +293,17 @@ def test_prompt_improvement_disabled_preserves_original_copy_request_and_draft(s
             autospec=True,
             return_value=response,
         ) as generate,
+        patch(
+            "ai.providers.groq_provider.GroqProvider.generate",
+            autospec=True,
+        ) as groq_generate,
         patch("materials.services.ai_copy_drafts.routed_generate") as routed,
     ):
         result = APIClient().post(f"/api/v1/material-bundles/{bundle.pk}/suggest-copy/")
 
     assert result.status_code == 201, result.json()
-    request = generate.call_args.args[1]
+    provider, request = generate.call_args.args
+    assert provider.name == "openai"
     assert request.instruction == COPY_DRAFT_INSTRUCTION
     assert request.output_format == "json"
     draft = result.json()["ai_copy_draft"]
@@ -225,6 +317,7 @@ def test_prompt_improvement_disabled_preserves_original_copy_request_and_draft(s
         "authorized_context",
     }
     assert AICallAudit.objects.filter(material_bundle=bundle).count() == 1
+    groq_generate.assert_not_called()
     routed.assert_not_called()
 
 

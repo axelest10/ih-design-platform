@@ -172,9 +172,12 @@ TASK_POLICIES = {
     AITaskType.COPY_DRAFT: AITaskPolicy(
         task_type=AITaskType.COPY_DRAFT,
         flow_classification=AIFlowClassification.EXISTING_CERTIFIED_FLOW,
-        provider_key="openai_generation",
-        route_id="existing-copy-draft-openai-v1",
-        selection_reason="existing_certified_flow, único candidato",
+        provider_key="groq_generation",
+        route_id="existing-copy-draft-groq-v1",
+        selection_reason=(
+            "existing_certified_flow, Groq seleccionado explícitamente por Axel para evitar "
+            "costo recurrente"
+        ),
     ),
     AITaskType.AUTOMATIC_VISUAL_REVIEW: AITaskPolicy(
         task_type=AITaskType.AUTOMATIC_VISUAL_REVIEW,

@@ -177,15 +177,30 @@ documentación o Models API oficial.
 directamente a `OpenAIProvider` y la revisión visual obtiene directamente el proveedor Anthropic o
 el fallback `needs_confirmation`, exactamente como antes de la Fase A.
 
-Al establecer `AI_ROUTER_ENABLED=1`, únicamente esos dos flujos certificados pasan por el registro
-y la política de tarea. La selección sigue siendo OpenAI para `copy_draft` y Anthropic para
-`automatic_visual_review`; no hay scoring, proveedores alternativos ni fallback pagado. Cada
-auditoría agrega `route_id`, `task_type`, `flow_classification` y `selection_reason` a
-`response_metadata`, sin modificar el resultado del proveedor ni el modelo persistido.
+Al establecer `AI_ROUTER_ENABLED=1`, esos dos flujos pasan por el registro y la política de tarea.
+Por decisión de Axel del 2026-08-23, `copy_draft` selecciona Groq con el modelo configurado en
+`GROQ_MODEL`; `automatic_visual_review` conserva Anthropic o el fallback trazable
+`needs_confirmation` cuando faltan sus credenciales. No hay scoring ni fallback automático a
+OpenAI/OpenRouter. Cada auditoría agrega `route_id`, `task_type`, `flow_classification` y
+`selection_reason` a `response_metadata`.
+
+Para activar exclusivamente la ruta final de copy con Groq en Railway:
+
+1. Configurar `GROQ_API_KEY` como secreto tanto en el servicio web como en el worker Celery.
+2. Confirmar `GROQ_MODEL=openai/gpt-oss-120b` en ambos servicios.
+3. Mantener `AI_PROMPT_IMPROVEMENT_ENABLED=0`, salvo autorización separada para una segunda llamada
+   de mejora de instrucción.
+4. Establecer `AI_ROUTER_ENABLED=1` en web y worker y redesplegar ambos servicios.
+5. Generar un borrador controlado y confirmar en `AICallAudit` `provider=groq`,
+   `route_id=existing-copy-draft-groq-v1` y ausencia de llamadas de fallback.
+
+Sin `GROQ_API_KEY`, la ruta activa falla de forma visible y guarda la auditoría de error; no cae
+silenciosamente a OpenAI. Los límites exactos del plan gratuito dependen de modelo y organización:
+deben verificarse en [Groq Console](https://console.groq.com/docs/rate-limits) antes del rollout.
 
 Rollback operativo: establecer `AI_ROUTER_ENABLED=0` en web y worker y redesplegar ambos servicios.
-No requiere migración ni revocar o cambiar credenciales. La Fase A no debe activarse durante la
-certificación end-to-end salvo que Axel decida probar explícitamente la equivalencia del router.
+Esto restaura la ruta directa de OpenAI y, por tanto, requiere que `OPENAI_API_KEY` esté configurada
+si se necesita seguir generando copy. No requiere migración ni revocar credenciales.
 
 ### Gemini: proveedor solo para evaluación
 
@@ -197,12 +212,13 @@ usar entradas y respuestas para mejorar productos y contemplan revisión humana.
 se configuran ambas variables, este adaptador solo puede evaluarse con datos sintéticos o públicos;
 nunca debe recibir briefs reales, datos confidenciales ni información personal de IH.
 
-### Adaptadores free-tier pendientes de activación
+### Adaptadores free-tier y alcance activo
 
-Groq, OpenRouter y Cloudflare Workers AI quedan registrados como candidatos de producción futura,
-pero no pertenecen a `TASK_POLICIES`, no tienen fallback ni punto de llamada real. Sus credenciales
+Groq, OpenRouter y Cloudflare Workers AI están registrados como candidatos de producción. Groq es
+el único que pertenece a una ruta de producción: atiende `copy_draft` cuando
+`AI_ROUTER_ENABLED=1` y también la mejora opt-in cuando su flag independiente está activo.
+OpenRouter y Cloudflare siguen sin política, fallback ni punto de llamada real. Sus credenciales
 permanecen vacías y no deben configurarse en staging o producción hasta una autorización separada.
-Agregar estos adaptadores tampoco requiere activar `AI_ROUTER_ENABLED`, que continúa en `0`.
 
 - Groq usa el modelo de texto `openai/gpt-oss-120b` por defecto mediante la compatibilidad OpenAI.
 - OpenRouter exige un modelo fijo explícito y rechaza `openrouter/free`. El candidato a confirmar
@@ -224,9 +240,10 @@ producción hasta una autorización separada de Axel, porque habilitarlo modific
 recibe el flujo actualmente en certificación.
 
 Con `1`, Groq intenta aclarar la instrucción usando únicamente el mismo `authorized_context` ya
-validado. La generación final continúa en OpenAI y conserva `_parse_copy()` como barrera para
-cifras y CTA. Si Groq no está configurado, falla o devuelve contenido inválido, se usa la
-instrucción original y la generación final continúa; no existe fallback a OpenRouter.
+validado. La generación final conserva `_parse_copy()` como barrera para cifras y CTA y usa la
+ruta correspondiente a `AI_ROUTER_ENABLED`: Groq con `1`, OpenAI directo con `0`. Si la mejora
+falla o devuelve contenido inválido, se usa la instrucción original; no existe fallback a
+OpenRouter.
 
 ## Comandos del servicio web
 
