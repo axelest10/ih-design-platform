@@ -32,6 +32,11 @@ class AIProviderCapability:
     VISUAL_REVIEW = "visual_review"
 
 
+class AIProviderProductionStatus:
+    PRODUCTION = "production"
+    EVALUATION_ONLY = "evaluation_only"
+
+
 @dataclass(frozen=True)
 class AITaskPolicy:
     task_type: str
@@ -46,6 +51,7 @@ class AIProviderRegistration:
     key: str
     capability: str
     factory: Callable[[], Any]
+    production_status: str = AIProviderProductionStatus.PRODUCTION
 
 
 @dataclass(frozen=True)
@@ -96,6 +102,12 @@ def _configured_anthropic_visual_review_provider():
     return configured_visual_review_provider()
 
 
+def _gemini_provider():
+    from ai.providers.gemini_provider import GeminiProvider
+
+    return GeminiProvider()
+
+
 DEFAULT_AI_PROVIDER_REGISTRY = AIProviderRegistry(
     (
         AIProviderRegistration(
@@ -107,6 +119,12 @@ DEFAULT_AI_PROVIDER_REGISTRY = AIProviderRegistry(
             key="anthropic_visual_review",
             capability=AIProviderCapability.VISUAL_REVIEW,
             factory=_configured_anthropic_visual_review_provider,
+        ),
+        AIProviderRegistration(
+            key="gemini_generation",
+            capability=AIProviderCapability.GENERATE,
+            factory=_gemini_provider,
+            production_status=AIProviderProductionStatus.EVALUATION_ONLY,
         ),
     )
 )

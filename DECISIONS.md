@@ -1,5 +1,17 @@
 # Decisiones técnicas
 
+## 2026-08-22 — Gemini queda registrado solo para evaluación sintética/pública
+
+Axel autorizó añadir `GeminiProvider` como candidato sin ruta operativa. El adaptador usa la API
+REST oficial mediante `urllib`, sin SDK ni dependencia nueva, y exige que `GEMINI_API_KEY` y
+`GEMINI_MODEL` se configuren explícitamente. Su registro queda marcado
+`production_status=evaluation_only` y no se agrega a `TASK_POLICIES`, fallback ni flujo real.
+
+Los términos de la cuota gratuita permiten a Google usar entradas y respuestas para mejorar sus
+productos y contemplan revisión humana. En consecuencia, Gemini solo puede evaluarse con datos
+sintéticos o públicos y nunca con briefs reales, datos confidenciales o información personal de
+IH. `AI_ROUTER_ENABLED` permanece apagado y la certificación en curso no cambia.
+
 ## 2026-08-22 — AI Router Fase A conserva los proveedores certificados
 
 Axel aprobó el plan de `docs/operations/ai-router-plan.md` en el PR #28 y autorizó implementar
