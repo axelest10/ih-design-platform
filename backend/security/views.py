@@ -9,6 +9,7 @@ from django.contrib.auth import (
     logout,
     update_session_auth_hash,
 )
+from django.utils import timezone
 from rest_framework.decorators import (
     api_view,
     authentication_classes,
@@ -20,6 +21,7 @@ from rest_framework.response import Response
 
 from common.observability import operation_event
 
+from .models import EmailRecipientState, TransactionalEmailDelivery
 from .permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
@@ -33,12 +35,12 @@ from .permissions import (
 from .serializers import PasswordChangeSerializer, PasswordResetConfirmSerializer
 from .services import (
     EmailDeliveryError,
-    EmailMessage,
+    EmailDeliverySuppressed,
     PasswordResetError,
     consume_password_reset,
     create_password_reset,
-    get_email_client,
     invalidate_other_password_resets,
+    send_transactional_email,
 )
 from .session_contract import (
     AUTH_METHOD_SESSION_KEY,
@@ -107,34 +109,85 @@ def request_password_reset(request):
     user = get_user_model().objects.filter(email__iexact=email, is_active=True).first()
     if not user or not is_allowed_corporate_email(user.email):
         return Response(PASSWORD_RESET_RESPONSE, status=202)
-    if not settings.RESEND_API_KEY or not settings.RESEND_FROM_EMAIL:
-        return Response(PASSWORD_RESET_RESPONSE, status=202)
-
     token, record = create_password_reset(user)
+    delivery = TransactionalEmailDelivery.objects.create(
+        recipient=user.email.strip().casefold(),
+        user=user,
+        password_reset_token=record,
+        message_stream=settings.POSTMARK_MESSAGE_STREAM,
+        tag="password-reset",
+    )
     reset_url = request.build_absolute_uri("/login.html") + f"#reset={quote(token, safe='')}"
     safe_url = escape(reset_url, quote=True)
     minutes = max(1, settings.PASSWORD_RESET_MAX_AGE_SECONDS // 60)
-    message = EmailMessage(
-        sender=settings.RESEND_FROM_EMAIL,
-        recipients=(user.email,),
-        subject="Recupera tu acceso a IH Design Platform",
-        html=(
-            f"<p>Usa este enlace para crear una contraseña nueva. Expira en {minutes} minutos "
-            "y solo puede utilizarse una vez.</p>"
-            f'<p><a href="{safe_url}">Recuperar acceso</a></p>'
-        ),
-        text=(
-            f"Usa este enlace para crear una contraseña nueva. Expira en {minutes} minutos y "
-            f"solo puede utilizarse una vez.\n\n{reset_url}"
-        ),
-    )
     try:
-        get_email_client().send(message)
-    except EmailDeliveryError:
+        provider_message_id = send_transactional_email(
+            to=user.email,
+            subject="Recupera tu acceso a IH Design Platform",
+            html_body=(
+                f"<p>Usa este enlace para crear una contraseña nueva. "
+                f"Expira en {minutes} minutos y solo puede utilizarse una vez.</p>"
+                f'<p><a href="{safe_url}">Recuperar acceso</a></p>'
+            ),
+            text_body=(
+                f"Usa este enlace para crear una contraseña nueva. "
+                f"Expira en {minutes} minutos y solo puede utilizarse una vez.\n\n{reset_url}"
+            ),
+            tag="password-reset",
+            metadata={"email_delivery_id": str(delivery.pk)},
+        )
+    except EmailDeliverySuppressed as exc:
+        delivery.password_reset_token = None
         record.delete()
+        delivery.refresh_from_db()
+        if delivery.last_event_at is None:
+            delivery.status = TransactionalEmailDelivery.Status.SUPPRESSED
+            delivery.failure_category = exc.category
+            delivery.suppressed = exc.category == "recipient_provider_suppressed"
+        delivery.save()
+        operation_event(
+            "authentication.password_reset_email",
+            status="suppressed",
+            provider="postmark",
+            reason=exc.category,
+            user_id=user.pk,
+            http_status=202,
+        )
+        return Response(PASSWORD_RESET_RESPONSE, status=202)
+    except EmailDeliveryError as exc:
+        delivery.password_reset_token = None
+        record.delete()
+        delivery.refresh_from_db()
+        if delivery.last_event_at is None:
+            delivery.status = TransactionalEmailDelivery.Status.FAILED
+            delivery.failure_category = exc.category
+        delivery.save()
+        operation_event(
+            "authentication.password_reset_email",
+            status="failed",
+            provider="postmark",
+            reason=exc.category,
+            user_id=user.pk,
+            http_status=202,
+        )
         return Response(PASSWORD_RESET_RESPONSE, status=202)
 
     invalidate_other_password_resets(record)
+    delivery.provider_message_id = provider_message_id
+    delivery.accepted_at = timezone.now()
+    if delivery.last_event_at is None:
+        delivery.status = TransactionalEmailDelivery.Status.ACCEPTED
+    delivery.save()
+    EmailRecipientState.objects.get_or_create(recipient=delivery.recipient)
+    operation_event(
+        "authentication.password_reset_email",
+        status="accepted",
+        provider="postmark",
+        provider_message_id=provider_message_id,
+        email_delivery_id=delivery.pk,
+        user_id=user.pk,
+        http_status=202,
+    )
     return Response(PASSWORD_RESET_RESPONSE, status=202)
 
 

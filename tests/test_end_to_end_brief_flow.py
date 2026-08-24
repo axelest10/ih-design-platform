@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 from ai.providers import GenerationResponse
 from briefs.models import DesignBrief
 from designs.models import Design, DesignDelivery
+from security.models import TransactionalEmailDelivery
 
 
 def _user(role, email):
@@ -23,8 +24,10 @@ def test_brief_review_delivery_flow_records_requester_recipient_and_link(
 ):
     settings.DESIGN_TEST_MODE = True
     settings.DESIGN_TEST_ALLOW_HUMAN_APPROVAL = True
-    settings.RESEND_FROM_EMAIL = "Design Platform <design@example.com>"
+    settings.EMAIL_DELIVERY_MODE = "allowlist"
+    settings.POSTMARK_MESSAGE_STREAM = "outbound"
     requester = _user("designer", "requester@ihmexico.com")
+    settings.EMAIL_ALLOWED_RECIPIENTS = (requester.email,)
     reviewer = _user("reviewer", "reviewer@ihmexico.com")
     creator_client = APIClient()
     creator_client.force_authenticate(user=requester)
@@ -66,12 +69,13 @@ def test_brief_review_delivery_flow_records_requester_recipient_and_link(
 
     sent = {}
 
-    class FakeEmailClient:
-        def send(self, message):
-            sent["message"] = message
-            return "resend-message-123"
+    def fake_send_transactional_email(**kwargs):
+        sent.update(kwargs)
+        return "postmark-message-123"
 
-    monkeypatch.setattr("designs.tasks.get_email_client", lambda: FakeEmailClient())
+    monkeypatch.setattr(
+        "designs.tasks.send_transactional_email", fake_send_transactional_email
+    )
     reviewer_client = APIClient()
     reviewer_client.force_authenticate(user=reviewer)
     approved = reviewer_client.post(
@@ -85,10 +89,20 @@ def test_brief_review_delivery_flow_records_requester_recipient_and_link(
     assert delivery.requested_by_id == requester.pk
     assert delivery.recipient_email == requester.email
     assert delivery.status == DesignDelivery.Status.DELIVERED
-    assert delivery.provider_message_id == "resend-message-123"
+    assert delivery.provider_message_id == "postmark-message-123"
     assert f"/api/v1/designs/{design_id}/versions/1/export/?output=svg" in delivery.download_url
-    assert sent["message"].recipients == (requester.email,)
-    assert delivery.download_url in sent["message"].text
+    assert sent["to"] == requester.email
+    assert sent["tag"] == "approved-design"
+    assert delivery.download_url in sent["text_body"]
+    email_delivery = TransactionalEmailDelivery.objects.get(
+        provider_message_id="postmark-message-123"
+    )
+    assert email_delivery.recipient == requester.email
+    assert email_delivery.status == TransactionalEmailDelivery.Status.ACCEPTED
+    assert sent["metadata"] == {
+        "email_delivery_id": str(email_delivery.pk),
+        "design_delivery_id": str(delivery.pk),
+    }
 
     design = Design.objects.get(pk=design_id)
     assert design.approved_version.number == 1

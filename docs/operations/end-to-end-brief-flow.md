@@ -26,8 +26,9 @@ y conserva el bloqueo de las primeras 50 pruebas.
 4. Un usuario con rol `reviewer` o `platform_admin` aprueba o rechaza la versión desde
    `POST /api/v1/designs/{id}/review/`.
 5. Al aprobar, se crea un registro `DesignDelivery` con `requested_by`, `recipient_email`, versión,
-   estado y enlace de descarga. Celery envía el correo usando el cliente Resend existente de
-   `backend/security/services/email.py`; no se agrega otro proveedor.
+   estado y enlace de descarga. Celery envía el correo mediante el límite central Postmark de
+   `backend/security/services/email.py` y crea un `TransactionalEmailDelivery` para reconciliar
+   aceptación, Delivery, Bounce, SpamComplaint y SubscriptionChange sin persistir el contenido.
 
 El enlace de entrega apunta al export autenticado de la versión (`svg`, `pdf` o `pptx`, según el
 artefacto disponible). El correo no adjunta archivos y requiere que el solicitante inicie sesión

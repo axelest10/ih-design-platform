@@ -22,7 +22,12 @@ from designs.services.storage_paths import generated_design_path
 from materials.models import MaterialBundle, MaterialType
 from materials.services.quick_design import create_quick_design
 from materials.services.school_kit import generate_school_kit
-from security.services.email import EmailDeliveryError, EmailMessage, get_email_client
+from security.models import EmailRecipientState, TransactionalEmailDelivery
+from security.services.email import (
+    EmailDeliveryError,
+    EmailDeliverySuppressed,
+    send_transactional_email,
+)
 
 
 def _generation_storage():
@@ -218,30 +223,60 @@ def deliver_approved_design_task(delivery_id):
     title = delivery.design.brief.title
     subject = f"Tu diseño aprobado: {title}"
     link = delivery.download_url
-    message = EmailMessage(
-        sender=settings.RESEND_FROM_EMAIL,
-        recipients=(delivery.recipient_email,),
-        subject=subject,
-        html=(
-            f"<p>Tu diseño <strong>{escape(title)}</strong> fue aprobado.</p>"
-            f"<p><a href=\"{escape(link, quote=True)}\">Descargar diseño aprobado</a></p>"
-            "<p>El enlace requiere iniciar sesión en IH Design Platform.</p>"
-        ),
-        text=(
-            f"Tu diseño '{title}' fue aprobado. Descárgalo aquí: {link}\n\n"
-            "El enlace requiere iniciar sesión en IH Design Platform."
-        ),
+    email_delivery = TransactionalEmailDelivery.objects.create(
+        recipient=delivery.recipient_email.strip().casefold(),
+        user=delivery.requested_by,
+        message_stream=settings.POSTMARK_MESSAGE_STREAM,
+        tag="approved-design",
     )
     try:
-        if not settings.RESEND_FROM_EMAIL:
-            raise EmailDeliveryError("RESEND_FROM_EMAIL no está configurado.")
-        provider_message_id = get_email_client().send(message)
+        provider_message_id = send_transactional_email(
+            to=delivery.recipient_email,
+            subject=subject,
+            html_body=(
+                f"<p>Tu diseño <strong>{escape(title)}</strong> fue aprobado.</p>"
+                f"<p><a href=\"{escape(link, quote=True)}\">Descargar diseño aprobado</a></p>"
+                "<p>El enlace requiere iniciar sesión en IH Design Platform.</p>"
+            ),
+            text_body=(
+                f"Tu diseño '{title}' fue aprobado. Descárgalo aquí: {link}\n\n"
+                "El enlace requiere iniciar sesión en IH Design Platform."
+            ),
+            tag="approved-design",
+            metadata={
+                "email_delivery_id": str(email_delivery.pk),
+                "design_delivery_id": str(delivery.pk),
+            },
+        )
+    except EmailDeliverySuppressed as exc:
+        email_delivery.refresh_from_db()
+        if email_delivery.last_event_at is None:
+            email_delivery.status = TransactionalEmailDelivery.Status.SUPPRESSED
+            email_delivery.failure_category = exc.category
+            email_delivery.suppressed = exc.category == "recipient_provider_suppressed"
+        email_delivery.save()
+        delivery.status = DesignDelivery.Status.FAILED
+        delivery.error = str(exc)
+        delivery.save(update_fields=["status", "error", "updated_at"])
+        return {"delivery_id": delivery.pk, "status": delivery.status, "error": str(exc)}
     except EmailDeliveryError as exc:
+        email_delivery.refresh_from_db()
+        if email_delivery.last_event_at is None:
+            email_delivery.status = TransactionalEmailDelivery.Status.FAILED
+            email_delivery.failure_category = exc.category
+        email_delivery.save()
         delivery.status = DesignDelivery.Status.FAILED
         delivery.error = str(exc)
         delivery.save(update_fields=["status", "error", "updated_at"])
         return {"delivery_id": delivery.pk, "status": delivery.status, "error": str(exc)}
 
+    email_delivery.refresh_from_db()
+    email_delivery.provider_message_id = provider_message_id
+    email_delivery.accepted_at = timezone.now()
+    if email_delivery.last_event_at is None:
+        email_delivery.status = TransactionalEmailDelivery.Status.ACCEPTED
+    email_delivery.save()
+    EmailRecipientState.objects.get_or_create(recipient=email_delivery.recipient)
     delivery.status = DesignDelivery.Status.DELIVERED
     delivery.provider_message_id = provider_message_id
     delivery.delivered_at = timezone.now()

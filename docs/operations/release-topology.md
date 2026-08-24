@@ -22,11 +22,10 @@ Un `push` o `merge` nunca debe desplegar Production por sí solo.
 
 | Entorno | Railway environment | Fuente | Trigger | Wait for CI | Dominio |
 | --- | --- | --- | --- | --- | --- |
-| Staging | `74f3cbd5-b558-4948-9dc3-e0849f642891` | `axelest10/ih-design-platform`, temporalmente `codex/hub-sso` | automático, solo Staging | activado | `mydesign-staging.ihlatam.com` |
+| Staging | `74f3cbd5-b558-4948-9dc3-e0849f642891` | `axelest10/ih-design-platform`, rama `main` | automático, solo Staging | desactivado; drift pendiente, exigir CI verde del PR antes del merge | `mydesign-staging.ihlatam.com` |
 | Production | `bd91b87f-8e0e-4001-a700-5da5e1df4864` | `axelest10/ih-design-platform`; la promoción manual toma la rama por defecto `main` | ninguno; autodeploy desactivado | no aplica al no existir trigger | `mydesign.ihlatam.com` |
 
-Cuando el PR de SSO se fusione, Staging debe volver de `codex/hub-sso` a `main`. No se debe
-conservar un entorno permanente ligado a la rama de feature.
+No se debe conservar ningún entorno permanente ligado a una rama de feature.
 
 ## CI y promoción exacta a Production
 
@@ -63,23 +62,23 @@ trigger de Production como atajo.
   configura `SESSION_COOKIE_DOMAIN` compartido.
 - Proveedores de IA: sus credenciales son por entorno. Una variable ausente significa integración
   deshabilitada; nunca se copia una clave de Production a Staging.
-- OIDC: Staging usa issuer, client ID, secreto y callback exclusivos. Production mantiene
-  `HUB_OIDC_ENABLED=0` (o ausente), no tiene credenciales OIDC y conserva el login local hasta una
-  aprobación de cutover independiente.
+- OIDC: Staging y Production usan issuer/client/callback y secretos exclusivos. Production exige
+  además `HUB_OIDC_PRODUCTION_APPROVED=1`; el login local permanece como contingencia y la
+  autorización/roles siguen siendo locales de Design.
 
 ## Correo
 
-Staging opera en modo de **supresión**: `RESEND_API_KEY` y `RESEND_FROM_EMAIL` no existen. El
-endpoint de recuperación conserva su respuesta genérica, pero no puede enviar correo. No se hacen
-pruebas con direcciones de empleados. Production conserva su proveedor/remitente actual y no se
-modifica como parte del trabajo de SSO.
+Staging usa el servidor Postmark **IH Design — Staging** en modo `allowlist`, que falla cerrado si
+la lista está vacía o el destinatario no está aprobado. Production usa el servidor independiente
+**IH Design — Production** en modo `live`. Durante el cutover las variables Resend pueden permanecer
+temporalmente para rollback, pero el código Postmark no las consulta; retirarlas y revocarlas es un
+cambio posterior explícitamente autorizado.
 
 ## Variables y cambios pendientes
 
 Los cambios de variables de Production se guardan con `--skip-deploys` cuando no deben reiniciar el
-servicio. En particular, la corrección a `DJANGO_ENV=production` se aplica en el siguiente release
-manual aprobado; no se genera un deploy solo para materializarla. Antes de promover se revisa el
-diff de variables y se confirma nuevamente que OIDC de Production sigue apagado.
+servicio. Antes de promover se revisa el diff de variables, se valida la configuración de arranque
+completa y se confirma que el SHA exacto sigue siendo el aprobado.
 
 ## Rollback
 
@@ -95,5 +94,5 @@ diff de variables y se confirma nuevamente que OIDC de Production sigue apagado.
 
 Solo la persona responsable del release puede iniciar Production. Debe registrar motivo, SHA,
 deployment ID y evidencia posterior. Una urgencia no autoriza reactivar autodeploy, seguir una
-rama de feature, omitir CI, compartir recursos de Staging ni habilitar SSO. Si Railway no permite
-promover sin cambiar el SHA esperado, se detiene el release.
+rama de feature, omitir CI ni compartir recursos de Staging. Si Railway no permite promover sin
+cambiar el SHA esperado, se detiene el release.

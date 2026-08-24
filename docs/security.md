@@ -67,10 +67,18 @@ predeterminada; la tasa se puede cambiar con `LOGIN_THROTTLE_RATE`.
 protegidas conserva `CorporateDomainPermission` cuando `DJANGO_REQUIRE_CORPORATE_AUTH=1`.
 
 La recuperación de acceso usa `POST /api/v1/auth/password-reset/request/` y
-`POST /api/v1/auth/password-reset/confirm/`. El correo se envía con Resend; el token firmado
+`POST /api/v1/auth/password-reset/confirm/`. El correo transaccional se entrega mediante el
+adaptador central de Postmark; el token firmado
 expira en 15 minutos por defecto, solo se puede consumir una vez y la base guarda únicamente su
 hash SHA-256. El token viaja en el fragmento de `login.html`, por lo que no forma parte de la
 solicitud HTTP ni de los logs del servidor web.
+
+La respuesta de solicitud siempre es genérica, incluso cuando la cuenta no existe, el entorno
+suprime la entrega o Postmark rechaza la solicitud. Staging solo permite destinatarios incluidos
+explícitamente en `EMAIL_ALLOWED_RECIPIENTS`; una lista vacía falla cerrada. Los eventos
+operativos conservan únicamente estado, categoría segura, usuario interno y el `MessageID` de
+Postmark cuando existe. No registran destinatario, contenido, URL de recuperación ni token del
+proveedor.
 
 ## Roles corporativos
 

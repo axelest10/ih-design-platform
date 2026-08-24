@@ -60,6 +60,19 @@
 
 ## Completadas
 
+- [x] Elevar Pillow a `>=12.3,<13.0` para cerrar los hallazgos vigentes de `pip-audit`
+      heredados de `main` antes de promover el hotfix de correo (2026-08-15).
+- [x] Sustituir el adaptador runtime de Resend por Postmark, con remitente aprobado, Reply-To
+      opcional, `MessageID` seguro y política `disabled|allowlist|live` que falla cerrada
+      (2026-08-15).
+- [x] Persistir el estado transaccional de Postmark y recibir Delivery, Bounce, SpamComplaint y
+      SubscriptionChange mediante webhook autenticado, acotado e idempotente (2026-08-15).
+- [x] Confirmar en Staging, mediante transacción de solo lectura, una entrega real aceptada y
+      entregada por Postmark, su webhook Delivery, el evento Bounce sintético y la supresión local,
+      sin exponer destinatarios ni `MessageID` (2026-08-23).
+- [x] Reconciliar el hotfix Postmark/Pillow con el `main` que ya contiene SSO y hacer que la
+      migración adopte de forma segura las tablas Postmark históricas de Staging aun cuando su
+      registro de migración ya no esté presente (2026-08-23).
 - [x] Implementar el contrato v1 de SSO con IH LATAM Hub como proveedor OIDC para Staging:
       Authorization Code + PKCE S256, enlace/provisión por identidad estable, rol local
       `viewer` por defecto, auditoría sin secretos y rollback por feature flag (2026-08-14).
@@ -126,6 +139,10 @@
 
 ## Siguientes
 
+- [ ] Promover mediante PR separado el SHA combinado Postmark/Pillow a Staging y después a
+      Production, con CI verde, migraciones verificadas y autodeploy de Production desactivado.
+- [ ] En un cambio posterior explícitamente autorizado, retirar las variables Resend y revocar su
+      clave solo después de cerrar el cutover Postmark; no hacerlo durante esta promoción.
 - [x] Confirmar los datos oficiales, la oferta local y el paquete inicial de `venue-kit` según
       `docs/operations/venue-marketing-kit-plan.md`; Axel confirmó los seis pilares y el PR de
       implementación ya está fusionado.

@@ -118,8 +118,16 @@ CLOUDFLARE_ACCOUNT_ID=
 CLOUDFLARE_API_TOKEN=
 CLOUDFLARE_VISION_MODEL=
 CLOUDFLARE_IMAGE_MODEL=@cf/black-forest-labs/flux-2-klein-4b
-RESEND_API_KEY=<API key secreta de Resend>
-RESEND_FROM_EMAIL=<remitente verificado, por ejemplo Design Platform <acceso@dominio>>
+EMAIL_DELIVERY_MODE=allowlist
+EMAIL_ALLOWED_RECIPIENTS=<destinatarios de prueba aprobados, separados por coma>
+POSTMARK_SERVER_TOKEN=<token del servidor IH Design — Staging, ingresado directamente en Railway>
+POSTMARK_FROM_EMAIL=mydesign@ihlatam.com
+POSTMARK_FROM_NAME=IH Design
+POSTMARK_MESSAGE_STREAM=outbound
+POSTMARK_REPLY_TO=
+POSTMARK_WEBHOOK_USERNAME=<usuario Basic exclusivo de Staging, ingresado directamente>
+POSTMARK_WEBHOOK_PASSWORD=<contraseña Basic exclusiva de Staging, ingresada directamente>
+POSTMARK_WEBHOOK_MAX_BYTES=65536
 PASSWORD_RESET_MAX_AGE_SECONDS=900
 LOGIN_THROTTLE_RATE=10/hour
 HUB_OIDC_ENABLED=1
@@ -185,6 +193,19 @@ En esta revisión, `python manage.py verify_storage_backend --dry-run` terminó 
 Con `HUB_OIDC_ENABLED=0`, cada integrante usa su cuenta y una contraseña almacenada con el hasher
 de Django. Con `HUB_OIDC_ENABLED=1`, Hub SSO es la ruta principal y el login local permanece como
 contingencia de Staging; los administradores siguen gestionando las cuentas locales desde el panel.
+
+El correo usa el servidor Postmark dedicado **IH Design — Staging**. El dominio verificado es
+`ihlatam.com` y el remitente aprobado es `IH Design <mydesign@ihlatam.com>`; no se configura
+`mydesign.ihlatam.com` como dominio de envío. `EMAIL_DELIVERY_MODE=allowlist` es obligatorio para
+una integración real en Staging. Una lista vacía o un destinatario no permitido impiden contactar
+a Postmark. `EMAIL_DELIVERY_MODE=live` se rechaza al arrancar fuera de Production. Ver
+[`email.md`](email.md) para pruebas, errores, rotación y rollback.
+El webhook Staging es
+`https://mydesign-staging.ihlatam.com/api/v1/webhooks/postmark/`; solo se activan Delivery, Bounce,
+Spam complaint y Subscription change con `HttpAuth`. Open/Click quedan apagados. Production usa
+credenciales diferentes y no se activa hasta el cutover autorizado. Toda variable de Production
+preparada sin despliegue debe aplicarse con `skipDeploys: true` o el equivalente vigente comprobado,
+no con una operación ordinaria que pueda redeplegar el servicio.
 
 La revisión visual automática usa la Messages API de Anthropic cuando `ANTHROPIC_API_KEY` y
 `ANTHROPIC_MODEL` están configuradas. Sin ambas variables, las piezas se conservan y quedan en
@@ -323,8 +344,10 @@ gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}
 
 Railway inyecta `PORT`; `8000` es únicamente el fallback local. El comando completo del
 Dockerfile también fija un worker, timeout de 120 segundos y envía access/error logs a stdout.
-El formato de access log usa únicamente el path (`%(U)s`): omite query strings y `Referer` para
-que el callback OIDC no registre el authorization code ni el state.
+El formato de access log omite deliberadamente el campo `remote_user`, porque con HTTP Basic ese
+campo contendría el usuario secreto del webhook Postmark. También usa únicamente el path
+(`%(U)s`) y omite query strings y `Referer`, para que el callback OIDC no registre el authorization
+code ni el state. Nunca se deben reintroducir `%(u)s`, `%(q)s`, `%(r)s` ni `%(f)s`.
 
 Antes del primer arranque se debe ejecutar, como pre-deploy o job controlado:
 
