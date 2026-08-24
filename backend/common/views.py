@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 from rest_framework.decorators import api_view, permission_classes
@@ -13,7 +14,18 @@ from materials.models import MaterialType
 @require_GET
 def health(request):
     """Liveness probe independiente de autenticación, base de datos y DRF."""
-    return JsonResponse({"status": "ok", "service": "ih-design-platform"})
+    return JsonResponse(
+        {
+            "status": "ok",
+            "service": "ih-design-platform",
+            "release": {
+                "commit_sha": settings.DEPLOYMENT_COMMIT_SHA or None,
+                "git_branch": settings.DEPLOYMENT_GIT_BRANCH or None,
+                "environment": settings.DEPLOYMENT_ENVIRONMENT,
+                "service": settings.DEPLOYMENT_SERVICE or None,
+            },
+        }
+    )
 
 
 @api_view(["GET"])

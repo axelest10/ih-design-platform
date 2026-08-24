@@ -77,3 +77,27 @@ def test_presentation_preview_saves_pptx_with_configured_storage(tmp_path, monke
     with storage.open(pptx_path, "rb") as pptx_file:
         assert pptx_file.read(2) == b"PK"
     assert pptx_path in version.asset_refs
+
+
+@pytest.mark.django_db
+def test_presentation_preview_returns_400_for_invalid_render_payload():
+    material_type = MaterialType.objects.get(slug="presentation")
+    brief = DesignBrief.objects.create(
+        title="Presentación inválida",
+        format=DesignBrief.Format.HTML,
+        material_type=material_type,
+        audience="Escuelas",
+        objective="Validar errores de renderizado",
+    )
+    design = Design.objects.create(brief=brief)
+    incomplete_payload = {**PRESENTATION_PAYLOAD}
+    incomplete_payload.pop("body")
+
+    response = APIClient().post(
+        f"/api/v1/designs/{design.pk}/preview/",
+        incomplete_payload,
+        format="json",
+    )
+
+    assert response.status_code == 400
+    assert "'body' es obligatorio" in response.json()["detail"]

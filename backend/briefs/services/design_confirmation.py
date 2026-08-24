@@ -9,6 +9,8 @@ from designs.services.renderer import RenderValidationError
 from ..models import DesignBrief
 from .generation import SUPPORTED_FORMATS, generate_initial_design
 
+# generated_prompt is editable advertising copy, not an image-generation prompt.
+
 
 class DesignConfirmationError(ValueError):
     """Error controlado que permite reintentar el paso 2 sin crear un diseño parcial."""
@@ -46,7 +48,7 @@ def confirm_brief_design(brief: DesignBrief, prompt_text: str) -> Design:
         output_format="json",
     )
     try:
-        copy_fields = generate_structured_copy(OpenAIProvider(), generation_request)
+        copy_fields = generate_structured_copy(OpenAIProvider(), generation_request, brief=brief)
     except StructuredCopyError as exc:
         raise DesignConfirmationError(str(exc)) from exc
 

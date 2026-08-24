@@ -1,5 +1,271 @@
 # Decisiones técnicas
 
+## 2026-08-23 — Revisión visual Cloudflare aislada por un flag propio
+
+Axel autorizó preparar Cloudflare Workers AI como alternativa gratuita y no certificada para
+`automatic_visual_review`. La integración se activa únicamente con
+`AI_VISUAL_REVIEW_FREE_TIER_ENABLED=1` y las tres variables de Cloudflare completas; el valor por
+defecto permanece en `0`. Con el flag apagado, Anthropic y el fallback trazable
+`needs_confirmation` conservan exactamente la prioridad anterior, tanto con
+`AI_ROUTER_ENABLED=0` como con `AI_ROUTER_ENABLED=1`. No se modifica `TASK_POLICIES`, la ruta de
+`copy_draft` por Groq ni `AI_PROMPT_IMPROVEMENT_ENABLED`.
+
+El modelo recomendado para la evaluación inicial es
+[`@cf/meta/llama-3.2-11b-vision-instruct`](https://developers.cloudflare.com/ai/models/%40cf/meta/llama-3.2-11b-vision-instruct/):
+Cloudflare documenta visión y lo incluye explícitamente entre los modelos compatibles con
+[JSON Mode](https://developers.cloudflare.com/workers-ai/features/json-mode/), requisito central
+para reutilizar el contrato estructurado de ocho controles. Antes del primer uso, Axel debe aceptar
+la licencia de Meta mediante el procedimiento oficial; el repositorio no realiza esa aceptación.
+
+Esta alternativa no está probada como equivalente a Anthropic para juzgar cumplimiento de marca.
+Axel debe revisar manualmente una muestra de resultados sintéticos realistas antes de permitir su
+uso con diseños reales. La asignación gratuita oficial es de 10,000 Neurons por día y, cuando se
+agota, Cloudflare devuelve `3036`/HTTP 429; no hay reintento ni fallback automático. El límite y la
+calidad deben vigilarse durante la evaluación.
+
+## 2026-08-23 — Groq sustituye a OpenAI en la ruta activa de `copy_draft`
+
+Axel decidió que, cuando `AI_ROUTER_ENABLED=1`, la generación final de borradores de copy use
+`GroqProvider` con `openai/gpt-oss-120b` en lugar de OpenAI para evitar costo recurrente. La ruta
+directa con OpenAI se conserva cuando el flag está en `0`, que continúa siendo el valor por
+defecto. La ruta Groq no tiene fallback automático: una clave ausente, cuota agotada o falla del
+proveedor se reporta de forma visible y trazable, sin intentar OpenAI ni OpenRouter.
+
+La activación exige vigilancia operativa. Los [límites oficiales de Groq](https://console.groq.com/docs/rate-limits)
+para el plan gratuito de `openai/gpt-oss-120b` reportaban, al confirmar esta decisión, 30 RPM,
+1,000 RPD, 8,000 TPM y 200,000 TPD; los límites efectivos de la organización deben comprobarse en
+Groq Console y un exceso devuelve HTTP 429. Además, la calidad del copy debe evaluarse con casos
+reales de IH antes de equipararla a la salida histórica de OpenAI; `_parse_copy()` continúa
+bloqueando cifras y CTA no autorizados independientemente del proveedor.
+
+Esta decisión no modifica `automatic_visual_review`: su política sigue apuntando a Anthropic y,
+sin `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL`, conserva el estado pendiente y trazable
+`needs_confirmation`. La configuración real de Groq y la activación del router corresponden a
+Axel en Railway, no al repositorio.
+
+## 2026-08-22 — Mejora de prompt opt-in sin alterar la certificación
+
+Axel autorizó `prompt_improvement` como primera tarea real del router, con Groq como único candidato
+y sin fallback a OpenRouter. `AI_PROMPT_IMPROVEMENT_ENABLED` queda en `0` por defecto y debe
+permanecer apagado en staging y producción hasta una autorización separada de Axel, porque cambia
+la instrucción que recibe el flujo de copy actualmente en certificación.
+
+Con el flag apagado, `suggest_copy_draft()` conserva la instrucción, proveedor, payload, borrador y
+auditoría anteriores. Con el flag encendido, Groq recibe solo el mismo `authorized_context`; un
+fallo o respuesta inválida vuelve silenciosamente a la instrucción original. OpenAI sigue generando
+el copy final y `_parse_copy()` conserva sin cambios el bloqueo de cifras y CTA no autorizados.
+Anthropic, revisión visual, seguridad, dependencias y configuración Railway quedan fuera.
+
+## 2026-08-22 — Adaptadores free-tier registrados sin activación ni políticas
+
+Axel autorizó preparar Groq, OpenRouter y Cloudflare Workers AI sin conectarlos a tareas reales.
+Groq y OpenRouter reutilizan el SDK OpenAI existente con `max_retries=0` y bases URL específicas;
+Cloudflare usa REST/`urllib` y almacena la imagen antes de devolver un descriptor JSON. No se
+agregan dependencias, tareas, fallbacks, llamadas ni cambios a los flujos certificados.
+
+Los tres registros usan `production_status=production`, pero su elegibilidad futura sigue
+pendiente de credenciales y activación explícita. `TASK_POLICIES` conserva únicamente OpenAI para
+`copy_draft` y Anthropic para `automatic_visual_review`; `AI_ROUTER_ENABLED` permanece en `0`.
+OpenRouter no admite `openrouter/free`: se propone `openai/gpt-oss-120b:free` como modelo fijo para
+confirmación posterior. Ollama y Gemini quedan fuera de esta fase.
+
+## 2026-08-22 — Gemini queda registrado solo para evaluación sintética/pública
+
+Axel autorizó añadir `GeminiProvider` como candidato sin ruta operativa. El adaptador usa la API
+REST oficial mediante `urllib`, sin SDK ni dependencia nueva, y exige que `GEMINI_API_KEY` y
+`GEMINI_MODEL` se configuren explícitamente. Su registro queda marcado
+`production_status=evaluation_only` y no se agrega a `TASK_POLICIES`, fallback ni flujo real.
+
+Los términos de la cuota gratuita permiten a Google usar entradas y respuestas para mejorar sus
+productos y contemplan revisión humana. En consecuencia, Gemini solo puede evaluarse con datos
+sintéticos o públicos y nunca con briefs reales, datos confidenciales o información personal de
+IH. `AI_ROUTER_ENABLED` permanece apagado y la certificación en curso no cambia.
+
+## 2026-08-22 — AI Router Fase A conserva los proveedores certificados
+
+Axel aprobó el plan de `docs/operations/ai-router-plan.md` en el PR #28 y autorizó implementar
+exclusivamente su Fase A. Se introduce un registro con las dos rutas actuales: OpenAI para
+borradores de copy y Anthropic para revisión visual automática. Ambas políticas se clasifican como
+`existing_certified_flow`; no participan en la prioridad free-first de fases futuras.
+
+`AI_ROUTER_ENABLED` queda apagado por defecto. Con `0`, se conserva el camino directo; con `1`, la
+selección sigue teniendo un único candidato y solo agrega metadata de routing a `AICallAudit`. No se
+incorporan proveedores, dependencias, credenciales, scoring ni fallback nuevos. El rollback consiste
+en volver el flag a `0` y redesplegar, sin migraciones.
+
+## 2026-08-22 — Configuración Railway separada para el worker Celery
+
+El worker de staging usa el mismo Dockerfile y código que el servicio web, pero carga
+`/railway.worker.json`. La configuración fija `celery -A config worker -l info --concurrency=2` y
+omite el healthcheck HTTP y la migración pre-deploy: el worker no escucha HTTP y las migraciones
+pertenecen al despliegue web. Las variables se comparten mediante referencias de Railway, sin
+copiar secretos al repositorio.
+
+## 2026-08-22 — Identidad verificable del despliegue de Railway
+
+El healthcheck público conserva su función de liveness sin consultar base de datos ni servicios
+externos, y expone además el SHA, la rama, el entorno y el servicio que Railway inyecta en el
+proceso. La fuente del SHA es exclusivamente `RAILWAY_GIT_COMMIT_SHA`; si Railway no originó el
+deploy desde GitHub, el valor queda `null` en vez de inferirse o hardcodearse. Esto permite
+comparar producción y staging contra `main` antes de ejecutar cualquier certificación funcional.
+
+No se modifica autenticación, SSO ni proveedores. Los metadatos no incluyen secretos, IDs de
+proyecto ni variables de infraestructura.
+
+## 2026-08-16 — Revisión humana por versión
+
+El endpoint `POST /api/v1/designs/{id}/review/` acepta `approve`, `reject` y `request_changes`
+con una `DesignVersion` explícita. La versión guarda `review_status` (`pending`, `approved`,
+`rejected` o `changes_requested`) y el diseño mantiene su estado agregado (`approved`, `rejected`
+o `revision_requested`). Los rechazos y solicitudes de cambios requieren comentario, que se
+persiste con `DesignReviewComment`; aprobar permite comentario opcional.
+
+La transición vive en `backend/designs/services/review.py` para que futuras vistas o paneles no
+dupliquen reglas. `notify_review_transition()` es un hook no-op: se reserva la integración de
+notificaciones para una fase posterior, sin enviar mensajes ahora. No se toca `backend/security/`.
+
+## 2026-08-16 — Historial y exportación WhatsApp sin envío
+
+La revisión expone `GET /api/v1/designs/{id}/history/` con una línea de tiempo por `DesignVersion`,
+incluyendo estado de revisión automática, validación y safe-zone. La interfaz conserva la selección
+de versiones y muestra esos estados en el historial visible.
+
+`output=whatsapp` reutiliza el renderer existente: para piezas sociales entrega el SVG con sus
+dimensiones nativas (1080 × 1080, 1080 × 1350 o 1080 × 1920) como imagen descargable; para una
+versión documental entrega el PDF persistido como documento. No se añade un renderer nuevo ni se
+integra la API de WhatsApp.
+
+## 2026-08-16 — Copy IA acotado a fuentes confirmadas
+
+`POST /api/v1/material-bundles/{id}/suggest-copy/` está disponible para `venue-kit`, `sales-kit` y
+`email-kit`. El contexto enviado al único proveedor actual (`OpenAIProvider`) se construye solo
+desde productos/sedes/campañas con `source_status=confirmed`; venue-kit aplica además la
+confirmación explícita de Axel para sus seis pilares. Un producto o campaña pendiente bloquea la
+llamada.
+
+La respuesta se guarda en `brief_context.ai_copy_draft` con `status=pending_approval`,
+`needs_confirmation=true`, proveedor/modelo y contexto autorizado. Es un borrador para el flujo de
+aprobación de la Fase 1: no crea ni modifica `DesignVersion` y no publica copy automáticamente.
+
+## 2026-08-16 — Auditoría y calidad ligera para llamadas IA
+
+`ai.AICallAudit` registra prompt/contexto autorizado, respuesta, proveedor, modelo, timestamp,
+metadatos, estado y vínculo a `DesignBrief`, `DesignVersion` o `MaterialBundle` cuando existe. Se
+registran también errores del proveedor para que la auditoría no pierda llamadas fallidas.
+
+`validate_ai_output()` es una señal de calidad reutilizable, no una aprobación automática: marca
+cifras y URLs ausentes del contexto autorizado y frases que parecen claims no verificables con
+`needs_review`. No modifica el copy ni agrega un segundo proveedor; OpenAI continúa siendo el único
+adaptador de generación y la revisión visual configurada conserva su proveedor actual.
+
+## 2026-08-15 — Visibilidad y geometría del chequeo safe-zone
+
+La revisión humana incorporará `validation_summary.safe_zone_check` en el mismo conjunto de
+verificaciones que ya muestra `frontend/scripts/review.js`; se eligió adaptar la lectura del
+frontend porque conserva el payload persistido y evita duplicar o reescribir checks en la señal.
+
+No se mantiene una rama post-render `geometry-violation`: el renderer ya rechaza una región como
+`logo_row` antes de crear `DesignVersion`, por lo que esa rama no sería alcanzable desde el flujo
+normal. Safe-zone deja trazabilidad de esa garantía en `geometry.source=renderer.safe_area`, y el
+caso de logo cerca del borde se prueba en el renderer, donde sí puede dispararse con una geometría
+inválida. No se toca `backend/security/`.
+
+## 2026-08-15 — safe-zone/legibilidad se persiste en `DesignVersion`
+
+La comprobación se conecta al signal común de creación de `DesignVersion`, por lo que cubre las
+versiones generadas por los flujos actuales y futuros que usen el modelo. Se guardan porcentajes,
+límites, regiones, violaciones y contraste en `validation_summary.safe_zone_check`; no se añade un
+modelo ni un estado paralelo.
+
+La política inicial usa 6.67% lateral y los márgenes equivalentes a 72 px de los templates social
+actuales: square 6.67% vertical, portrait 5.33% y story 3.75%. La legibilidad reutiliza la matriz
+oficial documentada y exige 4.5:1 para texto normal. Un fallo conserva la versión para trazabilidad
+y marca el resumen como `needs_changes`, pero no muta `claude_review_status` ni fuerza el estado
+de `Design`; esos estados siguen perteneciendo a revisión automática/humana. Documentos, PPTX y
+email reciben `skipped` porque no se inventa una zona social para ellos.
+## 2026-08-15 — `email-kit` es export-only hasta definir el envío
+
+La primera versión de `email-kit` genera un preview y un archivo HTML autocontenido para revisión
+o exportación manual. Usa una familia de renderer distinta a HTML/SVG porque necesita tablas,
+CSS inline, ancho máximo de 640 px, tipografías seguras y ausencia de JavaScript, iframes, video,
+fuentes externas y otros embeds. Reutiliza el pipeline Brief → Design → DesignVersion, los logos
+aprobados, `Campaign`, almacenamiento y revisión automática.
+
+No se integra SMTP/API, proveedor de email, listas, tracking ni envío real. La generación exige
+campaña activa/vigente con datos comerciales confirmados y `unsubscribe_url` en el contexto. Una
+fase posterior deberá recibir luz verde para decidir proveedor, consentimiento, rebotes, tracking,
+unsubscribe operativo y secretos. La implementación no toca `backend/security/`.
+## 2026-08-15 — `sales-kit` depende de campañas comerciales autorizadas
+
+La paquetería de ventas no crea un catálogo de precios ni una entidad paralela de ofertas.
+Reutiliza `catalog.Product` para seleccionar el producto y `campaigns.Campaign` como fuente de
+verdad para nombre, copy aprobado, vigencia y `offer_data`. La generación queda bloqueada si la
+campaña está inactiva, fuera de vigencia, no tiene copy aprobado o no incluye `source_status`,
+`source_url`, `benefit` y `cta` con estado confirmado.
+
+El paquete genera piezas cuadrada, story, vertical, brochure A4 y presentación 16:9 reutilizando
+los templates/renderers existentes. La campaña se copia como snapshot dentro de cada brief para
+que una pieza no cambie retrospectivamente si se edita la campaña después. No se sembraron
+precios, descuentos ni promociones reales: falta que Marketing entregue la primera `Campaign`
+confirmada antes de usar el flujo fuera de pruebas. La implementación permanece separada de
+`backend/security/`.
+## 2026-08-15 — `venue-kit` usa seis pilares y datos oficiales por sede
+
+- Axel confirmó que todas las sedes venden los seis pilares existentes: `general-english`,
+  `cambridge-exam-preparation`, `university-programmes`, `business-english`,
+  `ielts-preparation` y `spanish-courses`. Son las prioridades de `venue-kit`, pero la selección
+  acepta futuros slugs activos del catálogo.
+- El paquete cubre social, documento A4 y presentación mediante los renderers existentes; no se
+  crea un renderer nuevo. El CTA y la decisión de usar mapa, QR, fotografía o logos adicionales
+  pertenecen al brief/diseño, no a un default de sede.
+- `Branch` guarda `country` y `source_url`; `official_contact_data` normaliza ubicación, contacto,
+  `source_status` y `needs_confirmation`. La generación solo acepta sedes con fuente, dirección
+  y teléfono confirmados. Horarios, mapa, CTA y assets locales quedan pendientes.
+- Las sedes iniciales se cargan desde las páginas oficiales documentadas en
+  `docs/operations/venue-marketing-kit-plan.md`; no se inventan datos fuera de esas fuentes.
+
+## 2026-08-15 — Diseño inicial de `venue-kit` (superseded by confirmed implementation)
+
+- Se propone reutilizar `MaterialBundle`, `MaterialBundleItem`, briefs hijos, templates y renderers existentes de `school-kit`.
+- No se inventan programas, contactos, direcciones, mapas, horarios ni deliverables por defecto para una sede.
+- Esta entrada queda reemplazada por la decisión inmediatamente anterior, después de las
+  confirmaciones de Axel sobre los seis pilares, las fuentes oficiales y las tres familias de
+  formato.
+
+## 2026-08-15 — La verificación R2 se ejecuta en staging, no en local
+
+Como este entorno no tiene bucket, endpoint ni credenciales R2 disponibles, no se simula una
+verificación de red ni se agregan secretos al repositorio. Se añade el comando
+`python manage.py verify_storage_backend`, que exige `storages.backends.s3.S3Storage`, un bucket y
+un endpoint `*.r2.cloudflarestorage.com`; en ejecución normal guarda un objeto temporal, confirma
+existencia y contenido leído, lo elimina y reporta `result=passed`. `--dry-run` solo valida la
+configuración. La evidencia real queda pendiente de ejecutar en staging con credenciales fuera de
+Git.
+
+## 2026-08-15 — Generaciones pesadas pasan a Celery
+
+Las generaciones de PDF, PPTX y copy que requieren proveedor de IA se ejecutan mediante tareas
+Celery, no dentro del ciclo síncrono de una vista. Cada solicitud crea un `AsyncGenerationJob`
+propio, devuelve `202 Accepted` con `task_id` y `status_url`, y el frontend consulta
+`GET /api/v1/tasks/<task_id>/` hasta obtener `succeeded` o `failed`. El job guarda propietario,
+recurso, resultado y error para no exponer resultados de otra persona. El modo eager sólo se usa
+en tests; staging y producción requieren un worker real conectado a Redis.
+
+## 2026-08-15 — Nuevas escrituras de archivos quedan aisladas por usuario
+
+- Los uploads de logos, referencias de brief y activos de marketing usan rutas `users/{user_id}/...` mediante funciones `upload_to`.
+- Los PDF/PPTX generados usan el propietario del brief en `users/{user_id}/generated-designs/{design_id}/...`.
+- Registros sin propietario explícito se escriben bajo `users/unassigned/`; esto evita volver a crear claves planas.
+- Los objetos existentes con claves históricas planas no se renombran automáticamente. La migración física queda como operación explícita posterior para no romper URLs, referencias o procesos activos.
+
+## 2026-08-15 — IH Hub SSO queda definido como integración futura, no activa
+
+- IH Hub entrega un `apiToken` JWT HS256 con `sub`, `tenantId`, `email` y `exp`; design-platform lo validará más adelante con el secreto compartido `IHLATAM_SSO_SECRET`.
+- Se decide transportar el token inicialmente en el enlace de entrada (`?sso=`) y canjearlo una sola vez por `POST` sobre HTTPS; no se implementa endpoint, middleware ni vista en esta fase.
+- El SSO será una vía adicional: token ausente, inválido o expirado devuelve al magic-link existente sin tocarlo ni reemplazarlo.
+- `tenantId` se conservará en una identidad externa futura asociada al usuario local para seleccionar país/marca LATAM; no se confiará en valores enviados por el navegador.
+- La implementación está bloqueada hasta recibir el secreto real, confirmar expiración/claims y coordinar con quien mantiene el Hub el enlace hacia design-platform. Requiere luz verde explícita de Axel.
+
 ## 2026-08-09 — Hello Live English: se revierte la decisión del 2026-08-05, se adopta identidad propia
 
 Axel aportó el Brandfolder real del proveedor (`Brandfolder-Hello Live English.pdf`, Canva,
@@ -303,3 +569,56 @@ Los eventos se deduplican de forma durable mediante una clave SHA-256 estable co
 cuenta; un transient bounce solo se registra; una reactivación explícita de Postmark levanta la
 supresión. No hay reintentos automáticos. Se persiste detalle saneado y se ignoran campos de
 contenido para que URLs y tokens de recuperación no entren al audit o a logs.
+
+## 2026-08-23 — La migración Postmark adopta tablas históricas de Staging
+
+Una verificación de solo lectura confirmó que Staging conserva las tres tablas Postmark y evidencia
+de entrega/webhook del rollout anterior, pero ya no conserva el registro de su migración `0005`.
+Aplicar un `CreateModel` ordinario intentaría recrear relaciones existentes y bloquearía el
+pre-deploy. Como esa migración todavía no forma parte de `main`, sus tres operaciones crean cada
+tabla únicamente cuando no existe: Staging conserva datos y registra la migración, mientras una
+base nueva de Production crea el esquema completo. La migración `0006_merge` une ese nodo con el
+`0005` de Hub SSO. Una prueba aislada reproduce la ausencia del registro con tablas presentes y
+confirma que ambos `0005` y el merge quedan aplicados sin recrear ni borrar datos.
+
+Este release reconcilia Postmark/Pillow con el `main` que ya contiene SSO; no apaga OIDC. Resend se
+conserva únicamente como capacidad de rollback y su retirada/revocación exige autorización y cambio
+posteriores.
+
+## 2026-08-14 — Hub como proveedor OIDC; Design conserva autorización local
+
+IH LATAM Hub es la autoridad de autenticación para el SSO central y Design Platform es un
+cliente OIDC confidencial independiente. El contrato v1 usa Authorization Code + PKCE S256,
+issuer y callback exactos de Staging, firma RS256, `sub` estable del Hub y solo los claims
+`sub`, `email`, `email_verified` y `name`.
+
+Design Platform no acepta roles, centros, países, organizaciones ni tenants desde el token.
+Conserva sus grupos y permisos locales. El primer acceso enlaza por email normalizado exacto o
+crea un usuario con contraseña inutilizable y rol `viewer`; después, `sub` es la identidad
+principal aunque cambie el email. Ambigüedades, colisiones, usuarios inactivos y claims no
+permitidos fallan cerrados y quedan auditados sin tokens, códigos, cookies ni secretos.
+
+La integración empieza deshabilitada (`HUB_OIDC_ENABLED=0`), requiere aprobación adicional en
+Production y conserva el login local como contingencia de Staging. Las migraciones e historial
+Git de Design siguen siendo independientes de los del Hub.
+
+## 2026-08-14 — Pillow 12.3 por hallazgos del audit de dependencias
+
+El audit completo de `requirements.txt` encontró vulnerabilidades conocidas en el límite
+histórico `Pillow<12`. Se elevó el rango a `Pillow>=12.3,<13.0`, la primera versión que cierra
+todos los avisos reportados en el entorno de verificación. `pip check`, `pip-audit` y las 399
+pruebas quedaron en verde con Pillow 12.3.0.
+
+## 2026-08-15 — Releases separados: Staging automático, Production manual
+
+Se corrigió la topología para que una rama de feature no pueda desplegar Production. Durante el
+trabajo de SSO, solo Staging sigue `codex/hub-sso`, con autodeploy y espera por CI. Production
+conserva el repositorio conectado pero no tiene deployment trigger ni autodeploy; una persona
+responsable debe promocionar deliberadamente el SHA exacto y aprobado de `main`.
+
+La auditoría demostró instancias físicas distintas de PostgreSQL y Redis, pero encontró que ambos
+entornos compartían el secreto de Django, el bucket/credenciales R2 y Resend. Se rotó solo el
+secreto de Staging, se le asignó un bucket Railway exclusivo y se suprimió su correo eliminando las
+variables de Resend. Production no fue reiniciado ni redesplegado. La corrección
+`DJANGO_ENV=production` quedó guardada sin deploy para materializarse en la siguiente promoción
+aprobada. El contrato completo queda en `docs/operations/release-topology.md`.

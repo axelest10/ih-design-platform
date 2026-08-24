@@ -443,7 +443,10 @@ def test_login_frontend_sends_csrf_and_redirects_an_existing_session():
     assert 'cookie("csrftoken")' in csrf_script
     assert 'headers.set("X-CSRFToken"' in csrf_script
     assert 'fetch("/api/v1/me/")' in login_script
-    assert 'window.location.replace("/panel.html")' in login_script
+    assert "window.location.replace(nextPath)" in login_script
+    assert 'return "/panel.html"' in login_script
+    assert 'id="hub-sso-button"' in login_html
+    assert "Acceso de contingencia" in login_html
     assert "password-reset/request/" in login_script
     assert "password-reset/confirm/" in login_script
     assert "#reset=" not in login_script

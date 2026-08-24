@@ -13,6 +13,9 @@ from django.utils import timezone
 from common.observability import operation_event
 from designs.models import Design, DesignVersion
 
+from .audit import record_visual_review
+from .routing import AITaskType, ai_router_enabled, select_provider
+
 
 class VisualReviewProviderError(RuntimeError):
     """El proveedor de revisión no pudo devolver una decisión válida."""
@@ -113,7 +116,15 @@ def run_automatic_design_review(
     provider: VisualReviewProvider | None = None,
 ) -> DesignVersion:
     """Ejecuta Anthropic cuando está configurado o registra un pendiente trazable."""
-    selected_provider = provider or configured_visual_review_provider()
+    route_metadata = None
+    if provider is not None:
+        selected_provider = provider
+    elif ai_router_enabled():
+        selection = select_provider(AITaskType.AUTOMATIC_VISUAL_REVIEW)
+        selected_provider = selection.provider
+        route_metadata = selection.audit_metadata
+    else:
+        selected_provider = configured_visual_review_provider()
     started_at = perf_counter()
     operation_event(
         "visual_review.started",
@@ -125,6 +136,13 @@ def run_automatic_design_review(
     try:
         result = selected_provider.review(_review_request(version))
     except VisualReviewProviderError as exc:
+        record_visual_review(
+            provider=selected_provider,
+            request=_review_request(version),
+            result=None,
+            error=exc,
+            audit_metadata=route_metadata,
+        )
         reviewed = persist_design_review(
             version,
             decision=DesignVersion.ClaudeReviewStatus.PENDING,
@@ -146,6 +164,12 @@ def run_automatic_design_review(
         )
         return reviewed
 
+    record_visual_review(
+        provider=selected_provider,
+        request=_review_request(version),
+        result=result,
+        audit_metadata=route_metadata,
+    )
     reviewed = persist_design_review(
         version,
         decision=result.decision,
@@ -166,6 +190,15 @@ def run_automatic_design_review(
 
 
 def configured_visual_review_provider() -> VisualReviewProvider:
+    if (
+        getattr(settings, "AI_VISUAL_REVIEW_FREE_TIER_ENABLED", False)
+        and getattr(settings, "CLOUDFLARE_ACCOUNT_ID", "")
+        and getattr(settings, "CLOUDFLARE_API_TOKEN", "")
+        and getattr(settings, "CLOUDFLARE_VISION_MODEL", "")
+    ):
+        from ai.providers.cloudflare_vision_review import CloudflareVisionReviewProvider
+
+        return CloudflareVisionReviewProvider()
     if getattr(settings, "ANTHROPIC_API_KEY", "") and getattr(
         settings, "ANTHROPIC_MODEL", ""
     ):

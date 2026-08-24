@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from common.observability import operation_event
-from designs.serializers import DesignSerializer
+from designs.services.async_jobs import enqueue_generation_task, task_response
+from designs.tasks import confirm_brief_design_task
 from security.permissions import (
     ROLE_DESIGNER,
     ROLE_MARKETING,
@@ -13,7 +14,7 @@ from security.permissions import (
 
 from .models import BriefReferenceUpload, DesignBrief
 from .serializers import BriefReferenceUploadSerializer, DesignBriefSerializer
-from .services.design_confirmation import DesignConfirmationError, confirm_brief_design
+from .services.design_confirmation import DesignConfirmationError
 from .services.options import brief_options, is_regional_admin
 from .services.prompt_generation import generate_prompt_for_brief
 
@@ -62,13 +63,17 @@ class DesignBriefViewSet(RoleAwareViewSet, ModelViewSet):
             else brief.generated_prompt
         )
         try:
-            design = confirm_brief_design(brief, prompt_text)
+            job = enqueue_generation_task(
+                confirm_brief_design_task,
+                owner=request.user,
+                kind="brief-confirmation-copy",
+                resource_type="brief",
+                resource_id=brief.pk,
+                args=(brief.pk, prompt_text),
+            )
         except DesignConfirmationError as exc:
             return Response({"detail": str(exc)}, status=400)
-        return Response(
-            DesignSerializer(design, context=self.get_serializer_context()).data,
-            status=201,
-        )
+        return task_response(request, job)
 
     @action(detail=False, methods=["get"])
     def options(self, request):

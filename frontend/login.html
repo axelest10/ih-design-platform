@@ -21,8 +21,19 @@
       <section class="auth-card" aria-labelledby="login-title">
         <p class="auth-eyebrow">Acceso interno</p>
         <h1 id="login-title">Ingresa a la plataforma.</h1>
+        {% if hub_oidc_enabled %}
+        <p class="auth-intro">Usa tu cuenta central de IH LATAM. Design conservar&aacute; sus propios roles y permisos.</p>
+        <a id="hub-sso-button" class="auth-sso-button" href="/api/v1/auth/hub/login/">Continuar con IH LATAM Hub</a>
+        <p class="auth-sso-note">El Hub compartir&aacute; &uacute;nicamente tu identificador estable, correo verificado y nombre.</p>
+        {% else %}
         <p class="auth-intro">Ingresa con tu usuario y contraseña personal.</p>
 
+        {% endif %}
+        {% if hub_oidc_enabled %}
+        <details class="auth-legacy-access">
+          <summary>Acceso de contingencia</summary>
+          <div class="auth-legacy-access__body">
+        {% endif %}
         <form id="login-form" class="auth-form">
           <label for="username">Usuario</label>
           <input id="username" name="username" type="text" autocomplete="username" required />
@@ -32,6 +43,10 @@
         </form>
 
         <button id="forgot-password-toggle" class="auth-link-button" type="button">Olvidé mi contraseña</button>
+        {% if hub_oidc_enabled %}
+          </div>
+        </details>
+        {% endif %}
         <form id="password-reset-request-form" class="auth-form auth-secondary-form" hidden>
           <label for="reset-email">Correo corporativo</label>
           <input id="reset-email" name="email" type="email" autocomplete="email" required />

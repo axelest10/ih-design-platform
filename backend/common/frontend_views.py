@@ -1,5 +1,9 @@
 from pathlib import Path
+from urllib.parse import urlencode
 
+from django.conf import settings
+from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils._os import safe_join
 from django.utils.cache import patch_cache_control
 from django.views.generic import TemplateView
@@ -15,6 +19,18 @@ class RevalidatedTemplateView(TemplateView):
         response = super().render_to_response(context, **response_kwargs)
         patch_cache_control(response, no_cache=True, must_revalidate=True, max_age=0)
         return response
+
+
+class HubAuthenticatedTemplateView(RevalidatedTemplateView):
+    """Send protected deep links through Hub SSO when the integration is enabled."""
+
+    def dispatch(self, request, *args, **kwargs):
+        if settings.HUB_OIDC_ENABLED and not request.user.is_authenticated:
+            login_url = reverse("hub-oidc-login")
+            return HttpResponseRedirect(
+                f"{login_url}?{urlencode({'next': request.get_full_path()})}"
+            )
+        return super().dispatch(request, *args, **kwargs)
 
 
 def serve_versioned_asset(request, path, document_root):

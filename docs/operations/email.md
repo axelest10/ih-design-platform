@@ -8,13 +8,14 @@ debe configurar `mydesign.ihlatam.com` como dominio de envío.
 ## Arquitectura y comportamiento
 
 `backend/security/services/email.py` contiene el único cliente del proveedor y expone
-`send_transactional_email`. El flujo actual de correo es exclusivamente la recuperación de
-contraseña. Conserva destinatario, asunto, HTML, texto, enlace en fragmento, caducidad, uso único y
-respuesta genérica anti-enumeración. No existen tareas Celery, correos administrativos,
-notificaciones ni otros envíos activos.
+`send_transactional_email`. Los flujos actuales son la recuperación de contraseña y la entrega
+Celery del enlace autenticado de un diseño aprobado. Ambos conservan destinatario, asunto, HTML y
+texto; la recuperación conserva además enlace en fragmento, caducidad, uso único y respuesta
+genérica anti-enumeración.
 
 El adaptador usa `POST https://api.postmarkapp.com/email` con
-`X-Postmark-Server-Token`, HTML y texto, tag `password-reset`, tracking desactivado y el stream
+`X-Postmark-Server-Token`, HTML y texto, tags `password-reset` o `approved-design`, tracking
+desactivado y el stream
 transaccional configurado. Reply-To se omite cuando no está definido. Una respuesta aceptada debe
 incluir `ErrorCode=0` y `MessageID`; el identificador se registra en un evento operativo seguro.
 No se registran token del servidor, destinatario, contenido ni URL de recuperación.
@@ -110,19 +111,23 @@ token, el destinatario completo ni la URL de recuperación.
 
 ## Migración de Production y rollback
 
-La aplicación Production actual todavía depende de Resend. No se elimina su variable antes de
-desplegar código Postmark. La secuencia segura es:
+Las variables Resend de Production se conservan temporalmente durante este cutover, pero el código
+Postmark no las lee. No se eliminan ni se revocan antes de verificar el deployment Postmark. La
+secuencia segura es:
 
-1. Aprobar un PR provider-only basado en `main`, sin cambios SSO.
+1. Aprobar un PR cuyo diff contra el `main` vigente sea exclusivamente Postmark/Pillow y su
+   reconciliación con los flujos de correo actuales.
 2. Ingresar directamente en Railway Production el token de **IH Design — Production**, remitente,
-   nombre, stream, credenciales webhook separadas y `EMAIL_DELIVERY_MODE=live`, manteniendo
-   `HUB_OIDC_ENABLED` apagado. Si todavía no se pretende desplegar, la mutación debe usar
+   nombre, stream, credenciales webhook separadas y `EMAIL_DELIVERY_MODE=live`. Si todavía no se
+   pretende desplegar, la mutación debe usar
    explícitamente `skipDeploys: true` (o el equivalente documentado verificado en ese momento).
-3. Promover manualmente el SHA provider-only exacto; confirmar que no existe trigger automático.
-4. Verificar salud, login legacy y una recuperación controlada aprobada; reconciliar `MessageID`.
-5. Eliminar `RESEND_API_KEY` y `RESEND_FROM_EMAIL` de Railway porque el nuevo código ya no los usa.
-6. El propietario del workspace Resend real revoca la clave Production expuesta y verifica que ya
-   no sea utilizable.
+3. Promover manualmente el SHA exacto; confirmar que no existe trigger automático.
+4. Verificar salud, login legacy y Hub SSO, y una recuperación controlada aprobada; reconciliar
+   `MessageID` y webhook.
+5. En un cambio posterior explícitamente autorizado, eliminar `RESEND_API_KEY` y
+   `RESEND_FROM_EMAIL` con `skipDeploys: true` porque el código nuevo ya no los usa.
+6. Solo después, el propietario del workspace Resend real revoca la clave Production expuesta y
+   verifica que ya no sea utilizable.
 
 Para rollback antes de retirar Resend, se vuelve al deployment anterior y se conservan sus
 variables. Después de revocar Resend, el rollback seguro es a un SHA Postmark conocido como bueno;

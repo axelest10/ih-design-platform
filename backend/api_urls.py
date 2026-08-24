@@ -7,7 +7,7 @@ from briefs.views import BriefReferenceUploadViewSet, DesignBriefViewSet
 from campaigns.views import CampaignViewSet
 from catalog.views import BranchViewSet, ProductViewSet
 from common.views import stats_summary
-from designs.views import DesignViewSet
+from designs.views import DesignViewSet, generation_task_status
 from materials.views import (
     MarketingAssetViewSet,
     MaterialBundleViewSet,
@@ -21,6 +21,7 @@ from security.admin_views import (
     corporate_user_password,
     corporate_user_roles,
 )
+from security.hub_views import hub_oidc_callback, hub_oidc_login
 from security.views import (
     change_password,
     confirm_password_reset,
@@ -54,6 +55,7 @@ router.register("material-bundles", MaterialBundleViewSet, basename="material-bu
 router.register("marketing-assets", MarketingAssetViewSet, basename="marketing-asset")
 
 urlpatterns = [
+    path("tasks/<str:task_id>/", generation_task_status, name="generation-task-status"),
     path(
         "designs/<int:pk>/versions/<int:version_number>/export/",
         DesignViewSet.as_view({"get": "export_version"}),
@@ -88,6 +90,8 @@ urlpatterns = [
         name="security-user-password",
     ),
     path("auth/login/", password_login, name="password-login"),
+    path("auth/hub/login/", hub_oidc_login, name="hub-oidc-login"),
+    path("auth/hub/callback/", hub_oidc_callback, name="hub-oidc-callback"),
     path("auth/logout/", session_logout, name="session-logout"),
     path(
         "auth/password-reset/request/",

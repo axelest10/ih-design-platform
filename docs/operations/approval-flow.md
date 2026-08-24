@@ -1,13 +1,13 @@
-# Recomendación para el endpoint legacy de aprobación
+# Flujo de revisión y aprobación
 
-Estado: recomendación; no implementado todavía.
+Estado: implementado en `POST /api/v1/designs/{id}/review/`.
 
-## Recomendación
+## Contrato implementado
 
-Mantener `POST /api/v1/designs/{id}/review/` como adaptador de compatibilidad temporal, pero no
-usarlo como el flujo principal cuando `DESIGN_TEST_MODE` se desactive. El flujo principal debe ser
-un servicio/panel formal de revisión que persista comentarios, usuario, versión revisada, decisión y
-fecha.
+El endpoint delega la transición a `backend/designs/services/review.py`. Persiste la decisión sobre
+una `DesignVersion`, el usuario revisor y el comentario en `DesignReviewComment`. Los estados de
+versión son `pending`, `approved`, `rejected` y `changes_requested`; el estado de `Design` se
+mantiene sincronizado.
 
 ## Flujo propuesto después del lote de 50
 
@@ -21,14 +21,11 @@ self_review → claude-review: pass → in_review → approved
 aprobación humana debe requerir `reviewer` o `platform_admin`, una versión explícita y comentario
 cuando la decisión sea rechazo o solicitud de cambios.
 
-## Tratamiento del endpoint legacy
+## Tratamiento del endpoint y notificaciones futuras
 
-Cuando exista el panel formal:
+El endpoint exige una versión explícita. `approve` acepta comentario opcional; `reject` y
+`request_changes` exigen comentario. La función `notify_review_transition()` es un hook no-op para
+conectar notificaciones en una fase posterior; esta implementación no envía mensajes.
 
-1. Delegar la decisión al mismo servicio de dominio que usa el panel.
-2. Rechazar acciones sin versión explícita.
-3. Añadir una marca de deprecación y documentar la fecha de retiro.
-4. Mantenerlo solo mientras existan clientes legacy; no duplicar reglas de transición en dos lugares.
-
-No se implementa este cambio hasta que se confirme el diseño del panel formal y el responsable de
-aprobar.
+El frontend/panel debe llamar a este endpoint y no duplicar reglas de transición. El modo de
+pruebas mantiene el bloqueo temporal existente hasta completar el lote inicial.

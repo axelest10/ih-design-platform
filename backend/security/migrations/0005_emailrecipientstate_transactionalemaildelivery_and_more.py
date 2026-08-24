@@ -5,6 +5,19 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+class CreateModelIfMissing(migrations.CreateModel):
+    """Create a model table unless an earlier rollout already left it in place."""
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        model = to_state.apps.get_model(app_label, self.name)
+        if self.allow_migrate_model(schema_editor.connection.alias, model):
+            with schema_editor.connection.cursor() as cursor:
+                table_names = schema_editor.connection.introspection.table_names(cursor)
+            if model._meta.db_table in table_names:
+                return
+        super().database_forwards(app_label, schema_editor, from_state, to_state)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -13,7 +26,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
+        CreateModelIfMissing(
             name='EmailRecipientState',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -28,7 +41,7 @@ class Migration(migrations.Migration):
                 'ordering': ['recipient'],
             },
         ),
-        migrations.CreateModel(
+        CreateModelIfMissing(
             name='TransactionalEmailDelivery',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
@@ -55,7 +68,7 @@ class Migration(migrations.Migration):
                 'ordering': ['-submitted_at'],
             },
         ),
-        migrations.CreateModel(
+        CreateModelIfMissing(
             name='PostmarkWebhookEvent',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),

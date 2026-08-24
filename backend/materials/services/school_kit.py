@@ -15,6 +15,7 @@ from briefs.services.options import validate_brief_logo_access, validate_uploade
 from designs.models import Design, DesignVersion
 from designs.services.renderer import RenderValidationError, render_preview
 from designs.services.renderer_document import render_document_preview
+from designs.services.storage_paths import generated_design_path
 
 from ..models import MaterialBundleItem, MaterialTemplate
 from .catalog import school_kit_products
@@ -366,7 +367,7 @@ def generate_school_kit(
         except RenderValidationError as exc:
             raise SchoolKitGenerationError(f"{title}: {exc}") from exc
         pdf_path = default_storage.save(
-            f"generated-designs/{design.pk}/version-1.pdf",
+            generated_design_path(design, "version-1.pdf"),
             ContentFile(rendered.pdf),
         )
         version = DesignVersion.objects.create(

@@ -1,5 +1,6 @@
 """Generación del bloque de copy editable para un brief."""
 from ai.providers import AIProviderError, GenerationRequest, OpenAIProvider
+from ai.services.audit import audited_generate
 
 from ..models import DesignBrief
 
@@ -26,7 +27,7 @@ def _authorized_context(brief: DesignBrief) -> dict:
 
 
 def generate_prompt_for_brief(brief: DesignBrief) -> None:
-    """Genera el copy o deja preparado el fallback de escritura manual."""
+    """Genera copy publicitario editable, no un prompt para generar imágenes."""
     request = GenerationRequest(
         instruction=(
             "Escribe un solo bloque de copy publicitario en el idioma indicado por el brief, "
@@ -40,7 +41,7 @@ def generate_prompt_for_brief(brief: DesignBrief) -> None:
     )
 
     try:
-        response = OpenAIProvider().generate(request)
+        response = audited_generate(OpenAIProvider(), request, brief=brief)
     except AIProviderError:
         brief.generated_prompt = ""
         brief.prompt_source = DesignBrief.PromptSource.MANUAL

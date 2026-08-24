@@ -67,6 +67,22 @@ def test_renderer_reports_safe_area_text_layout_and_contrast():
     assert checks["contrast"]["pairs"][0]["ratio"] >= 4.5
 
 
+def test_renderer_rejects_logo_region_near_edge_before_safe_zone_persistence(monkeypatch):
+    monkeypatch.setitem(
+        TEMPLATE_SPECS["square-v1"]["regions"],
+        "logo_row",
+        (0, 120, 884, 92),
+    )
+
+    with pytest.raises(RenderValidationError, match="región 'logo_row' sale de la zona segura"):
+        render_preview(
+            {
+                "headline": "Título legible",
+                "body": "Una experiencia segura.",
+            }
+        )
+
+
 def test_renderer_adapts_text_that_exceeds_the_base_safe_width():
     headline = "Spanish + Culture 20% de descuento"
     rendered = render_preview({"headline": headline, "body": "Cuerpo"})
