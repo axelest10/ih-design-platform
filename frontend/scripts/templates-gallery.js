@@ -279,7 +279,12 @@
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
-    }).then(json).then((result) => {
+    }).then(json).then((initialResult) => window.IHAsyncGeneration.waitForResult(initialResult, {
+      request: window.authenticatedFetch,
+      onProgress: () => { status.textContent = "Generando diseño…"; },
+    })).then((result) => {
+      const preview = result?.preview;
+      if (!preview) throw new Error("La generación terminó sin devolver una vista previa.");
       status.replaceChildren("Diseño guardado. ");
       const link = document.createElement("a");
       link.href = "review.html";
@@ -287,13 +292,15 @@
       status.appendChild(link);
       const frame = document.querySelector("#quick-rendered-preview");
       const download = document.querySelector("#quick-download");
-      if (result.preview.html) {
-        frame.srcdoc = result.preview.html;
+      if (preview.html) {
+        frame.srcdoc = preview.html;
         frame.hidden = false;
-      } else {
-        download.href = result.preview.pdf_url || result.preview.pptx_url;
-        download.textContent = result.preview.pdf_url ? "Abrir PDF" : "Descargar PowerPoint";
+      } else if (preview.pdf_url || preview.pptx_url) {
+        download.href = preview.pdf_url || preview.pptx_url;
+        download.textContent = preview.pdf_url ? "Abrir PDF" : "Descargar PowerPoint";
         download.hidden = false;
+      } else {
+        throw new Error("La generación terminó sin devolver una vista previa válida.");
       }
     }).catch((error) => {
       status.textContent = error.message;

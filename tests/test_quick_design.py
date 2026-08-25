@@ -158,3 +158,20 @@ def test_templates_page_contains_quick_editor_and_persistence_endpoint():
     assert "Usar esta plantilla" in script
     assert "/api/v1/materials/quick-design/" in script
     assert "can_create_briefs" in script
+
+
+def test_quick_editor_waits_for_async_job_before_reading_preview():
+    html = Path("frontend/templates-gallery.html").read_text(encoding="utf-8")
+    script = Path("frontend/scripts/templates-gallery.js").read_text(encoding="utf-8")
+
+    assert html.index("asset_url 'scripts/async-generation.js'") < html.index(
+        "asset_url 'scripts/templates-gallery.js'"
+    )
+    handler = script.split(
+        'window.authenticatedFetch("/api/v1/materials/quick-design/"', 1
+    )[1]
+    waits_for_result = handler.index("window.IHAsyncGeneration.waitForResult")
+    reads_preview = handler.index("const preview = result?.preview")
+
+    assert waits_for_result < reads_preview
+    assert "result.preview.html" not in handler
