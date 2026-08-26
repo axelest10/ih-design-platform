@@ -1,11 +1,13 @@
-from unittest.mock import patch
+import json
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from rest_framework.test import APIClient
 
-from ai.providers import AIProviderError, GenerationResponse
+from ai.providers import AIProviderError
 from briefs.models import DesignBrief
 
 
@@ -33,18 +35,34 @@ def _brief():
 
 @pytest.mark.django_db
 def test_generate_prompt_saves_ai_copy_and_marks_brief_ready(settings):
-    settings.OPENAI_API_KEY = "test-key"
+    settings.GROQ_API_KEY = "test-key"
+    settings.GROQ_MODEL = "openai/gpt-oss-120b"
     brief = _brief()
-    generated = GenerationResponse(
-        provider="openai",
-        model="test-model",
-        content="  Mejora tu inglés y abre nuevas oportunidades profesionales.  ",
+    provider_response = SimpleNamespace(
+        id="synthetic-groq-response",
+        model="openai/gpt-oss-120b",
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=(
+                        "  Mejora tu inglés y abre nuevas oportunidades profesionales.  "
+                    )
+                )
+            )
+        ],
+        usage=None,
+    )
+    create = Mock(return_value=provider_response)
+    client_factory = Mock(
+        return_value=SimpleNamespace(
+            chat=SimpleNamespace(completions=SimpleNamespace(create=create))
+        )
     )
 
     with patch(
-        "briefs.services.prompt_generation.OpenAIProvider.generate",
-        return_value=generated,
-    ) as generate:
+        "ai.providers.groq_provider.default_client_factory",
+        client_factory,
+    ):
         response = APIClient().post(f"/api/v1/briefs/{brief.pk}/generate-prompt/")
 
     assert response.status_code == 200, response.json()
@@ -54,9 +72,15 @@ def test_generate_prompt_saves_ai_copy_and_marks_brief_ready(settings):
     assert brief.status == DesignBrief.Status.READY
     assert response.json()["generated_prompt"] == brief.generated_prompt
     assert response.json()["prompt_source"] == "ai"
-    generation_request = generate.call_args.args[0]
-    assert generation_request.output_format == "text"
-    assert generation_request.authorized_context == {
+    client_factory.assert_called_once_with(
+        api_key="test-key",
+        base_url="https://api.groq.com/openai/v1",
+        max_retries=0,
+    )
+    transport_payload = json.loads(create.call_args.kwargs["messages"][1]["content"])
+    assert create.call_args.kwargs["model"] == "openai/gpt-oss-120b"
+    assert transport_payload["output_format"] == "text"
+    assert transport_payload["authorized_context"] == {
         "title": "Inglés para crecer",
         "audience": "Profesionales jóvenes",
         "objective": "Generar solicitudes de información",
@@ -73,18 +97,19 @@ def test_generate_prompt_saves_ai_copy_and_marks_brief_ready(settings):
         "language": "es",
         "channel": "instagram",
     }
-    assert "no uses JSON" in generation_request.instruction
-    assert "no inventes precios" in generation_request.instruction
+    assert "no uses JSON" in transport_payload["instruction"]
+    assert "no inventes precios" in transport_payload["instruction"]
 
 
 @pytest.mark.django_db
 def test_generate_prompt_falls_back_to_manual_without_changing_draft_status(settings):
-    settings.OPENAI_API_KEY = ""
+    settings.GROQ_API_KEY = ""
+    settings.GROQ_MODEL = ""
     brief = _brief()
 
     with patch(
-        "briefs.services.prompt_generation.OpenAIProvider.generate",
-        side_effect=AIProviderError("OPENAI_API_KEY is not configured"),
+        "briefs.services.prompt_generation.GroqProvider.generate",
+        side_effect=AIProviderError("GROQ_API_KEY is not configured"),
     ):
         response = APIClient().post(f"/api/v1/briefs/{brief.pk}/generate-prompt/")
 
@@ -123,7 +148,7 @@ def test_generate_prompt_uses_brief_write_roles(role, expected_status):
     client.force_authenticate(user=user)
 
     with patch(
-        "briefs.services.prompt_generation.OpenAIProvider.generate",
+        "briefs.services.prompt_generation.GroqProvider.generate",
         side_effect=AIProviderError("provider unavailable"),
     ):
         response = client.post(f"/api/v1/briefs/{brief.pk}/generate-prompt/")

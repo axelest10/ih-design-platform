@@ -43,6 +43,13 @@ sin `ANTHROPIC_API_KEY`/`ANTHROPIC_MODEL`, conserva el estado pendiente y trazab
 `needs_confirmation`. La configuración real de Groq y la activación del router corresponden a
 Axel en Railway, no al repositorio.
 
+El 2026-08-26 Axel confirmó que `generate_prompt_for_brief()`, responsable del paso de copy del
+flujo normal «Crear diseño», también debe usar `GroqProvider` directamente. La función había
+quedado apuntando por error a `OpenAIProvider` durante la migración de copy y fallaba siempre que
+OpenAI no estaba configurado. Este ajuste no agrega una política al router ni cambia el fallback
+intencional: ante `AIProviderError`, el brief conserva copy vacío y fuente manual para permitir
+que la persona continúe escribiéndolo.
+
 ## 2026-08-22 — Mejora de prompt opt-in sin alterar la certificación
 
 Axel autorizó `prompt_improvement` como primera tarea real del router, con Groq como único candidato
