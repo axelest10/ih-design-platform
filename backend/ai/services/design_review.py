@@ -190,6 +190,12 @@ def run_automatic_design_review(
 
 
 def configured_visual_review_provider() -> VisualReviewProvider:
+    if getattr(settings, "ANTHROPIC_API_KEY", "") and getattr(
+        settings, "ANTHROPIC_MODEL", ""
+    ):
+        from ai.providers.anthropic_review import AnthropicVisualReviewProvider
+
+        return AnthropicVisualReviewProvider()
     if (
         getattr(settings, "AI_VISUAL_REVIEW_FREE_TIER_ENABLED", False)
         and getattr(settings, "CLOUDFLARE_ACCOUNT_ID", "")
@@ -199,10 +205,4 @@ def configured_visual_review_provider() -> VisualReviewProvider:
         from ai.providers.cloudflare_vision_review import CloudflareVisionReviewProvider
 
         return CloudflareVisionReviewProvider()
-    if getattr(settings, "ANTHROPIC_API_KEY", "") and getattr(
-        settings, "ANTHROPIC_MODEL", ""
-    ):
-        from ai.providers.anthropic_review import AnthropicVisualReviewProvider
-
-        return AnthropicVisualReviewProvider()
     return NeedsConfirmationClaudeReviewProvider()

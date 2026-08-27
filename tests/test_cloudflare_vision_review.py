@@ -204,10 +204,20 @@ def test_free_tier_flag_off_with_router_disabled_preserves_current_visual_review
         assert reviewed.claude_review["provider"] == "claude-stub"
 
 
-def test_configured_visual_review_prefers_cloudflare_only_with_complete_opt_in(settings):
+def test_configured_visual_review_prefers_anthropic_when_both_are_configured(settings):
     _configure_cloudflare(settings)
     settings.ANTHROPIC_API_KEY = "anthropic-key"
     settings.ANTHROPIC_MODEL = "anthropic-model"
+
+    provider = configured_visual_review_provider()
+
+    assert isinstance(provider, AnthropicVisualReviewProvider)
+
+
+def test_configured_visual_review_uses_cloudflare_without_anthropic(settings):
+    _configure_cloudflare(settings)
+    settings.ANTHROPIC_API_KEY = ""
+    settings.ANTHROPIC_MODEL = ""
 
     provider = configured_visual_review_provider()
 
@@ -229,11 +239,11 @@ def test_incomplete_cloudflare_opt_in_falls_back_to_anthropic(settings, missing_
     assert isinstance(provider, AnthropicVisualReviewProvider)
 
 
-def test_incomplete_cloudflare_without_anthropic_falls_back_to_stub(settings):
-    settings.AI_VISUAL_REVIEW_FREE_TIER_ENABLED = True
-    settings.CLOUDFLARE_ACCOUNT_ID = "account-test"
+def test_configured_visual_review_uses_safe_fallback_without_providers(settings):
+    settings.AI_VISUAL_REVIEW_FREE_TIER_ENABLED = False
+    settings.CLOUDFLARE_ACCOUNT_ID = ""
     settings.CLOUDFLARE_API_TOKEN = ""
-    settings.CLOUDFLARE_VISION_MODEL = "@cf/meta/llama-3.2-11b-vision-instruct"
+    settings.CLOUDFLARE_VISION_MODEL = ""
     settings.ANTHROPIC_API_KEY = ""
     settings.ANTHROPIC_MODEL = ""
 
