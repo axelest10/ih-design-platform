@@ -86,9 +86,15 @@ def record_visual_review(
     response_text = json.dumps(
         result.report if result else {"error": str(error)}, ensure_ascii=False
     )
-    audit_fields = {}
+    response_metadata = {}
+    error_metadata = getattr(error, "audit_metadata", None)
+    if isinstance(error_metadata, dict):
+        response_metadata.update(error_metadata)
     if audit_metadata:
-        audit_fields["response_metadata"] = audit_metadata
+        response_metadata.update(audit_metadata)
+    audit_fields = (
+        {"response_metadata": response_metadata} if response_metadata else {}
+    )
     return AICallAudit.objects.create(
         provider=getattr(provider, "name", provider.__class__.__name__),
         model=getattr(provider, "model", ""),

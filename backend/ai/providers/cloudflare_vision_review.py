@@ -28,6 +28,14 @@ from .visual_review_contract import (
 Transport = Callable[[str, dict[str, str], dict[str, Any], float], dict[str, Any]]
 
 
+def _invalid_response_error(
+    message: str, raw_provider_response: Any
+) -> VisualReviewProviderError:
+    error = VisualReviewProviderError(message)
+    error.audit_metadata = {"raw_provider_response": raw_provider_response}
+    return error
+
+
 def _default_transport(
     url: str, headers: dict[str, str], payload: dict[str, Any], timeout: float
 ) -> dict[str, Any]:
@@ -39,7 +47,14 @@ def _default_transport(
     )
     try:
         with urlopen(request, timeout=timeout) as response:  # noqa: S310 - HTTPS fijo
-            return json.loads(response.read().decode("utf-8"))
+            raw_response = response.read().decode("utf-8")
+            try:
+                return json.loads(raw_response)
+            except json.JSONDecodeError as exc:
+                raise _invalid_response_error(
+                    "Cloudflare Workers AI devolvió una respuesta no válida.",
+                    raw_response,
+                ) from exc
     except HTTPError as exc:
         code, message = _cloudflare_error(exc)
         detail = ": ".join(part for part in (code, message) if part)
@@ -56,7 +71,7 @@ def _default_transport(
         raise VisualReviewProviderError(
             "Cloudflare Workers AI no respondió dentro del tiempo permitido."
         ) from exc
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except UnicodeDecodeError as exc:
         raise VisualReviewProviderError(
             "Cloudflare Workers AI devolvió una respuesta no válida."
         ) from exc
@@ -65,22 +80,26 @@ def _default_transport(
 def _parse_response(response: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
     result = response.get("result", response)
     if not isinstance(result, dict):
-        raise VisualReviewProviderError(
-            "Cloudflare Workers AI no devolvió un resultado estructurado."
+        raise _invalid_response_error(
+            "Cloudflare Workers AI no devolvió un resultado estructurado.", response
         )
     candidate = result.get("response")
     if isinstance(candidate, str):
         try:
             candidate = json.loads(candidate)
         except json.JSONDecodeError as exc:
-            raise VisualReviewProviderError(
-                "Cloudflare Workers AI devolvió JSON inválido."
+            raise _invalid_response_error(
+                "Cloudflare Workers AI devolvió JSON inválido.", response
             ) from exc
     if not isinstance(candidate, dict):
-        raise VisualReviewProviderError(
-            "Cloudflare Workers AI no devolvió el reporte estructurado."
+        raise _invalid_response_error(
+            "Cloudflare Workers AI no devolvió el reporte estructurado.", response
         )
-    report = validate_review_report(candidate, provider_label="Cloudflare Workers AI")
+    try:
+        report = validate_review_report(candidate, provider_label="Cloudflare Workers AI")
+    except VisualReviewProviderError as exc:
+        exc.audit_metadata = {"raw_provider_response": response}
+        raise
     response_id = result.get("id") or response.get("id")
     return report, response_id if isinstance(response_id, str) else None
 
