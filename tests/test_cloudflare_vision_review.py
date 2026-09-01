@@ -349,6 +349,33 @@ def test_invalid_cloudflare_report_is_recorded_as_safe_pending_provider_error(
     assert message in reviewed.claude_review["summary"]
     audit = AICallAudit.objects.get(design_version=version)
     assert audit.status == AICallAudit.Status.ERROR
+    assert audit.response_metadata["raw_provider_response"] == response
+
+
+@pytest.mark.django_db
+def test_invalid_cloudflare_report_preserves_route_and_raw_response_metadata(settings):
+    _configure_cloudflare(settings)
+    version = _version("Cloudflare inválido con metadata de ruta")
+    response = {
+        "success": True,
+        "result": {
+            "id": "cf-invalid-123",
+            "response": {"decision": "pass", "summary": "Sin checks"},
+        },
+    }
+    provider = CloudflareVisionReviewProvider(transport=lambda *_args: response)
+
+    reviewed = run_automatic_design_review(version, provider=provider)
+
+    assert reviewed.claude_review_status == DesignVersion.ClaudeReviewStatus.PENDING
+    assert reviewed.claude_review["integration_status"] == "provider_error"
+    assert reviewed.claude_review["summary"] == (
+        "Cloudflare Workers AI devolvió un reporte fuera del contrato."
+    )
+    audit = AICallAudit.objects.get(design_version=version)
+    assert audit.provider == "cloudflare-workers-ai-vision"
+    assert audit.status == AICallAudit.Status.ERROR
+    assert audit.response_metadata == {"raw_provider_response": response}
 
 
 def test_visual_review_free_tier_flag_defaults_off():
