@@ -1,5 +1,18 @@
 # Decisiones técnicas
 
+## 2026-08-27 — Anthropic primero y Cloudflare como segunda opción de revisión visual
+
+Axel confirmó que Anthropic es la opción principal de `automatic_visual_review` después de su
+prueba real exitosa en staging el 2026-08-27. Cuando `ANTHROPIC_API_KEY` y `ANTHROPIC_MODEL` están
+configurados, `configured_visual_review_provider()` selecciona `AnthropicVisualReviewProvider`
+aunque Cloudflare también tenga configuración completa.
+
+Cloudflare queda como segunda opción por configuración: solo se selecciona cuando Anthropic no
+está configurado y permanecen activos `AI_VISUAL_REVIEW_FREE_TIER_ENABLED` y las tres variables de
+Cloudflare. `NeedsConfirmationClaudeReviewProvider` continúa como fallback seguro cuando ninguno
+está disponible. Esta decisión no modifica `TASK_POLICIES`, el contrato de revisión ni el interior
+de los proveedores; Cloudflare sigue pendiente de completar su propia prueba real exitosa.
+
 ## 2026-08-23 — Revisión visual Cloudflare aislada por un flag propio
 
 Axel autorizó preparar Cloudflare Workers AI como alternativa gratuita y no certificada para
